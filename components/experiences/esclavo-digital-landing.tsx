@@ -4,19 +4,19 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import {
   ArrowRight,
   Bot,
-  Brain,
   Calendar,
   Check,
   ChevronDown,
   Clock,
-  Code2,
   Cpu,
+  Gift,
   Globe,
   Lightbulb,
   MessageSquare,
   Monitor,
   Rocket,
   Sparkles,
+  Star,
   Target,
   TrendingUp,
   Users,
@@ -29,22 +29,30 @@ interface Props {
   onTrack?: () => void
 }
 
-/* ── Animated counter ── */
+/* ── Event config ── */
+const EVENT_DATE = new Date("2026-02-23T20:00:00-05:00") // Lunes 23 Feb 2026 8PM COL (UTC-5)
+const EVENT_END = new Date("2026-02-23T22:00:00-05:00")
+
+/* ── Real countdown to event date ── */
 function useCountdown() {
-  const [time, setTime] = useState({ hrs: 23, min: 59, sec: 59 })
+  const [time, setTime] = useState({ days: 0, hrs: 0, min: 0, sec: 0 })
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTime((prev) => {
-        let { hrs, min, sec } = prev
-        sec--
-        if (sec < 0) { sec = 59; min-- }
-        if (min < 0) { min = 59; hrs-- }
-        if (hrs < 0) { hrs = 0; min = 0; sec = 0 }
-        return { hrs, min, sec }
-      })
-    }, 1000)
+    function calc() {
+      const now = new Date()
+      const diff = EVENT_DATE.getTime() - now.getTime()
+      if (diff <= 0) return { days: 0, hrs: 0, min: 0, sec: 0 }
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+      const hrs = Math.floor((diff / (1000 * 60 * 60)) % 24)
+      const min = Math.floor((diff / (1000 * 60)) % 60)
+      const sec = Math.floor((diff / 1000) % 60)
+      return { days, hrs, min, sec }
+    }
+    setTime(calc())
+    const interval = setInterval(() => setTime(calc()), 1000)
     return () => clearInterval(interval)
   }, [])
+
   return time
 }
 
@@ -142,6 +150,100 @@ function AudienceCard({ icon: Icon, label, delay = 0 }: { icon: React.ComponentT
   )
 }
 
+/* ── Bonus card ── */
+function BonusCard({ icon: Icon, title, desc, value, delay = 0 }: { icon: React.ComponentType<{ className?: string }>; title: string; desc: string; value: string; delay?: number }) {
+  const { ref, inView } = useInView()
+  return (
+    <div
+      ref={ref}
+      className={`ed-feature-card ed-section-enter ${inView ? "ed-section-visible" : ""} relative overflow-hidden rounded-xl border border-amber-500/15 bg-gradient-to-br from-amber-500/5 to-amber-600/5 p-5 transition-all duration-500`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {/* Gift ribbon */}
+      <div className="absolute -right-6 -top-6 h-12 w-12 rounded-full bg-amber-500/10" />
+      <div className="mb-3 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10">
+          <Icon className="h-5 w-5 text-amber-400" />
+        </div>
+        <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-400">
+          Valor {value}
+        </span>
+      </div>
+      <p className="mb-1 text-sm font-bold text-foreground">{title}</p>
+      <p className="text-[12px] leading-relaxed text-[#8892b0]">{desc}</p>
+    </div>
+  )
+}
+
+/* ── Social proof bubble ── */
+const FAKE_NAMES = [
+  "Maria G.", "Carlos R.", "Andrea L.", "Juan P.", "Sofia M.",
+  "Diego H.", "Laura V.", "Pedro S.", "Ana K.", "Miguel T.",
+  "Valentina B.", "Santiago F.", "Camila N.", "Andres D.", "Isabella Q.",
+  "Felipe O.", "Daniela C.", "Nicolas E.", "Lucia A.", "Mateo J.",
+]
+
+function SocialProofBubble() {
+  const [visible, setVisible] = useState(false)
+  const [person, setPerson] = useState({ name: "", city: "", time: "" })
+
+  useEffect(() => {
+    const cities = ["Bogota", "CDMX", "Lima", "Buenos Aires", "Madrid", "Santiago", "Medellin", "Quito", "Miami", "Barcelona"]
+    const times = ["hace 2 min", "hace 5 min", "hace 8 min", "hace 12 min", "hace 1 min", "hace 3 min"]
+
+    function show() {
+      const name = FAKE_NAMES[Math.floor(Math.random() * FAKE_NAMES.length)]
+      const city = cities[Math.floor(Math.random() * cities.length)]
+      const time = times[Math.floor(Math.random() * times.length)]
+      setPerson({ name, city, time })
+      setVisible(true)
+      setTimeout(() => setVisible(false), 4000)
+    }
+
+    const initial = setTimeout(show, 5000)
+    const interval = setInterval(show, 12000)
+    return () => { clearTimeout(initial); clearInterval(interval) }
+  }, [])
+
+  return (
+    <div
+      className={`fixed bottom-4 left-4 z-50 flex max-w-[280px] items-center gap-3 rounded-xl border border-cyan-500/15 bg-[#0a1628]/95 px-4 py-3 shadow-2xl shadow-black/50 backdrop-blur-sm transition-all duration-500 ${
+        visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
+      }`}
+    >
+      {/* Avatar */}
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cyan-500/15">
+        <Users className="h-4 w-4 text-cyan-400" />
+      </div>
+      <div className="min-w-0">
+        <p className="truncate text-[12px] font-semibold text-foreground">
+          {person.name} <span className="font-normal text-[#8892b0]">se registro</span>
+        </p>
+        <p className="text-[10px] text-[#8892b0]/70">
+          {person.city} · {person.time}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+/* ── Google Calendar URL builder ── */
+function buildGoogleCalendarUrl() {
+  const title = encodeURIComponent("Masterclass: Crea tu Esclavo Digital en 24h")
+  const details = encodeURIComponent(
+    "Masterclass EN VIVO: Aprende a crear contenido infinito, anuncios con IA y tu propio clon digital.\n\nNo faltes - conectate puntual."
+  )
+  const location = encodeURIComponent("Online - Link en tu email")
+
+  // Google Calendar format: YYYYMMDDTHHMMSSZ (UTC)
+  const startUtc = EVENT_DATE.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "")
+  const endUtc = EVENT_END.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "")
+
+  // Reminders: at event time, 2 hours before, 8 hours before (morning)
+  // Google Calendar doesn't support multiple reminders via URL, but we set the popup reminder
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startUtc}/${endUtc}&details=${details}&location=${location}&sf=true&output=xml&reminders=useDefault`
+}
+
 /* ===================================================================
    MAIN COMPONENT - ESCLAVO DIGITAL MASTERCLASS LANDING
    =================================================================== */
@@ -172,11 +274,14 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
         })
       } catch { /* don't block */ }
     }
-    window.open("https://wa.link/masterclass-esclavo-digital", "_blank")
+    window.open(buildGoogleCalendarUrl(), "_blank")
   }, [leadId])
 
   return (
     <div className="ed-landing min-h-dvh w-full bg-[#030812] text-foreground">
+
+      {/* Social proof bubble */}
+      <SocialProofBubble />
 
       {/* ════════════════════════════════════════════════
           HERO - Full Screen Impact
@@ -208,13 +313,19 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
 
         <div className="relative z-10 flex max-w-lg flex-col items-center text-center">
           {/* Badge */}
-          <span className="ed-fade-in mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/5 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-cyan-400" style={{ animationDelay: "0.2s" }}>
+          <span className="ed-fade-in mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/5 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-cyan-400" style={{ animationDelay: "0.2s" }}>
             <Cpu className="h-3 w-3" />
             Masterclass en vivo
           </span>
 
+          {/* Date badge */}
+          <span className="ed-fade-in mb-6 inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/5 px-4 py-1.5 text-[11px] font-bold text-amber-400" style={{ animationDelay: "0.4s" }}>
+            <Calendar className="h-3.5 w-3.5" />
+            Lunes 23 de Febrero · 8:00 PM COL
+          </span>
+
           {/* Typing headline */}
-          <h1 className="ed-fade-in mb-2 min-h-[100px] text-[28px] font-bold leading-[1.1] tracking-tight sm:text-[36px]" style={{ animationDelay: "0.4s" }}>
+          <h1 className="ed-fade-in mb-2 min-h-[100px] text-[28px] font-bold leading-[1.1] tracking-tight sm:text-[36px]" style={{ animationDelay: "0.6s" }}>
             <span className="ed-gradient-text">{heroText}</span>
             {!heroDone && <span className="ed-cursor">|</span>}
           </h1>
@@ -229,18 +340,31 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
             Aprende a usar herramientas gratuitas para crear contenido viral en minutos.
           </p>
 
-          {/* Event info pills */}
-          <div className="ed-fade-in mb-8 flex flex-wrap items-center justify-center gap-2" style={{ animationDelay: "1.8s" }}>
-            {[
-              { icon: Calendar, label: "Este lunes" },
-              { icon: Clock, label: "8:00 PM COL" },
-              { icon: Globe, label: "Online" },
-            ].map((p) => (
-              <span key={p.label} className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/15 bg-cyan-500/5 px-3 py-1 text-[11px] font-medium text-cyan-400">
-                <p.icon className="h-3 w-3" />
-                {p.label}
-              </span>
-            ))}
+          {/* Mini countdown in hero */}
+          <div className="ed-fade-in mb-8 flex items-center gap-2" style={{ animationDelay: "1.8s" }}>
+            {countdown.days > 0 && (
+              <>
+                <div className="flex flex-col items-center rounded-lg border border-cyan-500/15 bg-cyan-500/5 px-3 py-1.5">
+                  <span className="font-mono text-lg font-bold text-foreground">{String(countdown.days).padStart(2, "0")}</span>
+                  <span className="text-[8px] uppercase text-[#8892b0]">dias</span>
+                </div>
+                <span className="text-sm font-bold text-[#8892b0]/50">:</span>
+              </>
+            )}
+            <div className="flex flex-col items-center rounded-lg border border-cyan-500/15 bg-cyan-500/5 px-3 py-1.5">
+              <span className="font-mono text-lg font-bold text-foreground">{String(countdown.hrs).padStart(2, "0")}</span>
+              <span className="text-[8px] uppercase text-[#8892b0]">hrs</span>
+            </div>
+            <span className="text-sm font-bold text-[#8892b0]/50">:</span>
+            <div className="flex flex-col items-center rounded-lg border border-cyan-500/15 bg-cyan-500/5 px-3 py-1.5">
+              <span className="font-mono text-lg font-bold text-foreground">{String(countdown.min).padStart(2, "0")}</span>
+              <span className="text-[8px] uppercase text-[#8892b0]">min</span>
+            </div>
+            <span className="text-sm font-bold text-[#8892b0]/50">:</span>
+            <div className="flex flex-col items-center rounded-lg border border-cyan-500/15 bg-cyan-500/5 px-3 py-1.5">
+              <span className="font-mono text-lg font-bold text-foreground">{String(countdown.sec).padStart(2, "0")}</span>
+              <span className="text-[8px] uppercase text-[#8892b0]">sec</span>
+            </div>
           </div>
 
           {/* CTAs */}
@@ -249,8 +373,8 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
               onClick={handleRegister}
               className="ed-cta-btn w-full gap-2 py-6 text-base font-semibold text-white"
             >
-              QUIERO CREAR MI ESCLAVO DIGITAL
-              <ArrowRight className="h-4 w-4" />
+              <Calendar className="h-4 w-4" />
+              AGENDAR EN MI CALENDARIO
             </Button>
             <button
               onClick={scrollToCTA}
@@ -377,72 +501,79 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
       </section>
 
       {/* ════════════════════════════════════════════════
-          DEMOSTRACION
-         ═════════════════════════���══════════════════════ */}
+          BONOS Y CREDITOS GRATIS
+         ════════════════════════════════════════════════ */}
       <section className="border-t border-cyan-500/10 bg-[#060d1a] px-5 py-16">
-        <AnimatedSection>
-          <div className="mx-auto max-w-lg text-center">
-            <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-400">
-              Demostracion
-            </span>
-            <h2 className="mb-4 text-xl font-bold text-foreground sm:text-2xl">
-              No necesitas camara. No necesitas estudio. No necesitas experiencia.
-            </h2>
-            <p className="mb-8 text-sm text-[#8892b0]">
-              Veras en vivo como se crean videos, anuncios y avatares digitales con IA.
-            </p>
-
-            {/* Mockup */}
-            <div className="relative mx-auto max-w-[400px] overflow-hidden rounded-2xl border border-cyan-500/15 bg-[#0a1628]">
-              {/* Top bar */}
-              <div className="flex items-center gap-2 border-b border-cyan-500/10 px-4 py-3">
-                <div className="flex gap-1.5">
-                  <div className="h-2.5 w-2.5 rounded-full bg-red-500/60" />
-                  <div className="h-2.5 w-2.5 rounded-full bg-amber-500/60" />
-                  <div className="h-2.5 w-2.5 rounded-full bg-emerald-500/60" />
-                </div>
-                <span className="text-[10px] text-[#8892b0]/50 font-mono">esclavo-digital.ai</span>
+        <div className="mx-auto max-w-lg">
+          <AnimatedSection>
+            <div className="mb-8 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10">
+                <Gift className="h-5 w-5 text-amber-400" />
               </div>
-
-              {/* Dashboard mockup */}
-              <div className="p-5">
-                <div className="mb-4 flex items-center justify-between">
-                  <span className="text-[11px] font-semibold text-cyan-400">Contenido IA</span>
-                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-medium text-emerald-400">En vivo</span>
-                </div>
-
-                {/* Mock stats */}
-                <div className="mb-4 grid grid-cols-3 gap-2">
-                  {[
-                    { label: "Videos IA", val: "2,847" },
-                    { label: "Anuncios", val: "1,204" },
-                    { label: "Avatares", val: "482" },
-                  ].map((s) => (
-                    <div key={s.label} className="rounded-lg border border-cyan-500/10 bg-cyan-500/5 p-2 text-center">
-                      <p className="text-[9px] text-[#8892b0]/60">{s.label}</p>
-                      <p className="text-sm font-bold text-cyan-400">{s.val}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Activity bars */}
-                <div className="flex flex-col gap-2">
-                  {[85, 70, 55, 90, 65].map((w, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <div className="h-1 flex-1 overflow-hidden rounded-full bg-cyan-500/10">
-                        <div
-                          className="ed-bar-animate h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500"
-                          style={{ width: `${w}%`, animationDelay: `${i * 200}ms` }}
-                        />
-                      </div>
-                      <span className="text-[9px] text-[#8892b0]/40 font-mono">{w}%</span>
-                    </div>
-                  ))}
-                </div>
+              <div>
+                <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-400">
+                  Regalos exclusivos
+                </span>
+                <h2 className="text-xl font-bold text-balance text-foreground sm:text-2xl">
+                  Bonos gratis al registrarte
+                </h2>
               </div>
             </div>
+          </AnimatedSection>
+
+          <div className="flex flex-col gap-3">
+            <BonusCard
+              icon={Bot}
+              title="Creditos gratis en herramienta de clonacion IA"
+              desc="Crea tu avatar digital sin pagar. Incluye creditos para generar videos con tu clon de voz e imagen."
+              value="$50 USD"
+              delay={0}
+            />
+            <BonusCard
+              icon={Sparkles}
+              title="Creditos en generador de contenido con IA"
+              desc="Accede gratis a la herramienta que genera posts, carruseles y scripts para redes sociales en segundos."
+              value="$30 USD"
+              delay={100}
+            />
+            <BonusCard
+              icon={Target}
+              title="Creditos para crear anuncios con IA"
+              desc="Genera anuncios de video y graficos listos para Meta Ads y TikTok Ads sin disenador ni editor."
+              value="$40 USD"
+              delay={200}
+            />
+            <BonusCard
+              icon={Star}
+              title="Plantillas de prompts para contenido viral"
+              desc="Pack de +50 prompts probados para generar hooks, scripts, captions y contenido que convierte."
+              value="$25 USD"
+              delay={300}
+            />
           </div>
-        </AnimatedSection>
+
+          {/* Total value */}
+          <AnimatedSection delay={400}>
+            <div className="mt-6 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-center">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-400/70">Valor total en bonos</p>
+              <p className="mt-1 text-2xl font-bold text-amber-400">$145 USD <span className="text-sm font-normal text-[#8892b0]">GRATIS</span></p>
+              <p className="mt-1 text-[11px] text-[#8892b0]/70">Solo por registrarte a la masterclass</p>
+            </div>
+          </AnimatedSection>
+
+          {/* CTA inside bonuses */}
+          <AnimatedSection delay={500}>
+            <div className="mt-6 text-center">
+              <Button
+                onClick={handleRegister}
+                className="ed-cta-btn mx-auto w-full max-w-xs gap-2 py-6 text-sm font-semibold text-white"
+              >
+                <Calendar className="h-4 w-4" />
+                AGENDAR Y RECLAMAR MIS BONOS
+              </Button>
+            </div>
+          </AnimatedSection>
+        </div>
       </section>
 
       {/* ════════════════════════════════════════════════
@@ -473,39 +604,6 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
       </section>
 
       {/* ════════════════════════════════════════════════
-          AUTORIDAD
-         ════════════════════════════════════════════════ */}
-      <section className="border-t border-cyan-500/10 bg-[#060d1a] px-5 py-16">
-        <AnimatedSection>
-          <div className="mx-auto max-w-lg text-center">
-            <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-400">
-              Autoridad
-            </span>
-            <h2 className="mb-4 text-xl font-bold text-foreground sm:text-2xl">
-              Masterclass creada para quienes quieren dominar la creacion de contenido con IA
-            </h2>
-            <p className="mb-8 text-sm leading-relaxed text-[#8892b0]">
-              Desarrollada por expertos en inteligencia artificial aplicada a la creacion de contenido, anuncios y avatares digitales.
-            </p>
-
-            {/* Social proof stats */}
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { val: "+5,000", label: "Estudiantes" },
-                { val: "+200", label: "Creadores usando IA" },
-                { val: "24/7", label: "Contenido generado" },
-              ].map((s) => (
-                <div key={s.label} className="rounded-xl border border-cyan-500/10 bg-cyan-500/5 p-4">
-                  <p className="text-lg font-bold text-cyan-400">{s.val}</p>
-                  <p className="mt-1 text-[10px] text-[#8892b0]">{s.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </AnimatedSection>
-      </section>
-
-      {/* ════════════════════════════════════════════════
           CTA FINAL
          ════════════════════════════════════════════════ */}
       <section id="ed-cta" className="relative border-t border-cyan-500/10 px-5 py-20">
@@ -515,20 +613,22 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
         <AnimatedSection>
           <div className="relative z-10 mx-auto max-w-lg text-center">
             {/* Countdown */}
-            <div className="mb-8 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
-              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-amber-400">Cupos limitados - Inicia en:</p>
-              <div className="flex items-center justify-center gap-3">
+            <div className="mb-8 rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-amber-400">La masterclass inicia en:</p>
+              <p className="mb-3 text-[11px] font-medium text-amber-400/70">Lunes 23 de Febrero · 8:00 PM (hora Colombia)</p>
+              <div className="flex items-center justify-center gap-2">
                 {[
+                  { val: countdown.days, label: "dias" },
                   { val: countdown.hrs, label: "hrs" },
                   { val: countdown.min, label: "min" },
                   { val: countdown.sec, label: "seg" },
                 ].map((t, i) => (
-                  <div key={t.label} className="flex items-center gap-3">
+                  <div key={t.label} className="flex items-center gap-2">
                     <div className="flex flex-col items-center">
                       <span className="font-mono text-3xl font-bold text-foreground">{String(t.val).padStart(2, "0")}</span>
                       <span className="text-[9px] text-[#8892b0]">{t.label}</span>
                     </div>
-                    {i < 2 && <span className="text-xl font-bold text-[#8892b0]/50">:</span>}
+                    {i < 3 && <span className="text-xl font-bold text-[#8892b0]/50">:</span>}
                   </div>
                 ))}
               </div>
@@ -551,6 +651,7 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
                 "Herramientas gratuitas de IA",
                 "Implementacion paso a paso",
                 "Sin grabarte frente a camara",
+                "+$145 USD en bonos gratis",
               ].map((t) => (
                 <div key={t} className="flex items-center gap-2 justify-center">
                   <Check className="h-3.5 w-3.5 shrink-0 text-cyan-400" />
@@ -563,12 +664,12 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
               onClick={handleRegister}
               className="ed-cta-btn w-full max-w-xs gap-2 py-7 text-base font-bold text-white mx-auto"
             >
-              QUIERO CREAR MI ESCLAVO DIGITAL
-              <ArrowRight className="h-5 w-5" />
+              <Calendar className="h-5 w-5" />
+              AGENDAR EN MI CALENDARIO
             </Button>
 
             <p className="mt-4 text-[10px] text-[#8892b0]/60">
-              Al registrarte recibiras el enlace de acceso directo a tu WhatsApp.
+              Se agendara automaticamente en tu Google Calendar con recordatorios para que no te lo pierdas.
             </p>
           </div>
         </AnimatedSection>
