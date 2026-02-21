@@ -32,6 +32,11 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts"
+import { QuickAccessGrid } from "@/components/shared/quick-access-grid"
+import { ChallengeLeaderboard } from "@/components/shared/challenge-leaderboard"
+import type { Challenge } from "@/lib/challenges-data"
+import { DEFAULT_CHALLENGES } from "@/lib/challenges-data"
+import { useState, useEffect } from "react"
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
@@ -44,10 +49,31 @@ const TIPO_EVENTO_COLORS: Record<string, string> = {
   cta: "bg-red-500",
 }
 
+function safeGet(key: string): string | null {
+  try {
+    return localStorage.getItem(key) ?? sessionStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
 export default function AdminDashboard() {
   const { data, error: fetchError, isLoading } = useSWR("/api/admin/dashboard", fetcher, {
     refreshInterval: 30000,
   })
+
+  const [challenges, setChallenges] = useState<Challenge[]>(DEFAULT_CHALLENGES)
+
+  useEffect(() => {
+    const stored = safeGet("mf_challenges")
+    if (stored) {
+      try {
+        setChallenges(JSON.parse(stored))
+      } catch { /* use defaults */ }
+    }
+  }, [])
+
+  const activeChallenges = challenges.filter((c) => c.activo)
 
   if (fetchError) {
     return (
@@ -316,6 +342,21 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Quick Access & Leaderboard */}
+          <div className="grid gap-4 lg:grid-cols-7">
+            <div className="lg:col-span-4">
+              <QuickAccessGrid role="admin" />
+            </div>
+            {activeChallenges.length > 0 && (
+              <div className="lg:col-span-3">
+                <ChallengeLeaderboard
+                  challenge={activeChallenges[0]}
+                  limit={10}
+                />
+              </div>
+            )}
+          </div>
 
           {/* Bottom Row */}
           <div className="grid gap-4 lg:grid-cols-7">
