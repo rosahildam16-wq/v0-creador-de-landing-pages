@@ -7,7 +7,6 @@ interface AuthContextType {
   isAuthenticated: boolean
   user: { email: string; name: string } | null
   login: (email: string, password: string) => Promise<boolean>
-  loginWithGoogle: () => Promise<boolean>
   logout: () => void
   isLoading: boolean
 }
@@ -72,26 +71,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated, isLoading, pathname, router])
 
-  const login = async (email: string, _password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true)
     await new Promise((r) => setTimeout(r, 1200))
-    const userData = { email, name: email.split("@")[0] }
-    setUser(userData)
-    setIsAuthenticated(true)
-    safeSet("mf_auth", JSON.stringify(userData))
-    setIsLoading(false)
-    return true
-  }
 
-  const loginWithGoogle = async (): Promise<boolean> => {
-    setIsLoading(true)
-    await new Promise((r) => setTimeout(r, 1000))
-    const userData = { email: "user@gmail.com", name: "Usuario" }
-    setUser(userData)
-    setIsAuthenticated(true)
-    safeSet("mf_auth", JSON.stringify(userData))
+    const ALLOWED_EMAIL = "iajorgeleon21@gmail.com"
+    const ALLOWED_PASSWORD = "Leon321$#"
+
+    if (email.toLowerCase().trim() === ALLOWED_EMAIL && password === ALLOWED_PASSWORD) {
+      const userData = { email: ALLOWED_EMAIL, name: "Jorge Leon" }
+      setUser(userData)
+      setIsAuthenticated(true)
+      safeSet("mf_auth", JSON.stringify(userData))
+      setIsLoading(false)
+      return true
+    }
+
     setIsLoading(false)
-    return true
+    return false
   }
 
   const logout = () => {
@@ -102,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, loginWithGoogle, logout, isLoading }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   )
