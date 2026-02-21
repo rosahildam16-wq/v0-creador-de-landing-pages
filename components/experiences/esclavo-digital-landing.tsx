@@ -188,7 +188,7 @@ function SocialProofBubble() {
   const [person, setPerson] = useState({ name: "", city: "", time: "" })
 
   useEffect(() => {
-    const cities = ["Bogota", "CDMX", "Lima", "Buenos Aires", "Madrid", "Santiago", "Medellin", "Quito", "Miami", "Barcelona"]
+    const cities = ["Bogotá", "CDMX", "Lima", "Buenos Aires", "Madrid", "Santiago", "Medellín", "Quito", "Miami", "Barcelona"]
     const times = ["hace 2 min", "hace 5 min", "hace 8 min", "hace 12 min", "hace 1 min", "hace 3 min"]
 
     function show() {
@@ -217,7 +217,7 @@ function SocialProofBubble() {
       </div>
       <div className="min-w-0">
         <p className="truncate text-[12px] font-semibold text-foreground">
-          {person.name} <span className="font-normal text-[#8892b0]">se registro</span>
+          {person.name} <span className="font-normal text-[#8892b0]">se registró</span>
         </p>
         <p className="text-[10px] text-[#8892b0]/70">
           {person.city} · {person.time}
@@ -231,7 +231,7 @@ function SocialProofBubble() {
 function buildGoogleCalendarUrl() {
   const title = encodeURIComponent("Masterclass: Crea tu Esclavo Digital en 24h")
   const details = encodeURIComponent(
-    "Masterclass EN VIVO: Aprende a crear contenido infinito, anuncios con IA y tu propio clon digital.\n\nNo faltes - conectate puntual."
+    "Masterclass EN VIVO: Aprende a crear contenido infinito, anuncios con IA y tu propio clon digital.\n\nNo faltes - conéctate puntual."
   )
   const location = encodeURIComponent("Online - Link en tu email")
 
@@ -346,7 +346,7 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
               <>
                 <div className="flex flex-col items-center rounded-lg border border-cyan-500/15 bg-cyan-500/5 px-3 py-1.5">
                   <span className="font-mono text-lg font-bold text-foreground">{String(countdown.days).padStart(2, "0")}</span>
-                  <span className="text-[8px] uppercase text-[#8892b0]">dias</span>
+                  <span className="text-[8px] uppercase text-[#8892b0]">días</span>
                 </div>
                 <span className="text-sm font-bold text-[#8892b0]/50">:</span>
               </>
@@ -380,7 +380,7 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
               onClick={scrollToCTA}
               className="text-xs font-medium text-[#8892b0] underline-offset-2 hover:text-cyan-400 hover:underline transition-colors"
             >
-              Ver que vas a aprender
+              Ver qué vas a aprender
             </button>
           </div>
         </div>
@@ -402,15 +402,15 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
               Crear contenido manualmente ya no tiene sentido
             </h2>
             <p className="mb-8 text-sm leading-relaxed text-[#8892b0]">
-              Grabar, editar, pensar ideas, producir anuncios... La mayoria abandona por eso. La inteligencia artificial cambia el juego.
+              Grabar, editar, pensar ideas, producir anuncios... La mayoría abandona por eso. La inteligencia artificial cambia el juego.
             </p>
 
             <div className="flex flex-col gap-3">
               {[
                 "Tardas horas grabando y editando un solo video",
-                "No sabes que contenido crear o te quedas sin ideas",
+                "No sabes qué contenido crear o te quedas sin ideas",
                 "Pagas agencia o freelancers para cada pieza",
-                "Te da pena grabarte frente a camara",
+                "Te da pena grabarte frente a cámara",
                 "No tienes tiempo para producir contenido consistente",
               ].map((item, i) => (
                 <div
@@ -439,19 +439,19 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
         <AnimatedSection>
           <div className="mx-auto max-w-lg">
             <h2 className="mb-3 text-xl font-bold text-balance text-foreground sm:text-2xl">
-              Que es un <span className="ed-gradient-text">Esclavo Digital</span>?
+              ¿Qué es un <span className="ed-gradient-text">Esclavo Digital</span>?
             </h2>
             <p className="mb-8 text-sm leading-relaxed text-[#8892b0]">
-              Un sistema de inteligencia artificial que crea contenido por ti todos los dias, sin descanso, sin quejas, sin salario.
+              Un sistema de inteligencia artificial que crea contenido por ti todos los días, sin descanso, sin quejas, sin salario.
             </p>
 
             <div className="flex flex-col gap-3">
               {[
-                { icon: Sparkles, label: "Crea videos automaticamente" },
+                { icon: Sparkles, label: "Crea videos automáticamente" },
                 { icon: Target, label: "Genera anuncios listos para publicar" },
-                { icon: MessageSquare, label: "Produce contenido organico sin parar" },
+                { icon: MessageSquare, label: "Produce contenido orgánico sin parar" },
                 { icon: Users, label: "Replica tu imagen o tu voz con IA" },
-                { icon: TrendingUp, label: "Crea piezas virales todos los dias" },
+                { icon: TrendingUp, label: "Crea piezas virales todos los días" },
                 { icon: Clock, label: "Trabaja 24/7 sin que tengas que grabarte" },
               ].map((item, i) => (
                 <div
@@ -476,20 +476,20 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
         <div className="mx-auto max-w-lg">
           <AnimatedSection>
             <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-400">
-              Lo que aprenderas
+              Lo que aprenderás
             </span>
             <h2 className="mb-8 text-xl font-bold text-balance text-foreground sm:text-2xl">
-              6 bloques de implementacion real
+              6 bloques de implementación real
             </h2>
           </AnimatedSection>
 
           <div className="grid grid-cols-2 gap-3">
-            <FeatureCard icon={Sparkles} title="Como crear contenido infinito con IA" delay={0} />
-            <FeatureCard icon={Target} title="Como crear anuncios con inteligencia artificial" delay={100} />
-            <FeatureCard icon={Bot} title="Como crear tu clon digital que habla por ti" delay={200} />
-            <FeatureCard icon={Users} title="Como crear una influencer artificial" delay={300} />
-            <FeatureCard icon={TrendingUp} title="Como viralizar contenido sin ser experto" delay={400} />
-            <FeatureCard icon={Zap} title="Como usar 3 herramientas gratuitas de IA" delay={500} />
+            <FeatureCard icon={Sparkles} title="Cómo crear contenido infinito con IA" delay={0} />
+            <FeatureCard icon={Target} title="Cómo crear anuncios con inteligencia artificial" delay={100} />
+            <FeatureCard icon={Bot} title="Cómo crear tu clon digital que habla por ti" delay={200} />
+            <FeatureCard icon={Users} title="Cómo crear una influencer artificial" delay={300} />
+            <FeatureCard icon={TrendingUp} title="Cómo viralizar contenido sin ser experto" delay={400} />
+            <FeatureCard icon={Zap} title="Cómo usar 3 herramientas gratuitas de IA" delay={500} />
           </div>
         </div>
       </section>
@@ -518,13 +518,13 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
           <div className="flex flex-col gap-3">
             <BonusCard
               icon={Bot}
-              title="Creditos gratis en herramientas de clonacion IA"
-              desc="Recibe acceso y creditos para crear tu avatar digital, generar videos con tu clon de voz e imagen sin grabarte."
+              title="Créditos gratis en herramientas de clonación IA"
+              desc="Recibe acceso y créditos para crear tu avatar digital, generar videos con tu clon de voz e imagen sin grabarte."
               delay={0}
             />
             <BonusCard
               icon={Sparkles}
-              title="Creditos en herramientas de creacion de contenido con IA"
+              title="Créditos en herramientas de creación de contenido con IA"
               desc="Accede gratis a herramientas que generan contenido, anuncios y material visual para tus redes sociales."
               delay={100}
             />
@@ -552,7 +552,7 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
         <div className="mx-auto max-w-lg">
           <AnimatedSection>
             <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-400">
-              Para quien es
+              Para quién es
             </span>
             <h2 className="mb-8 text-xl font-bold text-balance text-foreground sm:text-2xl">
               Esta masterclass es para ti si eres...
@@ -564,7 +564,7 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
             <AudienceCard icon={Rocket} label="Emprendedores digitales" delay={60} />
             <AudienceCard icon={Target} label="Personas que quieren hacer anuncios sin agencia" delay={120} />
             <AudienceCard icon={Monitor} label="Personas que quieren crear videos sin grabarse" delay={180} />
-            <AudienceCard icon={Users} label="Personas con pena frente a camara" delay={240} />
+            <AudienceCard icon={Users} label="Personas con pena frente a cámara" delay={240} />
             <AudienceCard icon={Clock} label="Personas que quieren ahorrar tiempo creando contenido" delay={300} />
             <AudienceCard icon={TrendingUp} label="Marketers y networkers" delay={360} />
             <AudienceCard icon={Lightbulb} label="Infoproductores" delay={420} />
@@ -587,7 +587,7 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
               <p className="mb-3 text-[11px] font-medium text-amber-400/70">Lunes 23 de Febrero · 8:00 PM (hora Colombia)</p>
               <div className="flex items-center justify-center gap-2">
                 {[
-                  { val: countdown.days, label: "dias" },
+                  { val: countdown.days, label: "días" },
                   { val: countdown.hrs, label: "hrs" },
                   { val: countdown.min, label: "min" },
                   { val: countdown.sec, label: "seg" },
@@ -606,11 +606,11 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
             <h2 className="mb-4 text-xl font-bold text-balance text-foreground sm:text-2xl">
               Mientras otros tardan horas creando contenido...
               <br />
-              <span className="ed-gradient-text">tu puedes crear sistemas que lo produzcan por ti.</span>
+              <span className="ed-gradient-text">tú puedes crear sistemas que lo produzcan por ti.</span>
             </h2>
 
             <p className="mb-8 text-sm text-[#8892b0]">
-              Aprende a crear tu esclavo digital en una sola sesion. Sin grabarte. Sin experiencia.
+              Aprende a crear tu esclavo digital en una sola sesión. Sin grabarte. Sin experiencia.
             </p>
 
             {/* Trust badges */}
@@ -618,9 +618,9 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
               {[
                 "Masterclass 100% en vivo",
                 "Herramientas gratuitas de IA",
-                "Implementacion paso a paso",
-                "Sin grabarte frente a camara",
-                "Bonos y creditos gratis en herramientas de IA",
+                "Implementación paso a paso",
+                "Sin grabarte frente a cámara",
+                "Bonos y créditos gratis en herramientas de IA",
               ].map((t) => (
                 <div key={t} className="flex items-center gap-2 justify-center">
                   <Check className="h-3.5 w-3.5 shrink-0 text-cyan-400" />
@@ -638,7 +638,7 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
             </Button>
 
             <p className="mt-4 text-[10px] text-[#8892b0]/60">
-              Se agendara automaticamente en tu Google Calendar con recordatorios para que no te lo pierdas.
+              Se agendará automáticamente en tu Google Calendar con recordatorios para que no te lo pierdas.
             </p>
           </div>
         </AnimatedSection>
