@@ -39,6 +39,36 @@
 }
 
 @layer base {
+  .light {
+    --background: 0 0% 98%;
+    --foreground: 240 10% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 10%;
+    --primary: 260 70% 52%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 8% 93%;
+    --secondary-foreground: 240 10% 10%;
+    --muted: 240 8% 93%;
+    --muted-foreground: 240 8% 45%;
+    --accent: 260 55% 58%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 8% 88%;
+    --input: 240 8% 88%;
+    --ring: 260 70% 52%;
+    --chart-1: 260 70% 52%;
+    --chart-2: 280 60% 55%;
+    --chart-3: 250 65% 58%;
+    --chart-4: 270 60% 55%;
+    --chart-5: 290 55% 55%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
   * {
     @apply border-border;
   }
@@ -334,6 +364,43 @@
   border-right: 1px solid hsl(240 12% 14% / 0.6);
 }
 
+/* Light mode glass overrides */
+.light .glass-card {
+  background: linear-gradient(
+    135deg,
+    hsl(0 0% 100% / 0.85),
+    hsl(240 8% 97% / 0.7)
+  );
+  border-color: hsl(240 8% 88% / 0.6);
+  box-shadow:
+    0 0 0 1px hsl(260 70% 52% / 0.04),
+    0 4px 16px hsl(240 20% 80% / 0.25),
+    inset 0 1px 0 hsl(0 0% 100% / 0.6);
+}
+
+.light .glass-card:hover {
+  border-color: hsl(260 70% 52% / 0.2);
+  box-shadow:
+    0 0 0 1px hsl(260 70% 52% / 0.08),
+    0 8px 24px hsl(240 20% 80% / 0.35),
+    inset 0 1px 0 hsl(0 0% 100% / 0.8);
+}
+
+.light .glass-sidebar {
+  background: linear-gradient(
+    180deg,
+    hsl(0 0% 100% / 0.95),
+    hsl(240 8% 97% / 0.98)
+  );
+  border-right-color: hsl(240 8% 88% / 0.6);
+}
+
+.light .ambient-orb-1,
+.light .ambient-orb-2,
+.light .ambient-orb-3 {
+  opacity: 0.03 !important;
+}
+
 /* Ambient glow orbs for background */
 @keyframes ambient-drift-1 {
   0%, 100% { transform: translate(0, 0) scale(1); }
@@ -426,6 +493,15 @@
     hsl(260 70% 58% / 0.06)
   );
   box-shadow: inset 0 0 12px hsl(260 70% 58% / 0.08);
+}
+
+.light .nav-item-active {
+  background: linear-gradient(
+    135deg,
+    hsl(260 70% 52% / 0.1),
+    hsl(260 70% 52% / 0.05)
+  );
+  box-shadow: inset 0 0 12px hsl(260 70% 52% / 0.06);
 }
 
 /* ========== RESET LANDING – Futuristic Sci-Fi ========== */

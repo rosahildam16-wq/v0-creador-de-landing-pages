@@ -5,14 +5,17 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
-import { LayoutDashboard, Link2, Users, ChevronLeft, ChevronRight, LogOut, GraduationCap } from "lucide-react"
+import { LayoutDashboard, Link2, Users, ChevronLeft, ChevronRight, LogOut, GraduationCap, Kanban, Trophy, Route } from "lucide-react"
 import { useState } from "react"
 
 const NAV_ITEMS = [
   { href: "/member", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/member/mis-leads", label: "Mis Leads", icon: Users },
+  { href: "/member/pipeline", label: "Pipeline", icon: Kanban },
+  { href: "/member/mi-embudo", label: "Mi Embudo", icon: Route },
+  { href: "/member/retos", label: "Retos", icon: Trophy },
   { href: "/member/academia", label: "Academia", icon: GraduationCap },
   { href: "/member/mi-link", label: "Mi Link", icon: Link2 },
-  { href: "/member/mis-leads", label: "Mis Leads", icon: Users },
 ]
 
 export function MemberSidebar() {
