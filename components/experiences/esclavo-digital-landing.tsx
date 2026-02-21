@@ -374,14 +374,15 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
               className="ed-cta-btn w-full gap-2 py-6 text-base font-semibold text-white"
             >
               <Calendar className="h-4 w-4" />
-              AGENDAR EN MI CALENDARIO
-            </Button>
-            <button
-              onClick={scrollToCTA}
-              className="text-xs font-medium text-[#8892b0] underline-offset-2 hover:text-cyan-400 hover:underline transition-colors"
-            >
-              Ver qué vas a aprender
-            </button>
+                AGENDAR PARA RECLAMAR MIS BONOS
+              </Button>
+              <button
+                onClick={() => document.getElementById("aprendizaje")?.scrollIntoView({ behavior: "smooth" })}
+                className="flex items-center gap-1.5 text-[12px] font-medium text-[#8892b0] transition-colors hover:text-cyan-400"
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+                Ver qué vas a aprender
+              </button>
           </div>
         </div>
 
@@ -524,8 +525,8 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
             />
             <BonusCard
               icon={Sparkles}
-              title="Créditos en herramientas de creación de contenido con IA"
-              desc="Accede gratis a herramientas que generan contenido, anuncios y material visual para tus redes sociales."
+              title="Lista de prompts para crear imágenes hiperrealistas con tu rostro"
+              desc="Genera fotos profesionales de ti mismo con IA sin cambiar las facciones de tu cara. Listas para usar en redes, anuncios y contenido."
               delay={100}
             />
           </div>
@@ -538,7 +539,7 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
                 className="ed-cta-btn mx-auto w-full max-w-xs gap-2 py-6 text-sm font-semibold text-white"
               >
                 <Calendar className="h-4 w-4" />
-                AGENDAR Y RECLAMAR MIS BONOS
+                AGENDAR PARA RECLAMAR MIS BONOS
               </Button>
             </div>
           </AnimatedSection>
@@ -634,7 +635,7 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
               className="ed-cta-btn w-full max-w-xs gap-2 py-7 text-base font-bold text-white mx-auto"
             >
               <Calendar className="h-5 w-5" />
-              AGENDAR EN MI CALENDARIO
+                AGENDAR PARA RECLAMAR MIS BONOS
             </Button>
 
             <p className="mt-4 text-[10px] text-[#8892b0]/60">
