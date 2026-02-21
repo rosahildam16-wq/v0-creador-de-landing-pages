@@ -372,11 +372,11 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
           <div className="ed-fade-in flex w-full max-w-xs flex-col gap-3" style={{ animationDelay: "2s" }}>
             <Button
               onClick={handleRegister}
-              className="ed-cta-btn w-full gap-2 py-6 text-base font-semibold text-white"
+              className="ed-cta-btn ed-cta-pulse w-full gap-2 px-4 py-6 text-[12px] font-semibold leading-tight text-white sm:text-sm"
             >
-              <Calendar className="h-4 w-4" />
-                AGENDAR PARA RECLAMAR MIS BONOS
-              </Button>
+              <Calendar className="h-4 w-4 shrink-0" />
+              AGENDAR PARA RECLAMAR MIS BONOS
+            </Button>
               <button
                 onClick={() => document.getElementById("aprendizaje")?.scrollIntoView({ behavior: "smooth" })}
                 className="flex items-center gap-1.5 text-[12px] font-medium text-[#8892b0] transition-colors hover:text-cyan-400"
@@ -537,9 +537,9 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
             <div className="mt-6 text-center">
               <Button
                 onClick={handleRegister}
-                className="ed-cta-btn mx-auto w-full max-w-xs gap-2 py-6 text-sm font-semibold text-white"
+                className="ed-cta-btn ed-cta-pulse mx-auto w-full max-w-xs gap-2 px-4 py-6 text-[12px] font-semibold leading-tight text-white sm:text-sm"
               >
-                <Calendar className="h-4 w-4" />
+                <Calendar className="h-4 w-4 shrink-0" />
                 AGENDAR PARA RECLAMAR MIS BONOS
               </Button>
             </div>
@@ -633,10 +633,10 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
 
             <Button
               onClick={handleRegister}
-              className="ed-cta-btn w-full max-w-xs gap-2 py-7 text-base font-bold text-white mx-auto"
+              className="ed-cta-btn ed-cta-pulse mx-auto w-full max-w-xs gap-2 px-4 py-7 text-[12px] font-bold leading-tight text-white sm:text-sm"
             >
-              <Calendar className="h-5 w-5" />
-                AGENDAR PARA RECLAMAR MIS BONOS
+              <Calendar className="h-5 w-5 shrink-0" />
+              AGENDAR PARA RECLAMAR MIS BONOS
             </Button>
 
             <p className="mt-4 text-[10px] text-[#8892b0]/60">

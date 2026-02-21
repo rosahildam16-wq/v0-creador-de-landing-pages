@@ -814,6 +814,26 @@
   to { transform: scaleX(1); }
 }
 
+/* CTA pulse attention animation */
+.ed-cta-pulse {
+  animation: ed-pulse-glow 2.5s ease-in-out infinite;
+}
+
+@keyframes ed-pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px hsla(185, 80%, 50%, 0.2), 0 4px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 32px hsla(185, 80%, 50%, 0.4), 0 0 56px hsla(185, 80%, 50%, 0.12), 0 4px 24px rgba(0, 0, 0, 0.5);
+    transform: scale(1.02);
+  }
+}
+
+.ed-cta-pulse:hover {
+  animation: none;
+}
+
 /* Scroll bounce */
 .ed-scroll-bounce {
   animation: ed-bounce 2s ease-in-out infinite;
