@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { useRouter, usePathname } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { TEAM_MEMBERS } from "./team-data"
 
 export type UserRole = "admin" | "member"
@@ -48,14 +48,11 @@ function safeRemove(key: string) {
   try { sessionStorage.removeItem(key) } catch { /* noop */ }
 }
 
-const PUBLIC_PATHS = ["/login", "/funnel", "/"]
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState<AuthUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
-  const pathname = usePathname()
 
   useEffect(() => {
     const stored = safeGet("mf_auth")
@@ -71,15 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false)
   }, [])
 
-  useEffect(() => {
-    if (isLoading) return
-
-    const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"))
-
-    if (!isAuthenticated && !isPublic && pathname !== "/") {
-      router.replace("/login")
-    }
-  }, [isAuthenticated, isLoading, pathname, router])
+  // NOTE: Route protection is handled by individual layouts (AdminLayout, MemberLayout)
+  // to avoid duplicate redirect conflicts that cause RSC payload loops.
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true)
