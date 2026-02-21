@@ -220,8 +220,13 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
           </h1>
 
           {/* Sub */}
-          <p className="ed-fade-in mb-8 max-w-[380px] text-[14px] leading-relaxed text-[#8892b0]" style={{ animationDelay: "1.5s" }}>
-            Un sistema que trabaja por ti generando contenido, prospectos y oportunidades todos los dias.
+          <p className="ed-fade-in mb-4 max-w-[380px] text-[14px] leading-relaxed text-[#8892b0]" style={{ animationDelay: "1.5s" }}>
+            Crea contenido infinito, anuncios con inteligencia artificial y tu propio clon digital que produce videos por ti sin grabarte.
+          </p>
+
+          {/* Micro text */}
+          <p className="ed-fade-in mb-8 max-w-[340px] text-[11px] leading-relaxed text-[#8892b0]/60" style={{ animationDelay: "1.7s" }}>
+            Aprende a usar herramientas gratuitas para crear contenido viral en minutos.
           </p>
 
           {/* Event info pills */}
@@ -244,14 +249,14 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
               onClick={handleRegister}
               className="ed-cta-btn w-full gap-2 py-6 text-base font-semibold text-white"
             >
-              QUIERO ACCESO A LA MASTERCLASS
+              QUIERO CREAR MI ESCLAVO DIGITAL
               <ArrowRight className="h-4 w-4" />
             </Button>
             <button
               onClick={scrollToCTA}
               className="text-xs font-medium text-[#8892b0] underline-offset-2 hover:text-cyan-400 hover:underline transition-colors"
             >
-              Ver como funciona
+              Ver que vas a aprender
             </button>
           </div>
         </div>
@@ -272,17 +277,20 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
             <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.2em] text-red-400">
               El problema
             </span>
-            <h2 className="mb-8 text-xl font-bold text-balance text-foreground sm:text-2xl">
-              La mayoria sigue trabajando como si fuera 2015
+            <h2 className="mb-4 text-xl font-bold text-balance text-foreground sm:text-2xl">
+              Crear contenido manualmente ya no tiene sentido
             </h2>
+            <p className="mb-8 text-sm leading-relaxed text-[#8892b0]">
+              Grabar, editar, pensar ideas, producir anuncios... La mayoria abandona por eso. La inteligencia artificial cambia el juego.
+            </p>
 
             <div className="flex flex-col gap-3">
               {[
-                "Buscando clientes manualmente todos los dias",
-                "Creando contenido sin estrategia ni sistema",
-                "Vendiendo sin automatizacion ni seguimiento",
-                "Perdiendo horas en tareas repetitivas",
-                "Sin un sistema que trabaje mientras duermes",
+                "Tardas horas grabando y editando un solo video",
+                "No sabes que contenido crear o te quedas sin ideas",
+                "Pagas agencia o freelancers para cada pieza",
+                "Te da pena grabarte frente a camara",
+                "No tienes tiempo para producir contenido consistente",
               ].map((item, i) => (
                 <div
                   key={i}
@@ -297,7 +305,7 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
             </div>
 
             <p className="mt-8 text-center text-sm font-medium text-cyan-400">
-              Mientras otros ya automatizan todo.
+              Mientras otros ya crean contenido con IA en minutos.
             </p>
           </div>
         </AnimatedSection>
@@ -316,16 +324,17 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
               Que es un <span className="ed-gradient-text">Esclavo Digital</span>?
             </h2>
             <p className="mb-8 text-sm leading-relaxed text-[#8892b0]">
-              Un sistema de inteligencia artificial que trabaja por ti 24/7, sin descanso, sin quejas, sin salario.
+              Un sistema de inteligencia artificial que crea contenido por ti todos los dias, sin descanso, sin quejas, sin salario.
             </p>
 
             <div className="flex flex-col gap-3">
               {[
-                { icon: MessageSquare, label: "Crea contenido automaticamente" },
-                { icon: Users, label: "Responde prospectos al instante" },
-                { icon: TrendingUp, label: "Automatiza tus ventas" },
-                { icon: Clock, label: "Trabaja 24 horas, 7 dias a la semana" },
-                { icon: Rocket, label: "Escala tu negocio sin limite" },
+                { icon: Sparkles, label: "Crea videos automaticamente" },
+                { icon: Target, label: "Genera anuncios listos para publicar" },
+                { icon: MessageSquare, label: "Produce contenido organico sin parar" },
+                { icon: Users, label: "Replica tu imagen o tu voz con IA" },
+                { icon: TrendingUp, label: "Crea piezas virales todos los dias" },
+                { icon: Clock, label: "Trabaja 24/7 sin que tengas que grabarte" },
               ].map((item, i) => (
                 <div
                   key={i}
@@ -352,25 +361,24 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
               Lo que aprenderas
             </span>
             <h2 className="mb-8 text-xl font-bold text-balance text-foreground sm:text-2xl">
-              5 modulos de implementacion real
+              6 bloques de implementacion real
             </h2>
           </AnimatedSection>
 
           <div className="grid grid-cols-2 gap-3">
-            <FeatureCard icon={Bot} title="Como crear tu asistente IA" delay={0} />
-            <FeatureCard icon={Target} title="Como automatizar prospeccion" delay={100} />
-            <FeatureCard icon={Sparkles} title="Como generar contenido infinito" delay={200} />
-            <FeatureCard icon={Code2} title="Como conectar sistemas de venta" delay={300} />
-            <div className="col-span-2">
-              <FeatureCard icon={Zap} title="Como crear un flujo automatico completo" delay={400} />
-            </div>
+            <FeatureCard icon={Sparkles} title="Como crear contenido infinito con IA" delay={0} />
+            <FeatureCard icon={Target} title="Como crear anuncios con inteligencia artificial" delay={100} />
+            <FeatureCard icon={Bot} title="Como crear tu clon digital que habla por ti" delay={200} />
+            <FeatureCard icon={Users} title="Como crear una influencer artificial" delay={300} />
+            <FeatureCard icon={TrendingUp} title="Como viralizar contenido sin ser experto" delay={400} />
+            <FeatureCard icon={Zap} title="Como usar 3 herramientas gratuitas de IA" delay={500} />
           </div>
         </div>
       </section>
 
       {/* ════════════════════════════════════════════════
           DEMOSTRACION
-         ════════════════════════════════════════════════ */}
+         ═════════════════════════���══════════════════════ */}
       <section className="border-t border-cyan-500/10 bg-[#060d1a] px-5 py-16">
         <AnimatedSection>
           <div className="mx-auto max-w-lg text-center">
@@ -378,10 +386,10 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
               Demostracion
             </span>
             <h2 className="mb-4 text-xl font-bold text-foreground sm:text-2xl">
-              Esto no es teoria. Es implementacion real.
+              No necesitas camara. No necesitas estudio. No necesitas experiencia.
             </h2>
             <p className="mb-8 text-sm text-[#8892b0]">
-              Veras en vivo como se construye un sistema completo de automatizacion con IA.
+              Veras en vivo como se crean videos, anuncios y avatares digitales con IA.
             </p>
 
             {/* Mockup */}
@@ -399,16 +407,16 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
               {/* Dashboard mockup */}
               <div className="p-5">
                 <div className="mb-4 flex items-center justify-between">
-                  <span className="text-[11px] font-semibold text-cyan-400">Dashboard IA</span>
+                  <span className="text-[11px] font-semibold text-cyan-400">Contenido IA</span>
                   <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-medium text-emerald-400">En vivo</span>
                 </div>
 
                 {/* Mock stats */}
                 <div className="mb-4 grid grid-cols-3 gap-2">
                   {[
-                    { label: "Prospectos", val: "2,847" },
-                    { label: "Contenidos", val: "1,204" },
-                    { label: "Ventas", val: "482" },
+                    { label: "Videos IA", val: "2,847" },
+                    { label: "Anuncios", val: "1,204" },
+                    { label: "Avatares", val: "482" },
                   ].map((s) => (
                     <div key={s.label} className="rounded-lg border border-cyan-500/10 bg-cyan-500/5 p-2 text-center">
                       <p className="text-[9px] text-[#8892b0]/60">{s.label}</p>
@@ -452,11 +460,14 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
           </AnimatedSection>
 
           <div className="flex flex-col gap-2">
-            <AudienceCard icon={Rocket} label="Emprendedor buscando escalar" delay={0} />
-            <AudienceCard icon={Users} label="Networker o marketero de red" delay={80} />
-            <AudienceCard icon={Lightbulb} label="Coach o consultor" delay={160} />
-            <AudienceCard icon={Monitor} label="Creador de contenido" delay={240} />
-            <AudienceCard icon={TrendingUp} label="Persona que quiere ingresos online" delay={320} />
+            <AudienceCard icon={Sparkles} label="Creadores de contenido" delay={0} />
+            <AudienceCard icon={Rocket} label="Emprendedores digitales" delay={60} />
+            <AudienceCard icon={Target} label="Personas que quieren hacer anuncios sin agencia" delay={120} />
+            <AudienceCard icon={Monitor} label="Personas que quieren crear videos sin grabarse" delay={180} />
+            <AudienceCard icon={Users} label="Personas con pena frente a camara" delay={240} />
+            <AudienceCard icon={Clock} label="Personas que quieren ahorrar tiempo creando contenido" delay={300} />
+            <AudienceCard icon={TrendingUp} label="Marketers y networkers" delay={360} />
+            <AudienceCard icon={Lightbulb} label="Infoproductores" delay={420} />
           </div>
         </div>
       </section>
@@ -471,18 +482,18 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
               Autoridad
             </span>
             <h2 className="mb-4 text-xl font-bold text-foreground sm:text-2xl">
-              Masterclass creada para quienes quieren escalar con IA
+              Masterclass creada para quienes quieren dominar la creacion de contenido con IA
             </h2>
             <p className="mb-8 text-sm leading-relaxed text-[#8892b0]">
-              Desarrollada por expertos en automatizacion e inteligencia artificial aplicada a negocios digitales.
+              Desarrollada por expertos en inteligencia artificial aplicada a la creacion de contenido, anuncios y avatares digitales.
             </p>
 
             {/* Social proof stats */}
             <div className="grid grid-cols-3 gap-3">
               {[
                 { val: "+5,000", label: "Estudiantes" },
-                { val: "+200", label: "Negocios escalados" },
-                { val: "24/7", label: "Sistemas activos" },
+                { val: "+200", label: "Creadores usando IA" },
+                { val: "24/7", label: "Contenido generado" },
               ].map((s) => (
                 <div key={s.label} className="rounded-xl border border-cyan-500/10 bg-cyan-500/5 p-4">
                   <p className="text-lg font-bold text-cyan-400">{s.val}</p>
@@ -524,22 +535,22 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
             </div>
 
             <h2 className="mb-4 text-xl font-bold text-balance text-foreground sm:text-2xl">
-              Mientras otros trabajan por horas...
+              Mientras otros tardan horas creando contenido...
               <br />
-              <span className="ed-gradient-text">tu puedes crear sistemas que trabajen por ti.</span>
+              <span className="ed-gradient-text">tu puedes crear sistemas que lo produzcan por ti.</span>
             </h2>
 
             <p className="mb-8 text-sm text-[#8892b0]">
-              Aprende a crear tu esclavo digital en una sola sesion. Sin saber programar.
+              Aprende a crear tu esclavo digital en una sola sesion. Sin grabarte. Sin experiencia.
             </p>
 
             {/* Trust badges */}
             <div className="mb-6 flex flex-col gap-2">
               {[
                 "Masterclass 100% en vivo",
-                "Acceso a comunidad privada",
+                "Herramientas gratuitas de IA",
                 "Implementacion paso a paso",
-                "Sin necesidad de saber programar",
+                "Sin grabarte frente a camara",
               ].map((t) => (
                 <div key={t} className="flex items-center gap-2 justify-center">
                   <Check className="h-3.5 w-3.5 shrink-0 text-cyan-400" />
@@ -552,7 +563,7 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
               onClick={handleRegister}
               className="ed-cta-btn w-full max-w-xs gap-2 py-7 text-base font-bold text-white mx-auto"
             >
-              RESERVAR MI CUPO
+              QUIERO CREAR MI ESCLAVO DIGITAL
               <ArrowRight className="h-5 w-5" />
             </Button>
 
@@ -568,7 +579,7 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
          ════════════════════════════════════════════════ */}
       <footer className="border-t border-cyan-500/10 px-5 py-8 text-center">
         <p className="text-[10px] text-[#8892b0]/40">
-          Magic Funnel - Automatizacion Inteligente
+          Magic Funnel - Contenido con IA
         </p>
       </footer>
     </div>
