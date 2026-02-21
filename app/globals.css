@@ -843,3 +843,89 @@
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(6px); }
 }
+
+/* ========== NOTIFICATION BELL ========== */
+
+/* Badge bounce animation */
+@keyframes notif-badge-bounce {
+  0% { transform: scale(1); }
+  15% { transform: scale(1.35); }
+  30% { transform: scale(0.9); }
+  45% { transform: scale(1.2); }
+  60% { transform: scale(0.95); }
+  75% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.notif-badge-bounce {
+  animation: notif-badge-bounce 0.8s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+/* Ping ring that expands outward */
+@keyframes notif-ping {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+.notif-ping-ring {
+  animation: notif-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Panel enter from top-right */
+@keyframes notif-panel-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+    transform-origin: top right;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transform-origin: top right;
+  }
+}
+
+.notif-panel-enter {
+  animation: notif-panel-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Each notification item slides in */
+@keyframes notif-item-enter {
+  0% {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.notif-item-enter {
+  opacity: 0;
+  animation: notif-item-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Unread dot pulse */
+@keyframes notif-dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.4); }
+}
+
+.notif-dot {
+  animation: notif-dot-pulse 2s ease-in-out infinite;
+}
+
+/* Bell button hover wiggle */
+.notif-bell-btn:hover svg {
+  animation: notif-bell-wiggle 0.5s ease-in-out;
+}
+
+@keyframes notif-bell-wiggle {
+  0% { transform: rotate(0deg); }
+  20% { transform: rotate(12deg); }
+  40% { transform: rotate(-10deg); }
+  60% { transform: rotate(6deg); }
+  80% { transform: rotate(-3deg); }
+  100% { transform: rotate(0deg); }
+}

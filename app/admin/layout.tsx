@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { AdminSidebar } from "@/components/admin/admin-sidebar"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
+import { NotificationBell } from "@/components/shared/notification-bell"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
@@ -49,7 +50,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
       <AdminSidebar />
       <main className="relative z-10 flex-1 overflow-auto">
-        <div className="mx-auto max-w-7xl p-6">
+        {/* Top bar with notifications */}
+        <div className="sticky top-0 z-30 flex items-center justify-end px-6 py-3">
+          <NotificationBell />
+        </div>
+        <div className="mx-auto max-w-7xl px-6 pb-6">
           {children}
         </div>
       </main>
