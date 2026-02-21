@@ -51,6 +51,12 @@ const EMBUDO_VISUALS: Record<string, {
     shadowColor: "shadow-pink-500/20",
     bgPattern: "radial-gradient(circle at 35% 65%, hsla(292,84%,61%,0.15) 0%, transparent 50%), radial-gradient(circle at 65% 35%, hsla(330,81%,60%,0.1) 0%, transparent 50%)",
   },
+  "esclavo-digital-masterclass": {
+    icon: Bot,
+    gradient: "from-cyan-600 via-sky-500 to-blue-500",
+    shadowColor: "shadow-cyan-500/20",
+    bgPattern: "radial-gradient(circle at 25% 75%, hsla(185,80%,50%,0.15) 0%, transparent 50%), radial-gradient(circle at 75% 25%, hsla(200,80%,50%,0.1) 0%, transparent 50%)",
+  },
   "munot-detox": {
     icon: Leaf,
     gradient: "from-emerald-600 via-teal-500 to-green-500",
