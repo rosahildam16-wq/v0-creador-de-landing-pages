@@ -9,7 +9,7 @@ import { Eye, EyeOff, ArrowRight, Sparkles, Bot, TrendingUp, Network } from "luc
 
 export default function LoginPage() {
   const router = useRouter()
-  const { login, isAuthenticated, isLoading: authLoading } = useAuth()
+  const { login, isAuthenticated, isLoading: authLoading, user } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -21,8 +21,10 @@ export default function LoginPage() {
   useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
-    if (!authLoading && isAuthenticated) router.replace("/admin")
-  }, [isAuthenticated, authLoading, router])
+    if (!authLoading && isAuthenticated && user) {
+      router.replace(user.role === "member" ? "/member" : "/admin")
+    }
+  }, [isAuthenticated, authLoading, user, router])
 
   if (authLoading || isAuthenticated) {
     return (
@@ -43,7 +45,7 @@ export default function LoginPage() {
     setIsSubmitting(true)
     const ok = await login(email, password)
     if (ok) {
-      router.push("/admin")
+      // Redirect will happen via the useEffect watching isAuthenticated + user
     } else {
       setError("Credenciales incorrectas. Verifica tu email y contrasena.")
       setIsSubmitting(false)

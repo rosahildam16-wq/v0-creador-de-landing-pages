@@ -2,10 +2,20 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useRouter, usePathname } from "next/navigation"
+import { TEAM_MEMBERS } from "./team-data"
+
+export type UserRole = "admin" | "member"
+
+export interface AuthUser {
+  email: string
+  name: string
+  role: UserRole
+  memberId?: string
+}
 
 interface AuthContextType {
   isAuthenticated: boolean
-  user: { email: string; name: string } | null
+  user: AuthUser | null
   login: (email: string, password: string) => Promise<boolean>
   logout: () => void
   isLoading: boolean
@@ -38,11 +48,11 @@ function safeRemove(key: string) {
   try { sessionStorage.removeItem(key) } catch { /* noop */ }
 }
 
-const PUBLIC_PATHS = ["/login", "/funnel"]
+const PUBLIC_PATHS = ["/login", "/funnel", "/"]
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [user, setUser] = useState<{ email: string; name: string } | null>(null)
+  const [user, setUser] = useState<AuthUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
   const pathname = usePathname()
@@ -75,11 +85,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true)
     await new Promise((r) => setTimeout(r, 1200))
 
-    const ALLOWED_EMAIL = "iajorgeleon21@gmail.com"
-    const ALLOWED_PASSWORD = "Leon321$#"
+    const ADMIN_EMAIL = "iajorgeleon21@gmail.com"
+    const ADMIN_PASSWORD = "Leon321$#"
+    const MEMBER_DEFAULT_PASSWORD = "Member123$"
 
-    if (email.toLowerCase().trim() === ALLOWED_EMAIL && password === ALLOWED_PASSWORD) {
-      const userData = { email: ALLOWED_EMAIL, name: "Jorge Leon" }
+    const normalizedEmail = email.toLowerCase().trim()
+
+    // Check admin credentials
+    if (normalizedEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      const userData: AuthUser = { email: ADMIN_EMAIL, name: "Jorge Leon", role: "admin" }
+      setUser(userData)
+      setIsAuthenticated(true)
+      safeSet("mf_auth", JSON.stringify(userData))
+      setIsLoading(false)
+      return true
+    }
+
+    // Check team member credentials
+    const member = TEAM_MEMBERS.find((m) => m.email.toLowerCase() === normalizedEmail)
+    if (member && password === MEMBER_DEFAULT_PASSWORD) {
+      const userData: AuthUser = {
+        email: member.email,
+        name: member.nombre,
+        role: "member",
+        memberId: member.id,
+      }
       setUser(userData)
       setIsAuthenticated(true)
       safeSet("mf_auth", JSON.stringify(userData))

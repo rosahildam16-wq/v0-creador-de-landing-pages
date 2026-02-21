@@ -5,23 +5,16 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
-import { LayoutDashboard, Users, UsersRound, Kanban, BarChart3, ChevronLeft, ChevronRight, Route, Megaphone, Plug, Zap, LogOut, Trophy } from "lucide-react"
+import { LayoutDashboard, Link2, Users, ChevronLeft, ChevronRight, LogOut } from "lucide-react"
 import { useState } from "react"
 
 const NAV_ITEMS = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/embudos", label: "Embudos", icon: Route },
-  { href: "/admin/leads", label: "Leads", icon: Users },
-  { href: "/admin/pipeline", label: "Pipeline", icon: Kanban },
-  { href: "/admin/equipo", label: "Equipo", icon: UsersRound },
-  { href: "/admin/retos", label: "Retos", icon: Trophy },
-  { href: "/admin/meta-ads", label: "Meta Ads", icon: Megaphone },
-  { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/admin/integraciones", label: "Integraciones", icon: Plug },
-  { href: "/admin/workflows", label: "Workflows", icon: Zap },
+  { href: "/member", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/member/mi-link", label: "Mi Link", icon: Link2 },
+  { href: "/member/mis-leads", label: "Mis Leads", icon: Users },
 ]
 
-export function AdminSidebar() {
+export function MemberSidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const { logout, user } = useAuth()
@@ -45,8 +38,8 @@ export function AdminSidebar() {
       {/* Navigation */}
       <nav className="flex flex-1 flex-col gap-1 p-3">
         {NAV_ITEMS.map((item) => {
-          const isActive = item.href === "/admin"
-            ? pathname === "/admin"
+          const isActive = item.href === "/member"
+            ? pathname === "/member"
             : pathname.startsWith(item.href)
 
           return (
@@ -72,7 +65,7 @@ export function AdminSidebar() {
       <div className="border-t border-border/30 p-3 flex flex-col gap-1">
         {!collapsed && user && (
           <div className="px-3 py-2 text-xs text-muted-foreground truncate">
-            {user.email}
+            {user.name}
           </div>
         )}
         <button
