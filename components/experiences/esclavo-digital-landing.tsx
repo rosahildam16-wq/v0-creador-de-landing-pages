@@ -151,7 +151,7 @@ function AudienceCard({ icon: Icon, label, delay = 0 }: { icon: React.ComponentT
 }
 
 /* ── Bonus card ── */
-function BonusCard({ icon: Icon, title, desc, value, delay = 0 }: { icon: React.ComponentType<{ className?: string }>; title: string; desc: string; value: string; delay?: number }) {
+function BonusCard({ icon: Icon, title, desc, value, delay = 0 }: { icon: React.ComponentType<{ className?: string }>; title: string; desc: string; value?: string; delay?: number }) {
   const { ref, inView } = useInView()
   return (
     <div
@@ -166,7 +166,7 @@ function BonusCard({ icon: Icon, title, desc, value, delay = 0 }: { icon: React.
           <Icon className="h-5 w-5 text-amber-400" />
         </div>
         <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-400">
-          Valor {value}
+          Regalo
         </span>
       </div>
       <p className="mb-1 text-sm font-bold text-foreground">{title}</p>
@@ -398,9 +398,6 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
       <section className="border-t border-cyan-500/10 px-5 py-16">
         <AnimatedSection>
           <div className="mx-auto max-w-lg">
-            <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.2em] text-red-400">
-              El problema
-            </span>
             <h2 className="mb-4 text-xl font-bold text-balance text-foreground sm:text-2xl">
               Crear contenido manualmente ya no tiene sentido
             </h2>
@@ -441,9 +438,6 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
       <section className="border-t border-cyan-500/10 bg-[#060d1a] px-5 py-16">
         <AnimatedSection>
           <div className="mx-auto max-w-lg">
-            <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-400">
-              El concepto
-            </span>
             <h2 className="mb-3 text-xl font-bold text-balance text-foreground sm:text-2xl">
               Que es un <span className="ed-gradient-text">Esclavo Digital</span>?
             </h2>
@@ -524,42 +518,17 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
           <div className="flex flex-col gap-3">
             <BonusCard
               icon={Bot}
-              title="Creditos gratis en herramienta de clonacion IA"
-              desc="Crea tu avatar digital sin pagar. Incluye creditos para generar videos con tu clon de voz e imagen."
-              value="$50 USD"
+              title="Creditos gratis en herramientas de clonacion IA"
+              desc="Recibe acceso y creditos para crear tu avatar digital, generar videos con tu clon de voz e imagen sin grabarte."
               delay={0}
             />
             <BonusCard
               icon={Sparkles}
-              title="Creditos en generador de contenido con IA"
-              desc="Accede gratis a la herramienta que genera posts, carruseles y scripts para redes sociales en segundos."
-              value="$30 USD"
+              title="Creditos en herramientas de creacion de contenido con IA"
+              desc="Accede gratis a herramientas que generan contenido, anuncios y material visual para tus redes sociales."
               delay={100}
             />
-            <BonusCard
-              icon={Target}
-              title="Creditos para crear anuncios con IA"
-              desc="Genera anuncios de video y graficos listos para Meta Ads y TikTok Ads sin disenador ni editor."
-              value="$40 USD"
-              delay={200}
-            />
-            <BonusCard
-              icon={Star}
-              title="Plantillas de prompts para contenido viral"
-              desc="Pack de +50 prompts probados para generar hooks, scripts, captions y contenido que convierte."
-              value="$25 USD"
-              delay={300}
-            />
           </div>
-
-          {/* Total value */}
-          <AnimatedSection delay={400}>
-            <div className="mt-6 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-center">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-400/70">Valor total en bonos</p>
-              <p className="mt-1 text-2xl font-bold text-amber-400">$145 USD <span className="text-sm font-normal text-[#8892b0]">GRATIS</span></p>
-              <p className="mt-1 text-[11px] text-[#8892b0]/70">Solo por registrarte a la masterclass</p>
-            </div>
-          </AnimatedSection>
 
           {/* CTA inside bonuses */}
           <AnimatedSection delay={500}>
@@ -651,7 +620,7 @@ export function EsclavoDigitalLanding({ leadId, onTrack }: Props) {
                 "Herramientas gratuitas de IA",
                 "Implementacion paso a paso",
                 "Sin grabarte frente a camara",
-                "+$145 USD en bonos gratis",
+                "Bonos y creditos gratis en herramientas de IA",
               ].map((t) => (
                 <div key={t} className="flex items-center gap-2 justify-center">
                   <Check className="h-3.5 w-3.5 shrink-0 text-cyan-400" />
