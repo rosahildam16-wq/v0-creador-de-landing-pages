@@ -7,6 +7,7 @@ import {
   Calendar,
   Check,
   ChevronDown,
+  ChevronRight,
   Clock,
   Cpu,
   Gift,
