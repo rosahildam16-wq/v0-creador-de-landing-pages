@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
-import { LayoutDashboard, Users, UsersRound, Kanban, BarChart3, ChevronLeft, ChevronRight, Route, Megaphone, Plug, Zap, LogOut, Trophy, GraduationCap } from "lucide-react"
+import { LayoutDashboard, Users, UsersRound, Kanban, BarChart3, ChevronLeft, ChevronRight, Route, Megaphone, Plug, Zap, LogOut, Trophy, GraduationCap, CreditCard } from "lucide-react"
 import { useState } from "react"
 
 const NAV_ITEMS = [
@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/integraciones", label: "Integraciones", icon: Plug },
   { href: "/admin/workflows", label: "Workflows", icon: Zap },
+  { href: "/admin/suscripcion", label: "Suscripcion", icon: CreditCard },
 ]
 
 export function AdminSidebar() {

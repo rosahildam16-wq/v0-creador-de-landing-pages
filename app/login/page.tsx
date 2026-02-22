@@ -260,9 +260,9 @@ export default function LoginPage() {
 
               <p className="mt-8 text-center text-sm text-violet-300/30">
                 {"No tienes cuenta? "}
-                <button className="text-violet-400 hover:text-violet-300 font-medium transition-colors">
-                  Solicita acceso
-                </button>
+                <a href="/pricing" className="text-violet-400 hover:text-violet-300 font-medium transition-colors">
+                  Ver planes y precios
+                </a>
               </p>
             </div>
 

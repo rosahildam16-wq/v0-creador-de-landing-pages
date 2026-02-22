@@ -7,6 +7,7 @@ import { AdminSidebar } from "@/components/admin/admin-sidebar"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
 import { NotificationBell } from "@/components/shared/notification-bell"
 import { ThemeToggle } from "@/components/shared/theme-toggle"
+import { SubscriptionGuard } from "@/components/subscription-guard"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
@@ -57,7 +58,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <NotificationBell />
         </div>
         <div className="mx-auto max-w-7xl px-6 pb-6">
-          {children}
+          <SubscriptionGuard>
+            {children}
+          </SubscriptionGuard>
         </div>
       </main>
     </div>
