@@ -1,17 +1,28 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState, useEffect, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
 import { LoginPremiumBg } from "@/components/login-premium-bg"
 import { PricingCards } from "@/components/pricing/pricing-cards"
 import { ArrowLeft, Sparkles } from "lucide-react"
 import Link from "next/link"
 
-export default function PricingPage() {
-  const [mounted, setMounted] = useState(false)
+function CancelledBanner() {
   const searchParams = useSearchParams()
   const cancelled = searchParams.get("cancelled")
+
+  if (!cancelled) return null
+
+  return (
+    <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] text-sm text-amber-300">
+      El pago fue cancelado. Puedes intentar nuevamente cuando quieras.
+    </div>
+  )
+}
+
+function PricingContent() {
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -47,11 +58,9 @@ export default function PricingPage() {
             </p>
           </div>
 
-          {cancelled && (
-            <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] text-sm text-amber-300">
-              El pago fue cancelado. Puedes intentar nuevamente cuando quieras.
-            </div>
-          )}
+          <Suspense fallback={null}>
+            <CancelledBanner />
+          </Suspense>
         </div>
 
         {/* Pricing cards */}
@@ -74,4 +83,8 @@ export default function PricingPage() {
       </div>
     </div>
   )
+}
+
+export default function PricingPage() {
+  return <PricingContent />
 }
