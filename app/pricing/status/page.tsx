@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
 import { LoginPremiumBg } from "@/components/login-premium-bg"
@@ -10,6 +10,18 @@ import Link from "next/link"
 type PaymentStatusType = "loading" | "demo" | "success" | "pending" | "failed"
 
 export default function PaymentStatusPage() {
+  return (
+    <Suspense fallback={
+      <div className="relative min-h-screen flex items-center justify-center" style={{ background: "#050012" }}>
+        <Loader2 className="w-10 h-10 text-violet-400 animate-spin" />
+      </div>
+    }>
+      <PaymentStatusContent />
+    </Suspense>
+  )
+}
+
+function PaymentStatusContent() {
   const searchParams = useSearchParams()
   const subscriptionId = searchParams.get("subscription_id")
   const statusParam = searchParams.get("status")
