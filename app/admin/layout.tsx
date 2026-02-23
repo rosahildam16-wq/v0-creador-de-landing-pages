@@ -10,7 +10,7 @@ import { ThemeToggle } from "@/components/shared/theme-toggle"
 import { SubscriptionGuard } from "@/components/subscription-guard"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, user } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
@@ -58,9 +58,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <NotificationBell />
         </div>
         <div className="mx-auto max-w-7xl px-6 pb-6">
-          <SubscriptionGuard>
-            {children}
-          </SubscriptionGuard>
+          {user?.role === "admin" ? children : (
+            <SubscriptionGuard>
+              {children}
+            </SubscriptionGuard>
+          )}
         </div>
       </main>
     </div>
