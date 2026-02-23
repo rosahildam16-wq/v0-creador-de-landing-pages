@@ -49,8 +49,8 @@ const slides: VideoSlide[] = [
     shares: "52.4 mil",
   },
   {
-    image: "/images/tiktok-beach2.jpg",
-    overlayText: ["POV: Dejaste el trabajo", "y ahora vives as\u00ed"],
+    videoEmbed: "https://www.youtube.com/embed/bRbaxgwtikY?autoplay=1&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1",
+    overlayText: [],
     username: "nomada.digital",
     caption: "#vidanomada #libertadfinanciera #viajes #fyp",
     music: "Sonido original - nomada.digital",
@@ -58,6 +58,17 @@ const slides: VideoSlide[] = [
     commentCount: "1,203",
     saves: "45 mil",
     shares: "31.2 mil",
+  },
+  {
+    videoEmbed: "https://www.youtube.com/embed/rwltL4nhLiY?autoplay=1&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1",
+    overlayText: [],
+    username: "escape.sistema",
+    caption: "#emprendedor #viajarporelmundo #dinerodigital #fyp",
+    music: "Money - Lisa",
+    likes: "589.1 mil",
+    commentCount: "2,847",
+    saves: "67 mil",
+    shares: "88.3 mil",
   },
   {
     image: "/images/tiktok-beach3.jpg",
