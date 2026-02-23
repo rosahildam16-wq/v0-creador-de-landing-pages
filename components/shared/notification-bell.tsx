@@ -41,6 +41,7 @@ export function NotificationBell() {
 
     const loadNotifs = () => {
       const notifs = getNotificationsForRole(user.role)
+      console.log("[v0] NotificationBell: role=", user.role, "total notifs=", notifs.length, "dynamic=", localStorage.getItem("mf_notifications")?.slice(0, 150))
       setNotifications((prev) => {
         // Only update if count changed (avoid unnecessary re-renders)
         if (prev.length !== notifs.length || (notifs[0] && prev[0] && notifs[0].id !== prev[0].id)) {

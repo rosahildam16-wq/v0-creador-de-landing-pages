@@ -17,7 +17,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (!isLoading && !isAuthenticated) {
       router.replace("/login")
     }
-  }, [isAuthenticated, isLoading, router])
+    if (user) {
+      console.log("[v0] Admin layout: user role=", user.role, "email=", user.email)
+      console.log("[v0] Admin layout: mf_notifications=", localStorage.getItem("mf_notifications")?.slice(0, 300))
+    }
+  }, [isAuthenticated, isLoading, router, user])
 
   if (isLoading || !isAuthenticated) {
     return (

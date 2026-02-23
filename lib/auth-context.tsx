@@ -240,6 +240,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Send notification to admin and leader
     const codeLabel = code ? ` | Codigo: ${code}` : ""
+    console.log("[v0] Register: about to addNotification for", trimmedName, normalizedEmail, "community:", communityName)
     addNotification({
       tipo: "team",
       titulo: "Nuevo registro de miembro",
@@ -248,6 +249,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       leida: false,
       destinatario: "admin",
     })
+    // Verify it was saved
+    try {
+      const savedNotifs = localStorage.getItem("mf_notifications")
+      console.log("[v0] Register: notifications in localStorage after save:", savedNotifs?.slice(0, 200))
+    } catch (e) { console.log("[v0] Register: error reading localStorage", e) }
 
     const userData: AuthUser = {
       email: normalizedEmail,
