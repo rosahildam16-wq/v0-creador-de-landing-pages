@@ -1,27 +1,84 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
 import { LoginPremiumBg } from "@/components/login-premium-bg"
 import { useAuth } from "@/lib/auth-context"
-import { Eye, EyeOff, ArrowRight, Sparkles, Bot, TrendingUp, Network, Tag } from "lucide-react"
+import { Eye, EyeOff, ArrowRight, Sparkles, Bot, TrendingUp, Network, Tag, AtSign, Check, X, UserPlus } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
   const { login, register, isAuthenticated, isLoading: authLoading, user } = useAuth()
   const [mode, setMode] = useState<"login" | "register">("login")
   const [name, setName] = useState("")
+  const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [discountCode, setDiscountCode] = useState("")
-  const [sponsorName, setSponsorName] = useState("")
+  const [sponsorUsername, setSponsorUsername] = useState("")
   const [showDiscountField, setShowDiscountField] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
   const [focusedField, setFocusedField] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
+
+  // Username availability
+  const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle")
+  // Sponsor verification
+  const [sponsorStatus, setSponsorStatus] = useState<"idle" | "checking" | "found" | "not_found">("idle")
+  const [sponsorRealName, setSponsorRealName] = useState("")
+
+  // Debounced username check
+  useEffect(() => {
+    if (!username || username.length < 3) {
+      setUsernameStatus(username.length > 0 ? "invalid" : "idle")
+      return
+    }
+    if (!/^[a-z0-9_]+$/.test(username)) {
+      setUsernameStatus("invalid")
+      return
+    }
+    setUsernameStatus("checking")
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/users/check-username?username=${encodeURIComponent(username)}`)
+        const data = await res.json()
+        setUsernameStatus(data.available ? "available" : "taken")
+      } catch {
+        setUsernameStatus("idle")
+      }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [username])
+
+  // Debounced sponsor check
+  useEffect(() => {
+    if (!sponsorUsername || sponsorUsername.length < 3) {
+      setSponsorStatus(sponsorUsername.length > 0 ? "not_found" : "idle")
+      setSponsorRealName("")
+      return
+    }
+    setSponsorStatus("checking")
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/users/check-sponsor?username=${encodeURIComponent(sponsorUsername)}`)
+        const data = await res.json()
+        if (data.exists) {
+          setSponsorStatus("found")
+          setSponsorRealName(data.name)
+        } else {
+          setSponsorStatus("not_found")
+          setSponsorRealName("")
+        }
+      } catch {
+        setSponsorStatus("idle")
+        setSponsorRealName("")
+      }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [sponsorUsername])
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -57,14 +114,24 @@ export default function LoginPage() {
         setIsSubmitting(false)
         return
       }
+      if (!username || username.length < 3 || !/^[a-z0-9_]+$/.test(username)) {
+        setError("El nombre de usuario debe tener minimo 3 caracteres (letras, numeros y _).")
+        setIsSubmitting(false)
+        return
+      }
+      if (usernameStatus === "taken") {
+        setError("Este nombre de usuario ya esta en uso. Elige otro.")
+        setIsSubmitting(false)
+        return
+      }
       if (password.length < 6) {
         setError("La contrasena debe tener al menos 6 caracteres.")
         setIsSubmitting(false)
         return
       }
-      const ok = await register(name, email, password, discountCode || undefined, sponsorName.trim() || undefined)
+      const ok = await register(name, email, password, username, discountCode || undefined, sponsorUsername.trim() || undefined)
       if (!ok) {
-        setError("Este email ya esta registrado. Intenta iniciar sesion.")
+        setError("Este email o usuario ya esta registrado. Intenta iniciar sesion.")
         setIsSubmitting(false)
       }
     } else {
@@ -320,31 +387,99 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {/* Sponsor + Community code (register only) */}
+                {/* Username, Sponsor, Community code (register only) */}
                 {mode === "register" && (
                   <>
-                    {/* Sponsor name */}
+                    {/* Username */}
+                    <div>
+                      <label htmlFor="login-username" className="block text-xs font-medium text-violet-200/60 mb-2 ml-0.5">
+                        Nombre de usuario
+                      </label>
+                      <div className={`relative rounded-xl border transition-all duration-300 ${
+                        focusedField === "username"
+                          ? usernameStatus === "taken" || usernameStatus === "invalid"
+                            ? "border-red-500/40 shadow-[0_0_0_3px_rgba(239,68,68,0.06)]"
+                            : usernameStatus === "available"
+                              ? "border-emerald-500/40 shadow-[0_0_0_3px_rgba(16,185,129,0.06)]"
+                              : "border-violet-500/40 shadow-[0_0_0_3px_rgba(139,92,246,0.06)]"
+                          : "border-white/[0.06] hover:border-white/[0.10]"
+                      }`}>
+                        <AtSign className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-violet-400/25" />
+                        <input
+                          id="login-username"
+                          type="text"
+                          value={username}
+                          onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                          onFocus={() => setFocusedField("username")}
+                          onBlur={() => setFocusedField(null)}
+                          placeholder="tu_usuario"
+                          className="w-full pl-10 pr-10 py-3 bg-transparent text-white text-sm font-mono placeholder:text-violet-400/25 focus:outline-none rounded-xl"
+                          required
+                        />
+                        {/* Status indicator */}
+                        <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                          {usernameStatus === "checking" && (
+                            <div className="w-4 h-4 border-2 border-violet-400/30 border-t-violet-400 rounded-full animate-spin" />
+                          )}
+                          {usernameStatus === "available" && <Check className="w-4 h-4 text-emerald-400" />}
+                          {(usernameStatus === "taken" || usernameStatus === "invalid") && <X className="w-4 h-4 text-red-400" />}
+                        </div>
+                      </div>
+                      <p className="mt-1.5 text-[10px] text-violet-300/30">
+                        {usernameStatus === "taken" ? (
+                          <span className="text-red-400">Este usuario ya esta en uso</span>
+                        ) : usernameStatus === "invalid" ? (
+                          <span className="text-red-400">Minimo 3 caracteres: letras, numeros y _</span>
+                        ) : usernameStatus === "available" ? (
+                          <span className="text-emerald-400">Disponible</span>
+                        ) : (
+                          "Unico e irrepetible. Este sera tu link de referido."
+                        )}
+                      </p>
+                    </div>
+
+                    {/* Sponsor by username */}
                     <div>
                       <label htmlFor="login-sponsor" className="block text-xs font-medium text-violet-200/60 mb-2 ml-0.5">
-                        Nombre de tu patrocinador
+                        Usuario de tu patrocinador
                       </label>
                       <div className={`relative rounded-xl border transition-all duration-300 ${
                         focusedField === "sponsor"
-                          ? "border-violet-500/40 shadow-[0_0_0_3px_rgba(139,92,246,0.06)]"
+                          ? sponsorStatus === "found"
+                            ? "border-emerald-500/40 shadow-[0_0_0_3px_rgba(16,185,129,0.06)]"
+                            : sponsorStatus === "not_found" && sponsorUsername.length >= 3
+                              ? "border-amber-500/40 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]"
+                              : "border-violet-500/40 shadow-[0_0_0_3px_rgba(139,92,246,0.06)]"
                           : "border-white/[0.06] hover:border-white/[0.10]"
                       }`}>
+                        <AtSign className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-violet-400/25" />
                         <input
                           id="login-sponsor"
                           type="text"
-                          value={sponsorName}
-                          onChange={(e) => setSponsorName(e.target.value)}
+                          value={sponsorUsername}
+                          onChange={(e) => setSponsorUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                           onFocus={() => setFocusedField("sponsor")}
                           onBlur={() => setFocusedField(null)}
-                          placeholder="Nombre de quien te invito"
-                          className="w-full px-4 py-3 bg-transparent text-white text-sm placeholder:text-violet-400/25 focus:outline-none rounded-xl"
+                          placeholder="usuario_de_quien_te_invito"
+                          className="w-full pl-10 pr-10 py-3 bg-transparent text-white text-sm font-mono placeholder:text-violet-400/25 focus:outline-none rounded-xl"
                         />
+                        <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                          {sponsorStatus === "checking" && (
+                            <div className="w-4 h-4 border-2 border-violet-400/30 border-t-violet-400 rounded-full animate-spin" />
+                          )}
+                          {sponsorStatus === "found" && <Check className="w-4 h-4 text-emerald-400" />}
+                          {sponsorStatus === "not_found" && sponsorUsername.length >= 3 && <X className="w-4 h-4 text-amber-400" />}
+                        </div>
                       </div>
-                      <p className="mt-1.5 text-[10px] text-violet-300/30">La persona que te invito a la plataforma.</p>
+                      <p className="mt-1.5 text-[10px] text-violet-300/30">
+                        {sponsorStatus === "found" ? (
+                          <span className="text-emerald-400">Patrocinador: {sponsorRealName}</span>
+                        ) : sponsorStatus === "not_found" && sponsorUsername.length >= 3 ? (
+                          <span className="text-amber-400">Usuario no encontrado</span>
+                        ) : (
+                          "Opcional. El username de la persona que te invito."
+                        )}
+                      </p>
                     </div>
 
                     {/* Community code */}
@@ -380,9 +515,19 @@ export default function LoginPage() {
                               className="w-full pl-10 pr-4 py-3 bg-transparent text-white text-sm font-mono placeholder:text-violet-400/25 focus:outline-none rounded-xl uppercase"
                             />
                           </div>
-                          <p className="mt-1.5 text-[10px] text-violet-300/30">Opcional. Si tu lider te dio un codigo, ingresalo para unirte a su comunidad.</p>
+                          <p className="mt-1.5 text-[10px] text-violet-300/30">Si tu lider te dio un codigo, ingresalo para unirte a su comunidad.</p>
                         </div>
                       )}
+                      {/* Role hint */}
+                      <div className="mt-3 rounded-lg border border-violet-500/10 bg-violet-500/[0.03] px-3 py-2.5">
+                        <p className="text-[10px] text-violet-300/50 leading-relaxed">
+                          {discountCode ? (
+                            <>Te registraras como <span className="font-semibold text-violet-300">miembro</span> de la comunidad asociada a este codigo.</>
+                          ) : (
+                            <>Sin codigo, te registras como <span className="font-semibold text-violet-300">lider</span> y se creara tu propia comunidad con 7 dias gratis.</>
+                          )}
+                        </p>
+                      </div>
                     </div>
                   </>
                 )}

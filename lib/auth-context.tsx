@@ -10,6 +10,7 @@ export type UserRole = "super_admin" | "leader" | "member"
 export interface AuthUser {
   email: string
   name: string
+  username?: string
   role: UserRole
   memberId?: string
   communityId?: string
@@ -19,7 +20,7 @@ interface AuthContextType {
   isAuthenticated: boolean
   user: AuthUser | null
   login: (email: string, password: string) => Promise<boolean>
-  register: (name: string, email: string, password: string, discountCode?: string, sponsorName?: string) => Promise<boolean>
+  register: (name: string, email: string, password: string, username: string, discountCode?: string, sponsorUsername?: string) => Promise<boolean>
   logout: () => void
   isLoading: boolean
 }
@@ -160,13 +161,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (res.ok) {
         const data = await res.json()
         if (data.success) {
-          const leaderComm = getLeaderCommunity(normalizedEmail)
+          const dbRole = data.role === "leader" ? "leader" : "member"
           const userData: AuthUser = {
             email: normalizedEmail,
             name: data.name,
-            role: leaderComm ? "leader" : "member",
+            username: data.username,
+            role: dbRole as UserRole,
             memberId: data.memberId,
-            communityId: data.communityId || leaderComm?.id,
+            communityId: data.communityId,
           }
           setUser(userData)
           setIsAuthenticated(true)
@@ -181,14 +183,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return false
   }
 
-  const register = async (name: string, email: string, password: string, discountCode?: string, sponsorName?: string): Promise<boolean> => {
+  const register = async (name: string, email: string, password: string, username: string, discountCode?: string, sponsorUsername?: string): Promise<boolean> => {
     setIsLoading(true)
 
     try {
       const res = await fetch("/api/communities/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, discountCode, sponsorName }),
+        body: JSON.stringify({ name, email, password, username, discountCode, sponsorUsername }),
       })
 
       const data = await res.json()
@@ -199,10 +201,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const normalizedEmail = email.toLowerCase().trim()
+      const role: UserRole = data.role === "leader" ? "leader" : "member"
       const userData: AuthUser = {
         email: normalizedEmail,
         name: name.trim(),
-        role: "member",
+        username: data.username,
+        role,
         memberId: data.memberId,
         communityId: data.communityId,
       }

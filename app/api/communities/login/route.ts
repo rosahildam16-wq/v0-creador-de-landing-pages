@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
     const { data: member } = await supabase
       .from("community_members")
-      .select("*")
+      .select("member_id, name, username, community_id, role")
       .eq("email", normalizedEmail)
       .eq("password_hash", password)
       .maybeSingle()
@@ -25,7 +25,9 @@ export async function POST(req: NextRequest) {
       success: true,
       memberId: member.member_id,
       name: member.name,
+      username: member.username,
       communityId: member.community_id,
+      role: member.role || "member",
     })
   } catch (err) {
     console.error("Login error:", err)

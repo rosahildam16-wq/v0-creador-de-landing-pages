@@ -83,7 +83,7 @@ function PaywallScreen({
     no_subscription: {
       icon: CreditCard,
       title: "Activa tu suscripcion",
-      description: "Para acceder a la plataforma necesitas una suscripcion activa. Comienza con 3 dias de prueba gratis.",
+      description: "Tu periodo de prueba no esta activo. Elige un plan para acceder a todas las herramientas de Magic Funnel.",
       cta: "Ver planes y precios",
     },
     trial_expired: {
