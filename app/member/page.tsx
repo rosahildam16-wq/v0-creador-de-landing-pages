@@ -186,6 +186,13 @@ export default function MemberDashboard() {
     }
   }, [user])
 
+  const getMemberPosition = useCallback((challenge: Challenge): number => {
+    if (!member) return 0
+    const ranking = getRanking(challenge)
+    const entry = ranking.find((r) => r.member.id === member.id)
+    return entry?.posicion ?? 0
+  }, [member])
+
   if (!member || !user) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
@@ -200,12 +207,6 @@ export default function MemberDashboard() {
   const trainingPercent = 37
   const achievements = 3
   const streak = 12
-
-  const getMemberPosition = useCallback((challenge: Challenge): number => {
-    const ranking = getRanking(challenge)
-    const entry = ranking.find((r) => r.member.id === member.id)
-    return entry?.posicion ?? 0
-  }, [member])
 
   return (
     <div className={`flex flex-col gap-8 transition-opacity duration-700 ${mounted ? "opacity-100" : "opacity-0"}`}>

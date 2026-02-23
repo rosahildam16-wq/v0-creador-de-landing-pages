@@ -19,7 +19,7 @@ export default function GlobalError({
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", gap: "24px", padding: "24px", textAlign: "center" }}>
           <h2 style={{ fontSize: "20px", fontWeight: 700 }}>Algo salio mal</h2>
           <p style={{ fontSize: "14px", opacity: 0.6, maxWidth: "400px" }}>
-            {error.message || "Error inesperado. Por favor intenta de nuevo."}
+            Error inesperado. Por favor intenta de nuevo.
           </p>
           <button
             onClick={reset}

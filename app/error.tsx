@@ -23,11 +23,11 @@ export default function Error({
         </div>
         <h2 className="text-xl font-bold text-foreground">Algo salio mal</h2>
         <p className="max-w-sm text-sm text-muted-foreground">
-          {error.message || "Ha ocurrido un error inesperado. Por favor intenta de nuevo."}
+          Ha ocurrido un error inesperado. Por favor intenta de nuevo.
         </p>
-        {error.digest && (
-          <p className="text-xs text-muted-foreground/60">Error ID: {error.digest}</p>
-        )}
+        {error?.digest ? (
+          <p className="text-xs text-muted-foreground/60">{String(error.digest)}</p>
+        ) : null}
       </div>
       <button
         onClick={reset}
