@@ -408,19 +408,6 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              {/* Launch test access */}
-              <div className="mt-6 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] px-4 py-3.5">
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-xs font-bold text-emerald-400">Pruebas para lanzamiento</span>
-                </div>
-                <p className="text-[11px] text-emerald-300/50 leading-relaxed">
-                  {'Si eres parte del equipo, ingresa tu email y usa el codigo '}
-                  <span className="font-mono font-bold text-emerald-400">LANZAMIENTO2026</span>
-                  {' como contrasena para acceder gratis.'}
-                </p>
-              </div>
-
               <p className="mt-6 text-center text-sm text-violet-300/30">
                 {mode === "login" ? "No tienes cuenta? " : "Ya tienes cuenta? "}
                 <button
