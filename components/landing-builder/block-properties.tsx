@@ -424,6 +424,104 @@ function BlockEditor({
             />
           </>
         )
+      case "community":
+        return (
+          <>
+            {textInput("Titulo de seccion", "sectionTitle")}
+            {textInput("Descripcion", "description", true)}
+            {textInput("Nombre de comunidad", "communityName")}
+            {textInput("Cantidad de miembros", "memberCount")}
+            {selectInput("Layout", "layout", [
+              { value: "split", label: "Feed + Leaderboard" },
+              { value: "feed", label: "Solo feed" },
+            ])}
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-2 text-xs font-medium text-foreground">
+                <input
+                  type="checkbox"
+                  checked={(p.showLeaderboard as boolean) ?? true}
+                  onChange={(e) => updateProp("showLeaderboard", e.target.checked)}
+                  className="rounded"
+                />
+                Mostrar leaderboard
+              </label>
+              <label className="flex items-center gap-2 text-xs font-medium text-foreground">
+                <input
+                  type="checkbox"
+                  checked={(p.showCategories as boolean) ?? true}
+                  onChange={(e) => updateProp("showCategories", e.target.checked)}
+                  className="rounded"
+                />
+                Mostrar categorias
+              </label>
+            </div>
+            <ListEditor
+              label="Categorias"
+              items={(p.categories as Array<{ name: string; emoji: string }>) ?? []}
+              onUpdate={(items) => updateProp("categories", items)}
+              renderItem={(item, onChange) => (
+                <div className="flex flex-1 items-center gap-2">
+                  <input type="text" value={item.emoji} onChange={(e) => onChange({ ...item, emoji: e.target.value })} placeholder="Emoji"
+                    className="w-10 rounded-md border border-border/40 bg-muted/30 px-2 py-1.5 text-center text-xs text-foreground outline-none" />
+                  <input type="text" value={item.name} onChange={(e) => onChange({ ...item, name: e.target.value })} placeholder="Nombre"
+                    className="flex-1 rounded-md border border-border/40 bg-muted/30 px-2 py-1.5 text-xs text-foreground outline-none" />
+                </div>
+              )}
+              createItem={() => ({ name: "Nueva categoria", emoji: "📌" })}
+            />
+            <ListEditor
+              label="Publicaciones"
+              items={(p.posts as Array<{ author: string; content: string; timeAgo: string; likes: number; comments: number; category: string; badge?: string }>) ?? []}
+              onUpdate={(items) => updateProp("posts", items)}
+              renderItem={(item, onChange) => (
+                <div className="flex flex-1 flex-col gap-1">
+                  <div className="flex gap-2">
+                    <input type="text" value={item.author} onChange={(e) => onChange({ ...item, author: e.target.value })} placeholder="Autor"
+                      className="flex-1 rounded-md border border-border/40 bg-muted/30 px-2 py-1.5 text-xs text-foreground outline-none" />
+                    <input type="text" value={item.badge ?? ""} onChange={(e) => onChange({ ...item, badge: e.target.value || undefined })} placeholder="Badge"
+                      className="w-24 rounded-md border border-border/40 bg-muted/30 px-2 py-1.5 text-[10px] text-foreground outline-none" />
+                  </div>
+                  <textarea value={item.content} onChange={(e) => onChange({ ...item, content: e.target.value })} placeholder="Contenido" rows={2}
+                    className="rounded-md border border-border/40 bg-muted/30 px-2 py-1.5 text-[10px] text-foreground outline-none" />
+                  <div className="flex gap-2">
+                    <input type="text" value={item.category} onChange={(e) => onChange({ ...item, category: e.target.value })} placeholder="Categoria"
+                      className="flex-1 rounded-md border border-border/40 bg-muted/30 px-2 py-1.5 text-[10px] text-foreground outline-none" />
+                    <input type="number" value={item.likes} onChange={(e) => onChange({ ...item, likes: Number(e.target.value) })} placeholder="Likes"
+                      className="w-16 rounded-md border border-border/40 bg-muted/30 px-2 py-1.5 text-[10px] text-foreground outline-none" />
+                    <input type="number" value={item.comments} onChange={(e) => onChange({ ...item, comments: Number(e.target.value) })} placeholder="Comments"
+                      className="w-16 rounded-md border border-border/40 bg-muted/30 px-2 py-1.5 text-[10px] text-foreground outline-none" />
+                  </div>
+                </div>
+              )}
+              createItem={() => ({ author: "Nuevo miembro", content: "Contenido del post...", timeAgo: "hace 1 hora", likes: 0, comments: 0, category: "General" })}
+            />
+            <ListEditor
+              label="Leaderboard"
+              items={(p.leaderboard as Array<{ name: string; points: number; level: number; badge: string }>) ?? []}
+              onUpdate={(items) => updateProp("leaderboard", items)}
+              renderItem={(item, onChange) => (
+                <div className="flex flex-1 flex-col gap-1">
+                  <input type="text" value={item.name} onChange={(e) => onChange({ ...item, name: e.target.value })} placeholder="Nombre"
+                    className="rounded-md border border-border/40 bg-muted/30 px-2 py-1.5 text-xs text-foreground outline-none" />
+                  <div className="flex gap-2">
+                    <input type="number" value={item.points} onChange={(e) => onChange({ ...item, points: Number(e.target.value) })} placeholder="Puntos"
+                      className="flex-1 rounded-md border border-border/40 bg-muted/30 px-2 py-1.5 text-[10px] text-foreground outline-none" />
+                    <input type="number" value={item.level} onChange={(e) => onChange({ ...item, level: Number(e.target.value) })} placeholder="Nivel"
+                      className="w-14 rounded-md border border-border/40 bg-muted/30 px-2 py-1.5 text-[10px] text-foreground outline-none" />
+                    <select value={item.badge} onChange={(e) => onChange({ ...item, badge: e.target.value })}
+                      className="w-20 rounded-md border border-border/40 bg-muted/30 px-1 py-1 text-[10px] text-foreground">
+                      <option value="Diamante">Diamante</option>
+                      <option value="Oro">Oro</option>
+                      <option value="Plata">Plata</option>
+                      <option value="Bronce">Bronce</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+              createItem={() => ({ name: "Nuevo miembro", points: 100, level: 1, badge: "Bronce" })}
+            />
+          </>
+        )
       default:
         return <p className="text-sm text-muted-foreground">Sin opciones para este bloque.</p>
     }

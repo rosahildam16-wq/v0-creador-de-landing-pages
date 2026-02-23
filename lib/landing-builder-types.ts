@@ -11,6 +11,7 @@ export type BlockType =
   | "form"
   | "video"
   | "gallery"
+  | "community"
 
 export interface LandingBlock {
   id: string
@@ -116,6 +117,32 @@ export interface GalleryProps {
   layout: "grid" | "masonry"
 }
 
+export interface CommunityProps {
+  sectionTitle: string
+  description: string
+  communityName: string
+  memberCount: string
+  categories: Array<{ name: string; emoji: string }>
+  posts: Array<{
+    author: string
+    content: string
+    timeAgo: string
+    likes: number
+    comments: number
+    category: string
+    badge?: string
+  }>
+  leaderboard: Array<{
+    name: string
+    points: number
+    level: number
+    badge: string
+  }>
+  showLeaderboard: boolean
+  showCategories: boolean
+  layout: "feed" | "split"
+}
+
 // Block metadata for the palette
 export interface BlockMeta {
   type: BlockType
@@ -136,6 +163,7 @@ export const BLOCK_CATALOG: BlockMeta[] = [
   { type: "form", label: "Formulario", description: "Captura de datos", icon: "FileText", category: "conversion" },
   { type: "video", label: "Video", description: "Video embebido", icon: "Play", category: "media" },
   { type: "gallery", label: "Galeria", description: "Galeria de imagenes", icon: "Image", category: "media" },
+  { type: "community", label: "Comunidad", description: "Comunidad interactiva", icon: "Users", category: "content" },
 ]
 
 export type TemplateKey = "venta" | "leads" | "evento"

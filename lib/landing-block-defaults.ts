@@ -10,6 +10,7 @@ import type {
   FormProps,
   VideoProps,
   GalleryProps,
+  CommunityProps,
 } from "./landing-builder-types"
 
 export function getDefaultProps(type: BlockType): Record<string, unknown> {
@@ -122,6 +123,58 @@ export function getDefaultProps(type: BlockType): Record<string, unknown> {
       columns: 2,
       layout: "grid",
     } satisfies GalleryProps,
+
+    community: {
+      sectionTitle: "Unete a la comunidad",
+      description: "Conecta con miles de emprendedores, comparte logros y crece junto a personas con tu misma mentalidad.",
+      communityName: "Emprendedores Elite",
+      memberCount: "2,847",
+      categories: [
+        { name: "General", emoji: "💬" },
+        { name: "Logros", emoji: "🏆" },
+        { name: "Recursos", emoji: "📚" },
+        { name: "Preguntas", emoji: "❓" },
+        { name: "Networking", emoji: "🤝" },
+      ],
+      posts: [
+        {
+          author: "Sofia Herrera",
+          content: "Acabo de cerrar mi primer cliente a $5,000 USD aplicando exactamente lo que aprendimos en el modulo 4. Estoy temblando de la emocion! Gracias a esta comunidad por todo el apoyo.",
+          timeAgo: "hace 2 horas",
+          likes: 47,
+          comments: 12,
+          category: "Logros",
+          badge: "Top Contributor",
+        },
+        {
+          author: "Miguel Torres",
+          content: "Comparto mi plantilla de embudo de ventas que me genero $12K el mes pasado. Espero les sirva tanto como a mi. Link en los comentarios.",
+          timeAgo: "hace 5 horas",
+          likes: 83,
+          comments: 24,
+          category: "Recursos",
+          badge: "Mentor",
+        },
+        {
+          author: "Laura Mendez",
+          content: "Alguien mas esta implementando la estrategia de email marketing del ultimo live? Tengo algunas dudas sobre la secuencia de bienvenida. Agradeceria mucho sus insights!",
+          timeAgo: "hace 8 horas",
+          likes: 19,
+          comments: 31,
+          category: "Preguntas",
+        },
+      ],
+      leaderboard: [
+        { name: "Sofia Herrera", points: 4850, level: 5, badge: "Diamante" },
+        { name: "Carlos Ruiz", points: 3720, level: 4, badge: "Oro" },
+        { name: "Miguel Torres", points: 3410, level: 4, badge: "Oro" },
+        { name: "Ana Castillo", points: 2890, level: 3, badge: "Plata" },
+        { name: "Diego Morales", points: 2150, level: 2, badge: "Bronce" },
+      ],
+      showLeaderboard: true,
+      showCategories: true,
+      layout: "split",
+    } satisfies CommunityProps,
   }
 
   return defaults[type]

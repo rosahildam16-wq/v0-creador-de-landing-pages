@@ -6,6 +6,7 @@ import {
   Sparkles, AlertTriangle, Clock, TrendingDown, Frown,
   Rocket, Target, BarChart3, Shield, Gift, Star,
   MessageSquare, HelpCircle, Play, ChevronDown, ChevronUp, Check,
+  Heart, MessageCircle, Share2, Search, Crown, Trophy, Award, TrendingUp, Users,
 } from "lucide-react"
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -361,6 +362,364 @@ function GalleryBlock({ props, theme }: { props: Record<string, unknown>; theme:
   )
 }
 
+// --- COMMUNITY ---
+function CommunityBlock({ props, theme }: { props: Record<string, unknown>; theme: LandingTheme }) {
+  const p = props as {
+    sectionTitle: string; description: string; communityName: string; memberCount: string
+    categories: Array<{ name: string; emoji: string }>
+    posts: Array<{ author: string; content: string; timeAgo: string; likes: number; comments: number; category: string; badge?: string }>
+    leaderboard: Array<{ name: string; points: number; level: number; badge: string }>
+    showLeaderboard: boolean; showCategories: boolean; layout: "feed" | "split"
+  }
+  const [activeCategory, setActiveCategory] = useState("Todos")
+  const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set())
+  const radius = themeRadius(theme.borderRadius)
+
+  const AVATAR_COLORS = [
+    ["#6366f1", "#8b5cf6"], ["#ec4899", "#f43f5e"], ["#14b8a6", "#06b6d4"],
+    ["#f59e0b", "#f97316"], ["#10b981", "#34d399"], ["#8b5cf6", "#a78bfa"],
+  ]
+
+  const BADGE_STYLES: Record<string, { bg: string; text: string; glow: string }> = {
+    "Diamante": { bg: "linear-gradient(135deg, #818cf8, #6366f1, #4f46e5)", text: "#ffffff", glow: "0 0 12px #6366f133" },
+    "Oro": { bg: "linear-gradient(135deg, #fbbf24, #f59e0b, #d97706)", text: "#ffffff", glow: "0 0 12px #f59e0b33" },
+    "Plata": { bg: "linear-gradient(135deg, #94a3b8, #64748b, #475569)", text: "#ffffff", glow: "0 0 12px #64748b33" },
+    "Bronce": { bg: "linear-gradient(135deg, #d97706, #b45309, #92400e)", text: "#ffffff", glow: "0 0 12px #d9770633" },
+    "Top Contributor": { bg: `linear-gradient(135deg, ${theme.primaryColor}, ${theme.accentColor})`, text: "#ffffff", glow: `0 0 12px ${theme.primaryColor}33` },
+    "Mentor": { bg: `linear-gradient(135deg, #10b981, #059669)`, text: "#ffffff", glow: "0 0 12px #10b98133" },
+  }
+
+  function getInitials(name: string) {
+    return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)
+  }
+
+  function getAvatarColor(name: string): string[] {
+    let hash = 0
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
+    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
+  }
+
+  function toggleLike(index: number) {
+    setLikedPosts((prev) => {
+      const next = new Set(prev)
+      if (next.has(index)) next.delete(index)
+      else next.add(index)
+      return next
+    })
+  }
+
+  const filteredPosts = activeCategory === "Todos" ? p.posts : p.posts.filter((post) => post.category === activeCategory)
+  const isSplit = p.layout === "split" && p.showLeaderboard
+
+  return (
+    <section className="px-6 py-16" style={{ background: theme.backgroundColor, color: theme.textColor }}>
+      <div className="mx-auto max-w-5xl">
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <h2 className="mb-3 text-3xl font-bold">{p.sectionTitle}</h2>
+          <p className="mx-auto max-w-2xl opacity-70">{p.description}</p>
+        </div>
+
+        {/* Community Bar */}
+        <div
+          className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border p-4"
+          style={{
+            borderColor: `${theme.primaryColor}20`,
+            background: `${theme.primaryColor}06`,
+            borderRadius: radius,
+            backdropFilter: "blur(12px)",
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="flex h-10 w-10 items-center justify-center rounded-xl"
+              style={{ background: `linear-gradient(135deg, ${theme.primaryColor}, ${theme.accentColor})` }}
+            >
+              <Users className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold">{p.communityName}</h3>
+              <p className="text-xs opacity-60">{p.memberCount} miembros activos</p>
+            </div>
+          </div>
+          <div
+            className="flex items-center gap-2 rounded-xl border px-3 py-2"
+            style={{ borderColor: `${theme.primaryColor}20`, background: `${theme.backgroundColor}80` }}
+          >
+            <Search className="h-3.5 w-3.5 opacity-40" />
+            <span className="text-xs opacity-40">Buscar en la comunidad...</span>
+          </div>
+        </div>
+
+        {/* Categories */}
+        {p.showCategories && p.categories.length > 0 && (
+          <div className="mb-6 flex flex-wrap gap-2">
+            <button
+              onClick={() => setActiveCategory("Todos")}
+              className="rounded-full px-4 py-2 text-xs font-medium transition-all"
+              style={{
+                background: activeCategory === "Todos" ? theme.primaryColor : `${theme.primaryColor}10`,
+                color: activeCategory === "Todos" ? "#ffffff" : theme.textColor,
+                borderRadius: "9999px",
+              }}
+            >
+              Todos
+            </button>
+            {p.categories.map((cat) => (
+              <button
+                key={cat.name}
+                onClick={() => setActiveCategory(cat.name)}
+                className="rounded-full px-4 py-2 text-xs font-medium transition-all"
+                style={{
+                  background: activeCategory === cat.name ? theme.primaryColor : `${theme.primaryColor}10`,
+                  color: activeCategory === cat.name ? "#ffffff" : theme.textColor,
+                  borderRadius: "9999px",
+                }}
+              >
+                <span className="mr-1.5">{cat.emoji}</span>{cat.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Main Content */}
+        <div className={isSplit ? "grid grid-cols-1 gap-6 lg:grid-cols-3" : ""}>
+          {/* Feed */}
+          <div className={isSplit ? "lg:col-span-2" : ""}>
+            {/* New Post Box */}
+            <div
+              className="mb-4 flex items-center gap-3 rounded-xl border p-4"
+              style={{ borderColor: `${theme.primaryColor}15`, background: `${theme.primaryColor}04`, borderRadius: radius }}
+            >
+              <div
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                style={{ background: `linear-gradient(135deg, ${theme.primaryColor}, ${theme.accentColor})` }}
+              >
+                T
+              </div>
+              <div
+                className="flex-1 rounded-lg border px-3 py-2 text-xs opacity-50"
+                style={{ borderColor: `${theme.primaryColor}15`, background: `${theme.backgroundColor}60` }}
+              >
+                Comparte algo con la comunidad...
+              </div>
+            </div>
+
+            {/* Posts */}
+            <div className="flex flex-col gap-4">
+              {filteredPosts.map((post, i) => {
+                const colors = getAvatarColor(post.author)
+                const isLiked = likedPosts.has(i)
+                return (
+                  <div
+                    key={i}
+                    className="group rounded-xl border p-5 transition-all duration-200"
+                    style={{
+                      borderColor: `${theme.primaryColor}12`,
+                      background: `${theme.primaryColor}03`,
+                      borderRadius: radius,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = `${theme.primaryColor}30`
+                      e.currentTarget.style.boxShadow = `0 4px 20px ${theme.primaryColor}08`
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = `${theme.primaryColor}12`
+                      e.currentTarget.style.boxShadow = "none"
+                    }}
+                  >
+                    {/* Post Header */}
+                    <div className="mb-3 flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                          style={{ background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})` }}
+                        >
+                          {getInitials(post.author)}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold">{post.author}</span>
+                            {post.badge && (
+                              <span
+                                className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                                style={{
+                                  background: BADGE_STYLES[post.badge]?.bg ?? `${theme.primaryColor}20`,
+                                  color: BADGE_STYLES[post.badge]?.text ?? theme.primaryColor,
+                                  boxShadow: BADGE_STYLES[post.badge]?.glow ?? "none",
+                                }}
+                              >
+                                {post.badge}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-[11px] opacity-50">
+                            <span>{post.timeAgo}</span>
+                            <span>en</span>
+                            <span className="font-medium" style={{ color: theme.primaryColor, opacity: 0.8 }}>
+                              {post.category}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Post Content */}
+                    <p className="mb-4 text-sm leading-relaxed opacity-85">{post.content}</p>
+
+                    {/* Reactions Bar */}
+                    <div
+                      className="flex items-center gap-1 border-t pt-3"
+                      style={{ borderColor: `${theme.primaryColor}10` }}
+                    >
+                      <button
+                        onClick={() => toggleLike(i)}
+                        className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs transition-all"
+                        style={{
+                          background: isLiked ? `${theme.primaryColor}15` : "transparent",
+                          color: isLiked ? theme.primaryColor : `${theme.textColor}88`,
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.primaryColor}10` }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = isLiked ? `${theme.primaryColor}15` : "transparent" }}
+                      >
+                        <Heart
+                          className="h-3.5 w-3.5 transition-transform"
+                          style={{
+                            fill: isLiked ? theme.primaryColor : "none",
+                            transform: isLiked ? "scale(1.1)" : "scale(1)",
+                          }}
+                        />
+                        <span className="font-medium">{isLiked ? post.likes + 1 : post.likes}</span>
+                      </button>
+                      <button
+                        className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs transition-all"
+                        style={{ color: `${theme.textColor}88` }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.primaryColor}10` }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent" }}
+                      >
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        <span className="font-medium">{post.comments}</span>
+                      </button>
+                      <button
+                        className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs transition-all"
+                        style={{ color: `${theme.textColor}88` }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.primaryColor}10` }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent" }}
+                      >
+                        <Share2 className="h-3.5 w-3.5" />
+                        <span className="font-medium">Compartir</span>
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Leaderboard Sidebar */}
+          {isSplit && (
+            <div className="lg:col-span-1">
+              <div
+                className="sticky top-6 rounded-xl border p-5"
+                style={{
+                  borderColor: `${theme.primaryColor}15`,
+                  background: `${theme.primaryColor}04`,
+                  borderRadius: radius,
+                  backdropFilter: "blur(8px)",
+                }}
+              >
+                <div className="mb-4 flex items-center gap-2">
+                  <Trophy className="h-4 w-4" style={{ color: theme.accentColor }} />
+                  <h4 className="text-sm font-bold">Leaderboard</h4>
+                </div>
+                <div className="flex flex-col gap-3">
+                  {p.leaderboard.map((member, i) => {
+                    const colors = getAvatarColor(member.name)
+                    const maxPoints = p.leaderboard[0]?.points ?? 1
+                    const progress = (member.points / maxPoints) * 100
+                    const RankIcon = i === 0 ? Crown : i === 1 ? Award : i === 2 ? TrendingUp : Star
+                    const rankColors = ["#f59e0b", "#94a3b8", "#d97706", `${theme.primaryColor}88`, `${theme.primaryColor}66`]
+                    return (
+                      <div
+                        key={i}
+                        className="group flex items-center gap-3 rounded-lg p-2.5 transition-all"
+                        onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.primaryColor}08` }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent" }}
+                      >
+                        {/* Rank */}
+                        <div className="flex h-6 w-6 shrink-0 items-center justify-center">
+                          {i < 3 ? (
+                            <RankIcon className="h-4 w-4" style={{ color: rankColors[i] }} />
+                          ) : (
+                            <span className="text-xs font-bold opacity-40">#{i + 1}</span>
+                          )}
+                        </div>
+                        {/* Avatar */}
+                        <div
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                          style={{ background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})` }}
+                        >
+                          {getInitials(member.name)}
+                        </div>
+                        {/* Info */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="truncate text-xs font-semibold">{member.name}</span>
+                            <span
+                              className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold"
+                              style={{
+                                background: BADGE_STYLES[member.badge]?.bg ?? `${theme.primaryColor}20`,
+                                color: BADGE_STYLES[member.badge]?.text ?? theme.primaryColor,
+                                boxShadow: BADGE_STYLES[member.badge]?.glow ?? "none",
+                              }}
+                            >
+                              {member.badge}
+                            </span>
+                          </div>
+                          <div className="mt-1 flex items-center gap-2">
+                            <div
+                              className="h-1.5 flex-1 overflow-hidden rounded-full"
+                              style={{ background: `${theme.primaryColor}15` }}
+                            >
+                              <div
+                                className="h-full rounded-full transition-all duration-500"
+                                style={{
+                                  width: `${progress}%`,
+                                  background: `linear-gradient(90deg, ${theme.primaryColor}, ${theme.accentColor})`,
+                                }}
+                              />
+                            </div>
+                            <span className="text-[10px] font-medium opacity-60">{member.points.toLocaleString()} pts</span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Stats */}
+                <div
+                  className="mt-5 grid grid-cols-2 gap-3 border-t pt-4"
+                  style={{ borderColor: `${theme.primaryColor}10` }}
+                >
+                  <div className="text-center">
+                    <p className="text-lg font-bold" style={{ color: theme.primaryColor }}>{p.memberCount}</p>
+                    <p className="text-[10px] opacity-50">Miembros</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-lg font-bold" style={{ color: theme.accentColor }}>{p.posts.length * 47}</p>
+                    <p className="text-[10px] opacity-50">Posts hoy</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // --- Main renderer ---
 export function BlockRenderer({ block, theme }: { block: LandingBlock; theme: LandingTheme }) {
   const map: Record<string, React.ComponentType<{ props: Record<string, unknown>; theme: LandingTheme }>> = {
@@ -374,6 +733,7 @@ export function BlockRenderer({ block, theme }: { block: LandingBlock; theme: La
     form: FormBlock,
     video: VideoBlock,
     gallery: GalleryBlock,
+    community: CommunityBlock,
   }
 
   const Component = map[block.type]

@@ -4,12 +4,12 @@ import type { BlockMeta } from "@/lib/landing-builder-types"
 import { BLOCK_CATALOG } from "@/lib/landing-builder-types"
 import {
   Sparkles, AlertTriangle, Gift, MessageSquare, HelpCircle,
-  Zap, Clock, FileText, Play, Image, GripVertical,
+  Zap, Clock, FileText, Play, Image, GripVertical, Users,
 } from "lucide-react"
 
 const ICON_MAP: Record<string, React.ElementType> = {
   Sparkles, AlertTriangle, Gift, MessageSquare, HelpCircle,
-  Zap, Clock, FileText, Play, Image,
+  Zap, Clock, FileText, Play, Image, Users,
 }
 
 const CATEGORIES = [
