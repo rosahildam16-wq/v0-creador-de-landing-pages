@@ -157,13 +157,13 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
     if (!isVimeo && !isYouTube) return
 
     let destroyed = false
-    let videoDuration = 0
 
     const handleMessage = (e: MessageEvent) => {
       if (destroyed) return
 
+      // Vimeo postMessage API
       if (isVimeo && e.origin === "https://player.vimeo.com") {
-        let data: any
+        let data: Record<string, unknown>
         try {
           data = typeof e.data === "string" ? JSON.parse(e.data) : e.data
         } catch { return }
@@ -172,42 +172,41 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
           const iframe = document.getElementById(`vimeo-player-${slideIndex}`) as HTMLIFrameElement
           if (iframe?.contentWindow) {
             iframe.contentWindow.postMessage(JSON.stringify({ method: "addEventListener", value: "finish" }), "*")
-            iframe.contentWindow.postMessage(JSON.stringify({ method: "addEventListener", value: "timeupdate" }), "*")
             iframe.contentWindow.postMessage(JSON.stringify({ method: "addEventListener", value: "play" }), "*")
             iframe.contentWindow.postMessage(JSON.stringify({ method: "addEventListener", value: "pause" }), "*")
-            // Set volume to max immediately so first play has sound
             iframe.contentWindow.postMessage(JSON.stringify({ method: "setVolume", value: 1 }), "*")
           }
         }
 
         if (data.event === "play") {
-          if (!destroyed) {
-            setVideoPlaying((prev) => ({ ...prev, [slideIndex]: true }))
-          }
+          if (!destroyed) setVideoPlaying((prev) => ({ ...prev, [slideIndex]: true }))
         }
 
         if (data.event === "pause") {
-          if (!destroyed) {
-            setVideoPlaying((prev) => ({ ...prev, [slideIndex]: false }))
-          }
-        }
-
-        if (data.event === "timeupdate" && data.data) {
-          if (data.data.duration) videoDuration = data.data.duration
+          if (!destroyed) setVideoPlaying((prev) => ({ ...prev, [slideIndex]: false }))
         }
 
         if (data.event === "finish") {
-          if (!destroyed) {
-            setVideoFinished((prev) => ({ ...prev, [slideIndex]: true }))
-          }
+          if (!destroyed) setVideoFinished((prev) => ({ ...prev, [slideIndex]: true }))
         }
+      }
+
+      // YouTube postMessage API (limited but works for state changes)
+      if (isYouTube && typeof e.data === "string") {
+        try {
+          const data = JSON.parse(e.data)
+          // YT sends info with event "onStateChange", state 0 = ended
+          if (data?.event === "onStateChange" && data?.info === 0) {
+            if (!destroyed) setVideoFinished((prev) => ({ ...prev, [slideIndex]: true }))
+          }
+        } catch { /* not a YT message */ }
       }
     }
 
     window.addEventListener("message", handleMessage)
 
-    // Safety fallback: auto-finish after 5min for Vimeo, 60s for YouTube
-    const fallbackMs = isYouTube ? 60000 : 300000
+    // Safety fallback: auto-finish after 5min for Vimeo, 90s for YouTube
+    const fallbackMs = isYouTube ? 90000 : 300000
     const finishFallback = setTimeout(() => {
       if (!destroyed) {
         setVideoFinished((prev) => ({ ...prev, [slideIndex]: true }))
