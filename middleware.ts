@@ -1,7 +1,16 @@
 import { updateSession } from '@/lib/supabase/middleware'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Public routes that don't need Supabase session refresh
+const PUBLIC_ROUTES = ['/login', '/pricing', '/register']
+
 export async function middleware(request: NextRequest) {
+  // Skip Supabase session refresh for public routes
+  const { pathname } = request.nextUrl
+  if (PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(route + '/'))) {
+    return NextResponse.next()
+  }
+
   try {
     return await updateSession(request)
   } catch {
