@@ -21,17 +21,20 @@ function safeGet(key: string): string | null {
   try { return localStorage.getItem(key) ?? sessionStorage.getItem(key) } catch { return null }
 }
 
-function generateLeadsPorDia(totalLeads: number): { fecha: string; leads: number }[] {
+function generateLeadsPorDia(totalLeads: number, seed: number): { fecha: string; leads: number }[] {
   const data: { fecha: string; leads: number }[] = []
   const today = new Date()
   let remaining = totalLeads
+  // Simple seeded pseudo-random to avoid hydration mismatch
+  let s = seed
+  const rand = () => { s = (s * 16807 + 0) % 2147483647; return (s & 0x7fffffff) / 2147483647 }
   for (let i = 29; i >= 0; i--) {
     const date = new Date(today)
     date.setDate(date.getDate() - i)
     const dayLabel = `${date.getDate()}/${date.getMonth() + 1}`
     let dayLeads = 0
     if (remaining > 0 && i <= 20) {
-      dayLeads = Math.min(remaining, Math.floor(Math.random() * 4))
+      dayLeads = Math.min(remaining, Math.floor(rand() * 4))
       remaining -= dayLeads
     }
     if (i === 0 && remaining > 0) dayLeads += remaining
@@ -192,7 +195,7 @@ export default function MemberDashboard() {
   }
 
   const activeChallenges = challenges.filter((c) => c.activo)
-  const leadsPorDia = generateLeadsPorDia(member.metricas.leads)
+  const leadsPorDia = generateLeadsPorDia(member.metricas.leads, 42)
   const firstName = member.nombre.split(" ")[0]
   const trainingPercent = 37
   const achievements = 3
@@ -319,30 +322,36 @@ export default function MemberDashboard() {
                 <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-400">Ultimos 30 dias</span>
               </div>
               <div className="h-[180px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={leadsPorDia} margin={{ top: 5, right: 5, bottom: 0, left: -25 }}>
-                    <defs>
-                      <linearGradient id="memberGradV2" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="fecha" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
-                      tickLine={false} axisLine={false} interval={4} />
-                    <YAxis tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
-                      tickLine={false} axisLine={false} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "12px", fontSize: "11px",
-                        color: "hsl(var(--foreground))", boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
-                      }}
-                    />
-                    <Area type="monotone" dataKey="leads" stroke="hsl(var(--primary))"
-                      fill="url(#memberGradV2)" strokeWidth={2} />
-                  </AreaChart>
-                </ResponsiveContainer>
+                {mounted ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={leadsPorDia} margin={{ top: 5, right: 5, bottom: 0, left: -25 }}>
+                      <defs>
+                        <linearGradient id="memberGradV2" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="fecha" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
+                        tickLine={false} axisLine={false} interval={4} />
+                      <YAxis tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
+                        tickLine={false} axisLine={false} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "12px", fontSize: "11px",
+                          color: "hsl(var(--foreground))", boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
+                        }}
+                      />
+                      <Area type="monotone" dataKey="leads" stroke="hsl(var(--primary))"
+                        fill="url(#memberGradV2)" strokeWidth={2} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  </div>
+                )}
               </div>
             </div>
           </div>
