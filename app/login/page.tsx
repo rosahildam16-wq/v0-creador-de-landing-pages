@@ -329,12 +329,12 @@ export default function LoginPage() {
                         className="flex items-center gap-1.5 text-xs text-violet-400/50 hover:text-violet-400 transition-colors"
                       >
                         <Tag className="w-3 h-3" />
-                        Tengo un codigo de descuento
+                        Tengo un codigo de comunidad
                       </button>
                     ) : (
                       <div>
                         <label htmlFor="login-discount" className="block text-xs font-medium text-violet-200/60 mb-2 ml-0.5">
-                          Codigo de descuento
+                          Codigo de comunidad
                         </label>
                         <div className={`relative rounded-xl border transition-all duration-300 ${
                           focusedField === "discount"
@@ -349,11 +349,11 @@ export default function LoginPage() {
                             onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
                             onFocus={() => setFocusedField("discount")}
                             onBlur={() => setFocusedField(null)}
-                            placeholder="Ej: SKALIAVIP"
+                            placeholder="Ej: MIEQUIPO2026"
                             className="w-full pl-10 pr-4 py-3 bg-transparent text-white text-sm font-mono placeholder:text-violet-400/25 focus:outline-none rounded-xl uppercase"
                           />
                         </div>
-                        <p className="mt-1.5 text-[10px] text-violet-300/30">Opcional. Si tienes un codigo, ingresalo para obtener beneficios.</p>
+                        <p className="mt-1.5 text-[10px] text-violet-300/30">Opcional. Si tu lider te dio un codigo, ingresalo para unirte a su comunidad.</p>
                       </div>
                     )}
                   </div>
