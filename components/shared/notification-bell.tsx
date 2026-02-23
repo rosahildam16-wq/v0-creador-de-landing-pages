@@ -35,29 +35,41 @@ export function NotificationBell() {
   const panelRef = useRef<HTMLDivElement>(null)
   const bellRef = useRef<HTMLButtonElement>(null)
 
+  // Load notifications on mount AND refresh every 5 seconds to pick up new registrations
   useEffect(() => {
     if (!user) return
-    const notifs = getNotificationsForRole(user.role)
-    setNotifications(notifs)
 
-    // Trigger the badge bounce when there are unread
-    const unread = notifs.filter((n) => !n.leida).length
-    if (unread > 0) {
-      setAnimateBadge(true)
-      const t = setTimeout(() => setAnimateBadge(false), 2000)
-      return () => clearTimeout(t)
+    const loadNotifs = () => {
+      const notifs = getNotificationsForRole(user.role)
+      setNotifications((prev) => {
+        // Only update if count changed (avoid unnecessary re-renders)
+        if (prev.length !== notifs.length || (notifs[0] && prev[0] && notifs[0].id !== prev[0].id)) {
+          return notifs
+        }
+        return prev
+      })
     }
+
+    loadNotifs()
+
+    // Poll for new notifications every 5 seconds
+    const interval = setInterval(loadNotifs, 5000)
+    return () => clearInterval(interval)
   }, [user])
 
-  // Periodically re-trigger the badge bounce
+  // Badge bounce animation for unread
   useEffect(() => {
     const unread = notifications.filter((n) => !n.leida).length
     if (unread === 0) return
+    setAnimateBadge(true)
+    const t = setTimeout(() => setAnimateBadge(false), 2000)
+
+    // Re-trigger bounce periodically
     const interval = setInterval(() => {
       setAnimateBadge(true)
       setTimeout(() => setAnimateBadge(false), 2000)
     }, 12000)
-    return () => clearInterval(interval)
+    return () => { clearTimeout(t); clearInterval(interval) }
   }, [notifications])
 
   // Close on outside click
@@ -78,14 +90,26 @@ export function NotificationBell() {
 
   const unreadCount = notifications.filter((n) => !n.leida).length
 
+  function persistReadState(ids: string[]) {
+    try {
+      const raw = localStorage.getItem("mf_notifications") || "[]"
+      const list = JSON.parse(raw) as AppNotification[]
+      const updated = list.map((n) => ids.includes(n.id) ? { ...n, leida: true } : n)
+      localStorage.setItem("mf_notifications", JSON.stringify(updated))
+    } catch { /* noop */ }
+  }
+
   function markAllRead() {
+    const ids = notifications.filter((n) => !n.leida).map((n) => n.id)
     setNotifications((prev) => prev.map((n) => ({ ...n, leida: true })))
+    persistReadState(ids)
   }
 
   function markRead(id: string) {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, leida: true } : n))
     )
+    persistReadState([id])
   }
 
   return (
