@@ -19,7 +19,7 @@ interface AuthContextType {
   isAuthenticated: boolean
   user: AuthUser | null
   login: (email: string, password: string) => Promise<boolean>
-  register: (name: string, email: string, password: string, discountCode?: string) => Promise<boolean>
+  register: (name: string, email: string, password: string, discountCode?: string, sponsorName?: string) => Promise<boolean>
   logout: () => void
   isLoading: boolean
 }
@@ -181,14 +181,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return false
   }
 
-  const register = async (name: string, email: string, password: string, discountCode?: string): Promise<boolean> => {
+  const register = async (name: string, email: string, password: string, discountCode?: string, sponsorName?: string): Promise<boolean> => {
     setIsLoading(true)
 
     try {
       const res = await fetch("/api/communities/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, discountCode }),
+        body: JSON.stringify({ name, email, password, discountCode, sponsorName }),
       })
 
       const data = await res.json()

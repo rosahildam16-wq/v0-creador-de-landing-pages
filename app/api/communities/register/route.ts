@@ -4,11 +4,12 @@ import { NextRequest, NextResponse } from "next/server"
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { name, email, password, discountCode } = body as {
+    const { name, email, password, discountCode, sponsorName } = body as {
       name: string
       email: string
       password: string
       discountCode?: string
+      sponsorName?: string
     }
 
     const normalizedEmail = email.toLowerCase().trim()
@@ -56,6 +57,7 @@ export async function POST(req: NextRequest) {
 
     // Insert member into community_members
     const memberId = `reg-${normalizedEmail.replace(/[^a-z0-9]/g, "")}`
+    const sponsorTrimmed = (sponsorName || "").trim() || null
     const { error: insertError } = await supabase.from("community_members").insert({
       member_id: memberId,
       community_id: communityId,
@@ -63,6 +65,7 @@ export async function POST(req: NextRequest) {
       name: trimmedName,
       password_hash: password, // In production, hash with bcrypt
       discount_code: code || null,
+      sponsor_name: sponsorTrimmed,
     })
 
     if (insertError) {
@@ -72,10 +75,11 @@ export async function POST(req: NextRequest) {
 
     // Create notification for admin
     const codeLabel = code ? ` | Codigo: ${code}` : ""
+    const sponsorLabel = sponsorTrimmed ? ` | Patrocinador: ${sponsorTrimmed}` : ""
     await supabase.from("admin_notifications").insert({
       tipo: "team",
       titulo: "Nuevo registro de miembro",
-      mensaje: `${trimmedName} (${normalizedEmail}) se unio a la comunidad ${communityName}${codeLabel}. Ve a Comunidades para gestionar su acceso.`,
+      mensaje: `${trimmedName} (${normalizedEmail}) se unio a la comunidad ${communityName}${codeLabel}${sponsorLabel}.`,
       destinatario: "admin",
     })
 

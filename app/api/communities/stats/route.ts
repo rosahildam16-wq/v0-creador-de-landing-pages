@@ -85,6 +85,7 @@ export async function GET() {
     email: m.email,
     community_id: m.community_id,
     discount_code: m.discount_code,
+    sponsor_name: m.sponsor_name || null,
     created_at: m.created_at,
     activo: m.activo,
   }))

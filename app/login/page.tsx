@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [discountCode, setDiscountCode] = useState("")
+  const [sponsorName, setSponsorName] = useState("")
   const [showDiscountField, setShowDiscountField] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -61,7 +62,7 @@ export default function LoginPage() {
         setIsSubmitting(false)
         return
       }
-      const ok = await register(name, email, password, discountCode || undefined)
+      const ok = await register(name, email, password, discountCode || undefined, sponsorName.trim() || undefined)
       if (!ok) {
         setError("Este email ya esta registrado. Intenta iniciar sesion.")
         setIsSubmitting(false)
@@ -319,44 +320,71 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {/* Discount code (register only) */}
+                {/* Sponsor + Community code (register only) */}
                 {mode === "register" && (
-                  <div>
-                    {!showDiscountField ? (
-                      <button
-                        type="button"
-                        onClick={() => setShowDiscountField(true)}
-                        className="flex items-center gap-1.5 text-xs text-violet-400/50 hover:text-violet-400 transition-colors"
-                      >
-                        <Tag className="w-3 h-3" />
-                        Tengo un codigo de comunidad
-                      </button>
-                    ) : (
-                      <div>
-                        <label htmlFor="login-discount" className="block text-xs font-medium text-violet-200/60 mb-2 ml-0.5">
-                          Codigo de comunidad
-                        </label>
-                        <div className={`relative rounded-xl border transition-all duration-300 ${
-                          focusedField === "discount"
-                            ? "border-emerald-500/40 shadow-[0_0_0_3px_rgba(16,185,129,0.06)]"
-                            : "border-white/[0.06] hover:border-white/[0.10]"
-                        }`}>
-                          <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-violet-400/25" />
-                          <input
-                            id="login-discount"
-                            type="text"
-                            value={discountCode}
-                            onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
-                            onFocus={() => setFocusedField("discount")}
-                            onBlur={() => setFocusedField(null)}
-                            placeholder="Ej: MIEQUIPO2026"
-                            className="w-full pl-10 pr-4 py-3 bg-transparent text-white text-sm font-mono placeholder:text-violet-400/25 focus:outline-none rounded-xl uppercase"
-                          />
-                        </div>
-                        <p className="mt-1.5 text-[10px] text-violet-300/30">Opcional. Si tu lider te dio un codigo, ingresalo para unirte a su comunidad.</p>
+                  <>
+                    {/* Sponsor name */}
+                    <div>
+                      <label htmlFor="login-sponsor" className="block text-xs font-medium text-violet-200/60 mb-2 ml-0.5">
+                        Nombre de tu patrocinador
+                      </label>
+                      <div className={`relative rounded-xl border transition-all duration-300 ${
+                        focusedField === "sponsor"
+                          ? "border-violet-500/40 shadow-[0_0_0_3px_rgba(139,92,246,0.06)]"
+                          : "border-white/[0.06] hover:border-white/[0.10]"
+                      }`}>
+                        <input
+                          id="login-sponsor"
+                          type="text"
+                          value={sponsorName}
+                          onChange={(e) => setSponsorName(e.target.value)}
+                          onFocus={() => setFocusedField("sponsor")}
+                          onBlur={() => setFocusedField(null)}
+                          placeholder="Nombre de quien te invito"
+                          className="w-full px-4 py-3 bg-transparent text-white text-sm placeholder:text-violet-400/25 focus:outline-none rounded-xl"
+                        />
                       </div>
-                    )}
-                  </div>
+                      <p className="mt-1.5 text-[10px] text-violet-300/30">La persona que te invito a la plataforma.</p>
+                    </div>
+
+                    {/* Community code */}
+                    <div>
+                      {!showDiscountField ? (
+                        <button
+                          type="button"
+                          onClick={() => setShowDiscountField(true)}
+                          className="flex items-center gap-1.5 text-xs text-violet-400/50 hover:text-violet-400 transition-colors"
+                        >
+                          <Tag className="w-3 h-3" />
+                          Tengo un codigo de comunidad
+                        </button>
+                      ) : (
+                        <div>
+                          <label htmlFor="login-discount" className="block text-xs font-medium text-violet-200/60 mb-2 ml-0.5">
+                            Codigo de comunidad
+                          </label>
+                          <div className={`relative rounded-xl border transition-all duration-300 ${
+                            focusedField === "discount"
+                              ? "border-emerald-500/40 shadow-[0_0_0_3px_rgba(16,185,129,0.06)]"
+                              : "border-white/[0.06] hover:border-white/[0.10]"
+                          }`}>
+                            <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-violet-400/25" />
+                            <input
+                              id="login-discount"
+                              type="text"
+                              value={discountCode}
+                              onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                              onFocus={() => setFocusedField("discount")}
+                              onBlur={() => setFocusedField(null)}
+                              placeholder="Ej: MIEQUIPO2026"
+                              className="w-full pl-10 pr-4 py-3 bg-transparent text-white text-sm font-mono placeholder:text-violet-400/25 focus:outline-none rounded-xl uppercase"
+                            />
+                          </div>
+                          <p className="mt-1.5 text-[10px] text-violet-300/30">Opcional. Si tu lider te dio un codigo, ingresalo para unirte a su comunidad.</p>
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
 
                 <button

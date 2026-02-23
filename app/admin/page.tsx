@@ -344,6 +344,7 @@ export default function AdminDashboard() {
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="text-xs">Nombre</TableHead>
                     <TableHead className="text-xs">Email</TableHead>
+                    <TableHead className="text-xs">Patrocinador</TableHead>
                     <TableHead className="text-xs">Comunidad</TableHead>
                     <TableHead className="text-xs">Codigo</TableHead>
                     <TableHead className="text-xs">Fecha</TableHead>
@@ -351,12 +352,19 @@ export default function AdminDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(commStats.recentRegistrations || []).map((reg: { name: string; email: string; community_id: string; discount_code: string | null; created_at: string; activo: boolean }, i: number) => {
+                  {(commStats.recentRegistrations || []).map((reg: { name: string; email: string; community_id: string; discount_code: string | null; sponsor_name: string | null; created_at: string; activo: boolean }, i: number) => {
                     const comm = (commStats.communityStats || []).find((c: { id: string }) => c.id === reg.community_id)
                     return (
                       <TableRow key={i}>
                         <TableCell className="py-2 text-sm font-medium">{reg.name}</TableCell>
                         <TableCell className="py-2 text-xs text-muted-foreground">{reg.email}</TableCell>
+                        <TableCell className="py-2 text-xs">
+                          {reg.sponsor_name ? (
+                            <span className="text-foreground">{reg.sponsor_name}</span>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
                         <TableCell className="py-2">
                           <div className="flex items-center gap-1.5">
                             <div className="h-2 w-2 rounded-full" style={{ backgroundColor: comm?.color || "#6366f1" }} />
@@ -383,7 +391,7 @@ export default function AdminDashboard() {
                   })}
                   {(!commStats.recentRegistrations || commStats.recentRegistrations.length === 0) && (
                     <TableRow>
-                      <TableCell colSpan={6} className="py-6 text-center text-sm text-muted-foreground">
+                      <TableCell colSpan={7} className="py-6 text-center text-sm text-muted-foreground">
                         Sin registros todavia. Los miembros apareceran aqui cuando se registren.
                       </TableCell>
                     </TableRow>
