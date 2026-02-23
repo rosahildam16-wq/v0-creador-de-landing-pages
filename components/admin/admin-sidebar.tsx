@@ -15,7 +15,7 @@ const NAV_ITEMS = [
   { href: "/admin/leads", label: "Leads", icon: Users },
   { href: "/admin/pipeline", label: "Pipeline", icon: Kanban },
   { href: "/admin/equipo", label: "Equipo", icon: UsersRound },
-  { href: "/admin/comunidad", label: "Comunidad", icon: MessagesSquare },
+  { href: "/admin/comunidades", label: "Comunidades", icon: MessagesSquare },
   { href: "/admin/retos", label: "Retos", icon: Trophy },
   { href: "/admin/academia", label: "Academia", icon: GraduationCap },
   { href: "/admin/meta-ads", label: "Meta Ads", icon: Megaphone },

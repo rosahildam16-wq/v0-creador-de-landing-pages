@@ -4,6 +4,8 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 import { useRouter } from "next/navigation"
 import { TEAM_MEMBERS } from "./team-data"
 import { addNotification } from "./notifications-data"
+import { getCommunityByCode, setMemberCommunity } from "./communities-data"
+import { updateMemberFunnels } from "./team-data"
 
 export type UserRole = "admin" | "member"
 
@@ -193,18 +195,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       safeSet("mf_registry", JSON.stringify(registry))
     } catch { /* noop */ }
 
+    const memberId = `reg-${normalizedEmail.replace(/[^a-z0-9]/g, "")}`
+
+    // Assign community based on discount code
+    const community = code ? getCommunityByCode(code) : undefined
+    const communityId = community?.id || "general"
+    const communityName = community?.nombre || "General"
+
+    setMemberCommunity({
+      memberId,
+      communityId,
+      email: normalizedEmail,
+      name: trimmedName,
+    })
+
+    // Auto-enable community default funnels
+    if (community?.embudos_default && community.embudos_default.length > 0) {
+      updateMemberFunnels(memberId, community.embudos_default)
+    }
+
     // Send notification to admin
     const codeLabel = code ? ` | Codigo: ${code}` : ""
     addNotification({
       tipo: "team",
       titulo: "Nuevo registro de miembro",
-      mensaje: `${trimmedName} (${normalizedEmail}) se ha registrado en la plataforma${codeLabel}. Ve a Equipo para habilitarle los embudos y acceso completo a Skalia VIP.`,
+      mensaje: `${trimmedName} (${normalizedEmail}) se unio a la comunidad ${communityName}${codeLabel}. Ve a Comunidades para gestionar su acceso.`,
       timestamp: new Date().toISOString(),
       leida: false,
       destinatario: "admin",
     })
 
-    const memberId = `reg-${normalizedEmail.replace(/[^a-z0-9]/g, "")}`
     const userData: AuthUser = {
       email: normalizedEmail,
       name: trimmedName,
