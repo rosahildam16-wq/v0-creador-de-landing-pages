@@ -11,7 +11,7 @@ import { useState } from "react"
 const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/embudos", label: "Embudos", icon: Route },
-  { href: "/admin/landing-builder", label: "Landing Builder", icon: PanelTop },
+  { href: "/admin/landing-builder", label: "Magic Builder", icon: PanelTop },
   { href: "/admin/leads", label: "Leads", icon: Users },
   { href: "/admin/pipeline", label: "Pipeline", icon: Kanban },
   { href: "/admin/equipo", label: "Equipo", icon: UsersRound },

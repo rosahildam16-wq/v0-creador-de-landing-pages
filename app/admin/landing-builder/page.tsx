@@ -51,7 +51,7 @@ export default function LandingBuilderPage() {
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Landing Builder</h1>
+          <h1 className="text-2xl font-bold text-foreground">Magic Builder</h1>
           <p className="mt-1 text-sm text-muted-foreground">Crea y gestiona tus landing pages con drag & drop</p>
         </div>
         <button
