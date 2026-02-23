@@ -81,3 +81,47 @@ export async function GET(req: NextRequest) {
     },
   })
 }
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const body = await req.json()
+    const { email, nombre, color, free_trial_days } = body
+
+    if (!email) {
+      return NextResponse.json({ error: "Email requerido" }, { status: 400 })
+    }
+
+    // Find the member's community
+    const { data: member } = await supabase
+      .from("community_members")
+      .select("community_id, role")
+      .eq("email", email.toLowerCase().trim())
+      .eq("role", "leader")
+      .maybeSingle()
+
+    if (!member) {
+      return NextResponse.json({ error: "No tienes permisos" }, { status: 403 })
+    }
+
+    // Build update object
+    const updates: Record<string, unknown> = {}
+    if (nombre) updates.nombre = nombre
+    if (color) updates.color = color
+    if (free_trial_days !== undefined) updates.free_trial_days = parseInt(free_trial_days)
+
+    if (Object.keys(updates).length > 0) {
+      const { error } = await supabase
+        .from("communities")
+        .update(updates)
+        .eq("id", member.community_id)
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 })
+      }
+    }
+
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ error: "Error interno" }, { status: 500 })
+  }
+}

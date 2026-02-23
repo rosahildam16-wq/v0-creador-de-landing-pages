@@ -1,50 +1,83 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useAuth } from "@/lib/auth-context"
-import { getCommunityById, getCommunityPosts, addCommunityPost, type CommunityPost } from "@/lib/communities-data"
+import { useLeaderCommunity } from "@/hooks/use-leader-community"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { MessagesSquare, Send, Heart, Shield } from "lucide-react"
 
+interface CommunityPost {
+  id: string
+  communityId: string
+  authorName: string
+  authorEmail: string
+  content: string
+  timestamp: string
+  likes: number
+}
+
+function getPosts(communityId: string): CommunityPost[] {
+  if (typeof window === "undefined") return []
+  try {
+    const raw = localStorage.getItem("mf_community_posts") || "[]"
+    return (JSON.parse(raw) as CommunityPost[]).filter((p) => p.communityId === communityId)
+  } catch { return [] }
+}
+
+function addPost(post: CommunityPost) {
+  try {
+    const raw = localStorage.getItem("mf_community_posts") || "[]"
+    const all = JSON.parse(raw) as CommunityPost[]
+    all.unshift(post)
+    localStorage.setItem("mf_community_posts", JSON.stringify(all))
+  } catch { /* noop */ }
+}
+
 export default function LeaderComunidadPage() {
-  const { user } = useAuth()
-  const community = user?.communityId ? getCommunityById(user.communityId) : undefined
+  const { community, loading, user } = useLeaderCommunity()
   const [posts, setPosts] = useState<CommunityPost[]>([])
   const [newPost, setNewPost] = useState("")
 
   useEffect(() => {
-    if (user?.communityId) setPosts(getCommunityPosts(user.communityId))
-  }, [user?.communityId])
+    if (community?.id) setPosts(getPosts(community.id))
+  }, [community?.id])
 
-  if (!community) return <p className="py-10 text-center text-muted-foreground">Comunidad no encontrada.</p>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+      </div>
+    )
+  }
 
   const handlePost = () => {
-    if (!newPost.trim() || !user) return
-    addCommunityPost({
+    if (!newPost.trim() || !user || !community) return
+    const post: CommunityPost = {
+      id: `post-${Date.now()}`,
       communityId: community.id,
       authorName: user.name,
       authorEmail: user.email,
       content: newPost.trim(),
       timestamp: new Date().toISOString(),
-    })
-    setPosts(getCommunityPosts(community.id))
+      likes: 0,
+    }
+    addPost(post)
+    setPosts((prev) => [post, ...prev])
     setNewPost("")
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Feed de {community.nombre}</h1>
+        <h1 className="text-2xl font-bold text-foreground">Comunidad</h1>
         <p className="text-sm text-muted-foreground">Publica anuncios y mensajes para tu equipo</p>
       </div>
 
-      {/* Post composer */}
       <Card className="border-border/50">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full shrink-0" style={{ backgroundColor: `${community.color}20` }}>
-              <Shield className="h-4 w-4" style={{ color: community.color }} />
+            <div className="flex h-9 w-9 items-center justify-center rounded-full shrink-0" style={{ backgroundColor: `${community?.color || "#6366f1"}20` }}>
+              <Shield className="h-4 w-4" style={{ color: community?.color || "#6366f1" }} />
             </div>
             <div className="flex-1">
               <textarea
@@ -65,7 +98,6 @@ export default function LeaderComunidadPage() {
         </CardContent>
       </Card>
 
-      {/* Posts */}
       {posts.length > 0 ? (
         <div className="space-y-3">
           {posts.map((post) => (
@@ -78,11 +110,9 @@ export default function LeaderComunidadPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-foreground">{post.authorName}</span>
-                      {post.authorEmail === community.leaderEmail && (
-                        <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ backgroundColor: `${community.color}20`, color: community.color }}>
-                          Lider
-                        </span>
-                      )}
+                      <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ backgroundColor: `${community?.color || "#6366f1"}20`, color: community?.color || "#6366f1" }}>
+                        Lider
+                      </span>
                       <span className="text-[10px] text-muted-foreground">
                         {new Date(post.timestamp).toLocaleDateString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                       </span>
@@ -103,9 +133,9 @@ export default function LeaderComunidadPage() {
       ) : (
         <Card className="border-border/50">
           <CardContent className="py-16 text-center">
-            <MessagesSquare className="mx-auto h-10 w-10 text-muted-foreground/20" />
-            <p className="mt-3 text-sm text-muted-foreground">Sin publicaciones aun.</p>
-            <p className="mt-1 text-xs text-muted-foreground/60">Se el primero en publicar algo.</p>
+            <MessagesSquare className="mx-auto h-12 w-12 text-muted-foreground/15" />
+            <p className="mt-4 text-sm font-medium text-foreground">Se el primero en publicar algo</p>
+            <p className="mt-1.5 text-xs text-muted-foreground">Las publicaciones de tu comunidad apareceran aqui.</p>
           </CardContent>
         </Card>
       )}

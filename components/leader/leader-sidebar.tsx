@@ -25,6 +25,7 @@ const NAV_ITEMS = [
   { href: "/leader/comunidad", label: "Comunidad", icon: MessagesSquare },
   { href: "/leader/mi-link", label: "Mi Link", icon: Link2 },
   { href: "/leader/suscripcion", label: "Suscripcion", icon: CreditCard },
+  { href: "/leader/configuracion", label: "Configuracion", icon: Settings },
 ]
 
 export function LeaderSidebar() {

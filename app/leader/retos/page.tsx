@@ -1,12 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useAuth } from "@/lib/auth-context"
-import { getCommunityById } from "@/lib/communities-data"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useLeaderCommunity } from "@/hooks/use-leader-community"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Trophy, Plus, Flame, Calendar, Users, Trash2 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Trophy, Plus, Flame, Calendar, Trash2 } from "lucide-react"
 
 interface CommunityChallenge {
   id: string
@@ -21,13 +19,14 @@ interface CommunityChallenge {
 }
 
 function getChallenges(communityId: string): CommunityChallenge[] {
+  if (typeof window === "undefined") return []
   try {
     const raw = localStorage.getItem("mf_community_challenges") || "[]"
     return (JSON.parse(raw) as CommunityChallenge[]).filter((c) => c.communityId === communityId)
   } catch { return [] }
 }
 
-function saveChallenge(challenge: CommunityChallenge) {
+function saveChallengeLocal(challenge: CommunityChallenge) {
   try {
     const raw = localStorage.getItem("mf_community_challenges") || "[]"
     const all = JSON.parse(raw) as CommunityChallenge[]
@@ -36,7 +35,7 @@ function saveChallenge(challenge: CommunityChallenge) {
   } catch { /* noop */ }
 }
 
-function deleteChallenge(id: string) {
+function deleteChallengeLocal(id: string) {
   try {
     const raw = localStorage.getItem("mf_community_challenges") || "[]"
     const all = (JSON.parse(raw) as CommunityChallenge[]).filter((c) => c.id !== id)
@@ -45,8 +44,7 @@ function deleteChallenge(id: string) {
 }
 
 export default function LeaderRetosPage() {
-  const { user } = useAuth()
-  const community = user?.communityId ? getCommunityById(user.communityId) : undefined
+  const { community, loading } = useLeaderCommunity()
   const [challenges, setChallenges] = useState<CommunityChallenge[]>([])
   const [showForm, setShowForm] = useState(false)
   const [titulo, setTitulo] = useState("")
@@ -56,13 +54,19 @@ export default function LeaderRetosPage() {
   const [metrica, setMetrica] = useState("leads")
 
   useEffect(() => {
-    if (user?.communityId) setChallenges(getChallenges(user.communityId))
-  }, [user?.communityId])
+    if (community?.id) setChallenges(getChallenges(community.id))
+  }, [community?.id])
 
-  if (!community) return <p className="py-10 text-center text-muted-foreground">Comunidad no encontrada.</p>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+      </div>
+    )
+  }
 
   const handleCreate = () => {
-    if (!titulo.trim()) return
+    if (!titulo.trim() || !community) return
     const newChallenge: CommunityChallenge = {
       id: `reto-${Date.now()}`,
       communityId: community.id,
@@ -74,7 +78,7 @@ export default function LeaderRetosPage() {
       activo: true,
       createdAt: new Date().toISOString(),
     }
-    saveChallenge(newChallenge)
+    saveChallengeLocal(newChallenge)
     setChallenges((prev) => [newChallenge, ...prev])
     setTitulo("")
     setDescripcion("")
@@ -82,7 +86,7 @@ export default function LeaderRetosPage() {
   }
 
   const handleDelete = (id: string) => {
-    deleteChallenge(id)
+    deleteChallengeLocal(id)
     setChallenges((prev) => prev.filter((c) => c.id !== id))
   }
 
@@ -92,7 +96,7 @@ export default function LeaderRetosPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Retos de {community.nombre}</h1>
+          <h1 className="text-2xl font-bold text-foreground">Retos</h1>
           <p className="text-sm text-muted-foreground">Crea retos para motivar a tu equipo</p>
         </div>
         <Button onClick={() => setShowForm(!showForm)} className="gap-1.5">
@@ -151,7 +155,7 @@ export default function LeaderRetosPage() {
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10 shrink-0">
                         <Icon className="h-4 w-4 text-amber-500" />
                       </div>
                       <div>
@@ -175,9 +179,9 @@ export default function LeaderRetosPage() {
       ) : (
         <Card className="border-border/50">
           <CardContent className="py-16 text-center">
-            <Trophy className="mx-auto h-10 w-10 text-muted-foreground/20" />
-            <p className="mt-3 text-sm text-muted-foreground">No hay retos creados.</p>
-            <p className="mt-1 text-xs text-muted-foreground/60">Crea retos para motivar a tu equipo.</p>
+            <Trophy className="mx-auto h-12 w-12 text-muted-foreground/15" />
+            <p className="mt-4 text-sm font-medium text-foreground">Crea retos para motivar a tu equipo</p>
+            <p className="mt-1.5 text-xs text-muted-foreground">Los retos ayudan a tus miembros a mantener el enfoque y alcanzar sus metas.</p>
           </CardContent>
         </Card>
       )}
