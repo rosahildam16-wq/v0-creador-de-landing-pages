@@ -56,12 +56,18 @@ const DEFAULT_COMMUNITIES: Community[] = [
   },
 ]
 
-// ----- Storage helpers -----
+// ----- Storage helpers (with sessionStorage fallback for iframe/third-party contexts) -----
 function safeGet(key: string): string | null {
-  try { return localStorage.getItem(key) } catch { return null }
+  try {
+    const val = localStorage.getItem(key)
+    if (val !== null) return val
+  } catch { /* noop */ }
+  try { return sessionStorage.getItem(key) } catch { /* noop */ }
+  return null
 }
 function safeSet(key: string, value: string) {
   try { localStorage.setItem(key, value) } catch { /* noop */ }
+  try { sessionStorage.setItem(key, value) } catch { /* noop */ }
 }
 
 // ----- Communities CRUD -----
