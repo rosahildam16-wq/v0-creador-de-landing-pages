@@ -9,7 +9,9 @@ import { Eye, EyeOff, ArrowRight, Sparkles, Bot, TrendingUp, Network } from "luc
 
 export default function LoginPage() {
   const router = useRouter()
-  const { login, isAuthenticated, isLoading: authLoading, user } = useAuth()
+  const { login, register, isAuthenticated, isLoading: authLoading, user } = useAuth()
+  const [mode, setMode] = useState<"login" | "register">("login")
+  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -39,17 +41,39 @@ export default function LoginPage() {
     )
   }
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
     setIsSubmitting(true)
-    const ok = await login(email, password)
-    if (ok) {
-      // Redirect will happen via the useEffect watching isAuthenticated + user
+
+    if (mode === "register") {
+      if (!name.trim()) {
+        setError("Ingresa tu nombre completo.")
+        setIsSubmitting(false)
+        return
+      }
+      if (password.length < 6) {
+        setError("La contrasena debe tener al menos 6 caracteres.")
+        setIsSubmitting(false)
+        return
+      }
+      const ok = await register(name, email, password)
+      if (!ok) {
+        setError("Este email ya esta registrado. Intenta iniciar sesion.")
+        setIsSubmitting(false)
+      }
     } else {
-      setError("Credenciales incorrectas. Verifica tu email y contrasena.")
-      setIsSubmitting(false)
+      const ok = await login(email, password)
+      if (!ok) {
+        setError("Credenciales incorrectas. Verifica tu email y contrasena.")
+        setIsSubmitting(false)
+      }
     }
+  }
+
+  const toggleMode = () => {
+    setMode((m) => m === "login" ? "register" : "login")
+    setError("")
   }
 
   const features = [
@@ -153,19 +177,45 @@ export default function LoginPage() {
                 <MagicFunnelLogo size="md" animated />
               </div>
 
+              {/* Mode toggle tabs */}
+              <div className="mb-6 flex rounded-xl border border-white/[0.06] bg-white/[0.02] p-1">
+                <button
+                  type="button"
+                  onClick={() => { setMode("login"); setError("") }}
+                  className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-all duration-300 ${
+                    mode === "login"
+                      ? "bg-violet-600/20 text-violet-300 shadow-sm"
+                      : "text-violet-400/40 hover:text-violet-300/60"
+                  }`}
+                >
+                  Iniciar Sesion
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setMode("register"); setError("") }}
+                  className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-all duration-300 ${
+                    mode === "register"
+                      ? "bg-violet-600/20 text-violet-300 shadow-sm"
+                      : "text-violet-400/40 hover:text-violet-300/60"
+                  }`}
+                >
+                  Registrarse
+                </button>
+              </div>
+
               {/* Header */}
               <div className="mb-8">
                 <div className="flex items-center gap-2 mb-3 justify-center lg:justify-start">
                   <Sparkles className="w-4 h-4 text-violet-400" />
                   <span className="text-[11px] font-bold text-violet-400/80 tracking-[0.2em] uppercase">
-                    Acceso Premium
+                    {mode === "login" ? "Acceso Premium" : "Crear Cuenta"}
                   </span>
                 </div>
                 <h2 className="text-[1.65rem] font-bold text-white tracking-tight text-center lg:text-left">
-                  Bienvenido de vuelta
+                  {mode === "login" ? "Bienvenido de vuelta" : "Unete a Magic Funnel"}
                 </h2>
                 <p className="mt-2 text-sm text-violet-300/40 text-center lg:text-left">
-                  Ingresa tus credenciales para continuar
+                  {mode === "login" ? "Ingresa tus credenciales para continuar" : "Crea tu cuenta y comienza a crecer"}
                 </p>
               </div>
 
@@ -177,7 +227,33 @@ export default function LoginPage() {
               )}
 
               {/* Form */}
-              <form onSubmit={handleLogin} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Name field (register only) */}
+                {mode === "register" && (
+                  <div>
+                    <label htmlFor="login-name" className="block text-xs font-medium text-violet-200/60 mb-2 ml-0.5">
+                      Nombre completo
+                    </label>
+                    <div className={`relative rounded-xl border transition-all duration-300 ${
+                      focusedField === "name"
+                        ? "border-violet-500/40 shadow-[0_0_0_3px_rgba(139,92,246,0.06)]"
+                        : "border-white/[0.06] hover:border-white/[0.10]"
+                    }`}>
+                      <input
+                        id="login-name"
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        onFocus={() => setFocusedField("name")}
+                        onBlur={() => setFocusedField(null)}
+                        placeholder="Tu nombre completo"
+                        className="w-full px-4 py-3 bg-transparent text-white text-sm placeholder:text-violet-400/25 focus:outline-none rounded-xl"
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <label htmlFor="login-email" className="block text-xs font-medium text-violet-200/60 mb-2 ml-0.5">
                     Email
@@ -206,9 +282,11 @@ export default function LoginPage() {
                     <label htmlFor="login-password" className="block text-xs font-medium text-violet-200/60">
                       Contrasena
                     </label>
-                    <button type="button" className="text-[11px] text-violet-400/60 hover:text-violet-400 transition-colors">
-                      Olvidaste tu contrasena?
-                    </button>
+                    {mode === "login" && (
+                      <button type="button" className="text-[11px] text-violet-400/60 hover:text-violet-400 transition-colors">
+                        Olvidaste tu contrasena?
+                      </button>
+                    )}
                   </div>
                   <div className={`relative rounded-xl border transition-all duration-300 ${
                     focusedField === "password"
@@ -246,11 +324,11 @@ export default function LoginPage() {
                     {isSubmitting ? (
                       <>
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Ingresando...
+                        {mode === "login" ? "Ingresando..." : "Creando cuenta..."}
                       </>
                     ) : (
                       <>
-                        Iniciar Sesion
+                        {mode === "login" ? "Iniciar Sesion" : "Crear Cuenta"}
                         <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                       </>
                     )}
@@ -272,10 +350,14 @@ export default function LoginPage() {
               </div>
 
               <p className="mt-6 text-center text-sm text-violet-300/30">
-                {"No tienes cuenta? "}
-                <a href="/pricing" className="text-violet-400 hover:text-violet-300 font-medium transition-colors">
-                  Ver planes y precios
-                </a>
+                {mode === "login" ? "No tienes cuenta? " : "Ya tienes cuenta? "}
+                <button
+                  type="button"
+                  onClick={toggleMode}
+                  className="text-violet-400 hover:text-violet-300 font-medium transition-colors"
+                >
+                  {mode === "login" ? "Registrate aqui" : "Inicia sesion"}
+                </button>
               </p>
             </div>
 

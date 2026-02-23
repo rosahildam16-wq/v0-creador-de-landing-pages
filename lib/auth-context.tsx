@@ -17,6 +17,7 @@ interface AuthContextType {
   isAuthenticated: boolean
   user: AuthUser | null
   login: (email: string, password: string) => Promise<boolean>
+  register: (name: string, email: string, password: string) => Promise<boolean>
   logout: () => void
   isLoading: boolean
 }
@@ -126,8 +127,77 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return true
     }
 
+    // Check registered users
+    try {
+      const registryRaw = safeGet("mf_registry") || "[]"
+      const registry = JSON.parse(registryRaw) as Array<{ email: string; name: string; password: string }>
+      const registered = registry.find((r) => r.email === normalizedEmail && r.password === password)
+      if (registered) {
+        const memberId = `reg-${normalizedEmail.replace(/[^a-z0-9]/g, "")}`
+        const userData: AuthUser = {
+          email: normalizedEmail,
+          name: registered.name,
+          role: "member",
+          memberId,
+        }
+        setUser(userData)
+        setIsAuthenticated(true)
+        safeSet("mf_auth", JSON.stringify(userData))
+        setIsLoading(false)
+        return true
+      }
+    } catch { /* noop */ }
+
     setIsLoading(false)
     return false
+  }
+
+  const register = async (name: string, email: string, password: string): Promise<boolean> => {
+    setIsLoading(true)
+    await new Promise((r) => setTimeout(r, 1200))
+
+    const normalizedEmail = email.toLowerCase().trim()
+    const trimmedName = name.trim()
+
+    if (!trimmedName || !normalizedEmail || password.length < 6) {
+      setIsLoading(false)
+      return false
+    }
+
+    // Check if already exists as admin
+    if (normalizedEmail === "iajorgeleon21@gmail.com") {
+      setIsLoading(false)
+      return false
+    }
+
+    // Save registered user to localStorage registry
+    try {
+      const registryRaw = safeGet("mf_registry") || "[]"
+      const registry = JSON.parse(registryRaw) as Array<{ email: string; name: string; password: string }>
+      
+      // Check duplicate
+      if (registry.some((r) => r.email === normalizedEmail)) {
+        setIsLoading(false)
+        return false
+      }
+
+      registry.push({ email: normalizedEmail, name: trimmedName, password })
+      safeSet("mf_registry", JSON.stringify(registry))
+    } catch { /* noop */ }
+
+    const memberId = `reg-${normalizedEmail.replace(/[^a-z0-9]/g, "")}`
+    const userData: AuthUser = {
+      email: normalizedEmail,
+      name: trimmedName,
+      role: "member",
+      memberId,
+    }
+
+    setUser(userData)
+    setIsAuthenticated(true)
+    safeSet("mf_auth", JSON.stringify(userData))
+    setIsLoading(false)
+    return true
   }
 
   const logout = () => {
@@ -138,7 +208,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, register, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   )
