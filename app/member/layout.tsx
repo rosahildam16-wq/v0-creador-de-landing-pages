@@ -7,6 +7,7 @@ import { MemberSidebar } from "@/components/member/member-sidebar"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
 import { NotificationBell } from "@/components/shared/notification-bell"
 import { ThemeToggle } from "@/components/shared/theme-toggle"
+import { MemberProfileDropdown } from "@/components/member/member-profile-dropdown"
 import { SubscriptionGuard } from "@/components/subscription-guard"
 
 export default function MemberLayout({ children }: { children: React.ReactNode }) {
@@ -57,9 +58,10 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
       <MemberSidebar />
       <main className="relative z-10 flex-1 overflow-auto">
         {/* Top bar with notifications */}
-        <div className="sticky top-0 z-30 flex items-center justify-end gap-2 px-6 py-3">
+        <div className="sticky top-0 z-30 flex items-center justify-end gap-2 px-6 py-3 backdrop-blur-sm">
           <ThemeToggle />
           <NotificationBell />
+          <MemberProfileDropdown />
         </div>
         <div className="mx-auto max-w-4xl px-6 pb-6">
           <SubscriptionGuard>
