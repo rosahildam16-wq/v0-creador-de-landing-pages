@@ -93,7 +93,8 @@ create policy "bookmarks_delete_own" on public.community_bookmarks
   for delete using (auth.uid() = user_id);
 
 -- Updated_at triggers
+drop trigger if exists community_posts_updated_at on public.community_posts;
 create trigger community_posts_updated_at
   before update on public.community_posts
   for each row
-  execute function update_updated_at_column();
+  execute function public.update_updated_at();

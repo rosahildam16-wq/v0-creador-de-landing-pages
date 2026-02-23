@@ -48,7 +48,8 @@ create trigger on_auth_user_created
   execute function public.handle_new_user();
 
 -- Updated_at trigger for profiles
+drop trigger if exists profiles_updated_at on public.profiles;
 create trigger profiles_updated_at
   before update on public.profiles
   for each row
-  execute function update_updated_at_column();
+  execute function public.update_updated_at();
