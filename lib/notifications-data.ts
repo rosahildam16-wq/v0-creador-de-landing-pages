@@ -9,7 +9,7 @@ export interface AppNotification {
   mensaje: string
   timestamp: string
   leida: boolean
-  destinatario: "all" | "admin" | "member"
+  destinatario: "all" | "admin" | "super_admin" | "leader" | "member"
   icono?: string
   accentColor?: string
 }
@@ -124,7 +124,13 @@ function getDynamicNotifications(): AppNotification[] {
 export function getNotificationsForRole(role: UserRole): AppNotification[] {
   const all = [...getDynamicNotifications(), ...DEFAULT_NOTIFICATIONS]
   return all
-    .filter((n) => n.destinatario === "all" || n.destinatario === role)
+    .filter((n) => {
+      if (n.destinatario === "all") return true
+      if (n.destinatario === role) return true
+      // "admin" notifications go to both super_admin and leader
+      if (n.destinatario === "admin" && (role === "super_admin" || role === "leader")) return true
+      return false
+    })
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 }
 
