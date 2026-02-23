@@ -18,9 +18,12 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
     if (!isLoading && !isAuthenticated) {
       router.replace("/login")
     }
-    // If authenticated but not a member, redirect to admin
-    if (!isLoading && isAuthenticated && user?.role === "admin") {
+    // Redirect non-members to their appropriate panel
+    if (!isLoading && isAuthenticated && user?.role === "super_admin") {
       router.replace("/admin")
+    }
+    if (!isLoading && isAuthenticated && user?.role === "leader") {
+      router.replace("/leader")
     }
   }, [isAuthenticated, isLoading, user, router])
 

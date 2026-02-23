@@ -12,6 +12,9 @@ export interface Community {
   color: string
   descripcion: string
   activa: boolean
+  leaderEmail: string | null // email del lider de la comunidad
+  leaderName: string | null
+  cuota_miembro: number // cuanto pagan los miembros mensualmente (USD)
   createdAt: string
 }
 
@@ -33,6 +36,9 @@ const DEFAULT_COMMUNITIES: Community[] = [
     color: "#8b5cf6",
     descripcion: "Comunidad exclusiva del equipo Skalia. Acceso completo a herramientas premium y embudos especializados.",
     activa: true,
+    leaderEmail: "iajorgeleon21@gmail.com",
+    leaderName: "Jorge Leon",
+    cuota_miembro: 10,
     createdAt: "2026-01-15T00:00:00Z",
   },
   {
@@ -43,6 +49,9 @@ const DEFAULT_COMMUNITIES: Community[] = [
     color: "#6366f1",
     descripcion: "Usuarios registrados sin comunidad especifica. Acceso basico a la plataforma.",
     activa: true,
+    leaderEmail: null,
+    leaderName: null,
+    cuota_miembro: 0,
     createdAt: "2026-01-01T00:00:00Z",
   },
 ]
@@ -67,6 +76,22 @@ export function getAllCommunities(): Community[] {
 
 export function getCommunityById(id: string): Community | undefined {
   return getAllCommunities().find((c) => c.id === id)
+}
+
+/**
+ * Get the community where this email is the leader.
+ */
+export function getLeaderCommunity(email: string): Community | undefined {
+  if (!email) return undefined
+  const normalized = email.toLowerCase().trim()
+  return getAllCommunities().find((c) => c.leaderEmail?.toLowerCase() === normalized && c.activa)
+}
+
+/**
+ * Check if a given email is a leader of any community.
+ */
+export function isLeader(email: string): boolean {
+  return !!getLeaderCommunity(email)
 }
 
 export function getCommunityByCode(code: string): Community | undefined {

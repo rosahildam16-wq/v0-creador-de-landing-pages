@@ -4,16 +4,17 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 import { useRouter } from "next/navigation"
 import { TEAM_MEMBERS } from "./team-data"
 import { addNotification } from "./notifications-data"
-import { getCommunityByCode, setMemberCommunity } from "./communities-data"
+import { getCommunityByCode, setMemberCommunity, getLeaderCommunity } from "./communities-data"
 import { updateMemberFunnels } from "./team-data"
 
-export type UserRole = "admin" | "member"
+export type UserRole = "super_admin" | "leader" | "member"
 
 export interface AuthUser {
   email: string
   name: string
   role: UserRole
   memberId?: string
+  communityId?: string
 }
 
 interface AuthContextType {
@@ -86,9 +87,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const normalizedEmail = email.toLowerCase().trim()
 
-    // Check admin credentials
+    // Check Super Admin credentials
     if (normalizedEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      const userData: AuthUser = { email: ADMIN_EMAIL, name: "Jorge Leon", role: "admin" }
+      const userData: AuthUser = { email: ADMIN_EMAIL, name: "Jorge Leon", role: "super_admin" }
       setUser(userData)
       setIsAuthenticated(true)
       safeSet("mf_auth", JSON.stringify(userData))
@@ -98,14 +99,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Check launch test code (free trial for team members)
     if (password === LAUNCH_TEST_CODE) {
-      // Create a dynamic member from their email
       const existingMember = TEAM_MEMBERS.find((m) => m.email.toLowerCase() === normalizedEmail)
       const nameFromEmail = normalizedEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+      const memberId = existingMember?.id || `test-${normalizedEmail.replace(/[^a-z0-9]/g, "")}`
+
+      // Check if this email is a community leader
+      const leaderComm = getLeaderCommunity(normalizedEmail)
+      if (leaderComm) {
+        const userData: AuthUser = {
+          email: normalizedEmail,
+          name: existingMember?.nombre || nameFromEmail,
+          role: "leader",
+          memberId,
+          communityId: leaderComm.id,
+        }
+        setUser(userData)
+        setIsAuthenticated(true)
+        safeSet("mf_auth", JSON.stringify(userData))
+        setIsLoading(false)
+        return true
+      }
+
       const userData: AuthUser = {
         email: normalizedEmail,
         name: existingMember?.nombre || nameFromEmail,
         role: "member",
-        memberId: existingMember?.id || `test-${normalizedEmail.replace(/[^a-z0-9]/g, "")}`,
+        memberId,
       }
       setUser(userData)
       setIsAuthenticated(true)
@@ -117,11 +136,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Check team member credentials
     const member = TEAM_MEMBERS.find((m) => m.email.toLowerCase() === normalizedEmail)
     if (member && password === MEMBER_DEFAULT_PASSWORD) {
+      // Check if this member is a leader
+      const leaderComm = getLeaderCommunity(normalizedEmail)
       const userData: AuthUser = {
         email: member.email,
         name: member.nombre,
-        role: "member",
+        role: leaderComm ? "leader" : "member",
         memberId: member.id,
+        communityId: leaderComm?.id,
       }
       setUser(userData)
       setIsAuthenticated(true)
@@ -137,11 +159,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const registered = registry.find((r) => r.email === normalizedEmail && r.password === password)
       if (registered) {
         const memberId = `reg-${normalizedEmail.replace(/[^a-z0-9]/g, "")}`
+        const leaderComm = getLeaderCommunity(normalizedEmail)
         const userData: AuthUser = {
           email: normalizedEmail,
           name: registered.name,
-          role: "member",
+          role: leaderComm ? "leader" : "member",
           memberId,
+          communityId: leaderComm?.id,
         }
         setUser(userData)
         setIsAuthenticated(true)
@@ -214,7 +238,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       updateMemberFunnels(memberId, community.embudos_default)
     }
 
-    // Send notification to admin
+    // Send notification to admin and leader
     const codeLabel = code ? ` | Codigo: ${code}` : ""
     addNotification({
       tipo: "team",
@@ -230,6 +254,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       name: trimmedName,
       role: "member",
       memberId,
+      communityId,
     }
 
     setUser(userData)

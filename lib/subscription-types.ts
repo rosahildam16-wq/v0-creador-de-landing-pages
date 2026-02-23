@@ -29,7 +29,7 @@ export interface SubscriptionPlan {
 export interface Subscription {
   id: string
   user_email: string
-  user_role: "admin" | "member"
+  user_role: "super_admin" | "leader" | "member"
   plan_id: string
   status: SubscriptionStatus
   trial_starts_at: string | null

@@ -26,7 +26,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!authLoading && isAuthenticated && user) {
-      router.replace(user.role === "member" ? "/member" : "/admin")
+      if (user.role === "super_admin") router.replace("/admin")
+      else if (user.role === "leader") router.replace("/leader")
+      else router.replace("/member")
     }
   }, [isAuthenticated, authLoading, user, router])
 
