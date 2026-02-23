@@ -202,7 +202,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Community metric cards */}
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
             <MetricCard
               title="Total Miembros"
               value={commStats.totalMembers ?? 0}
@@ -211,16 +211,23 @@ export default function AdminDashboard() {
               icon={Users}
             />
             <MetricCard
-              title="Hoy"
-              value={commStats.membersToday ?? 0}
-              change="Registros nuevos"
-              changeType="neutral"
-              icon={UserPlus}
+              title="En Trial Gratis"
+              value={commStats.membersInTrial ?? 0}
+              change={`${commStats.membersTrialExpired ?? 0} expirados`}
+              changeType={commStats.membersInTrial > 0 ? "positive" : "neutral"}
+              icon={Clock}
+            />
+            <MetricCard
+              title="Pagando"
+              value={commStats.payingMembers ?? 0}
+              change={`De ${commStats.activeMembers ?? 0} activos`}
+              changeType="positive"
+              icon={CreditCard}
             />
             <MetricCard
               title="MRR Estimado"
               value={`$${(commStats.mrrEstimado ?? 0).toLocaleString()}`}
-              change={`${commStats.activeMembers ?? 0} activos x $${commStats.cuotaBase ?? 17}`}
+              change={`${commStats.payingMembers ?? 0} pagando x $${commStats.cuotaBase ?? 17}`}
               changeType="positive"
               icon={DollarSign}
             />
@@ -292,11 +299,16 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col gap-4">
-                  {(commStats.communityStats || []).map((c: { id: string; nombre: string; color: string; total_miembros: number; activos: number; mrr: number; cuota_miembro: number; leader_name: string | null; codigo: string | null }) => (
+                  {(commStats.communityStats || []).map((c: { id: string; nombre: string; color: string; total_miembros: number; activos: number; en_trial: number; pagando: number; mrr: number; cuota_miembro: number; free_trial_days: number; leader_name: string | null; codigo: string | null }) => (
                     <div key={c.id} className="rounded-xl border border-border/50 p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="h-3 w-3 rounded-full" style={{ backgroundColor: c.color }} />
                         <span className="font-semibold text-sm">{c.nombre}</span>
+                        {c.free_trial_days > 0 && (
+                          <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+                            {c.free_trial_days} dias gratis
+                          </span>
+                        )}
                         {c.codigo && (
                           <span className="ml-auto rounded-full bg-secondary px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
                             {c.codigo}
@@ -306,14 +318,18 @@ export default function AdminDashboard() {
                       {c.leader_name && (
                         <p className="text-[11px] text-muted-foreground mb-2">Lider: {c.leader_name}</p>
                       )}
-                      <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="grid grid-cols-4 gap-2 text-center">
                         <div>
                           <p className="text-lg font-bold">{c.total_miembros}</p>
                           <p className="text-[10px] text-muted-foreground">Miembros</p>
                         </div>
                         <div>
-                          <p className="text-lg font-bold text-emerald-400">{c.activos}</p>
-                          <p className="text-[10px] text-muted-foreground">Activos</p>
+                          <p className="text-lg font-bold text-amber-400">{c.en_trial}</p>
+                          <p className="text-[10px] text-muted-foreground">En Trial</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-emerald-400">{c.pagando}</p>
+                          <p className="text-[10px] text-muted-foreground">Pagando</p>
                         </div>
                         <div>
                           <p className="text-lg font-bold text-violet-400">${c.mrr}</p>
@@ -352,8 +368,11 @@ export default function AdminDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(commStats.recentRegistrations || []).map((reg: { name: string; email: string; community_id: string; discount_code: string | null; sponsor_name: string | null; created_at: string; activo: boolean }, i: number) => {
+                  {(commStats.recentRegistrations || []).map((reg: { name: string; email: string; community_id: string; discount_code: string | null; sponsor_name: string | null; trial_status: string; trial_ends_at: string | null; created_at: string; activo: boolean }, i: number) => {
                     const comm = (commStats.communityStats || []).find((c: { id: string }) => c.id === reg.community_id)
+                    const trialDaysLeft = reg.trial_ends_at
+                      ? Math.max(0, Math.ceil((new Date(reg.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+                      : 0
                     return (
                       <TableRow key={i}>
                         <TableCell className="py-2 text-sm font-medium">{reg.name}</TableCell>
@@ -378,13 +397,23 @@ export default function AdminDashboard() {
                           {new Date(reg.created_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" })}
                         </TableCell>
                         <TableCell className="py-2">
-                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                            reg.activo
-                              ? "bg-emerald-500/10 text-emerald-400"
-                              : "bg-amber-500/10 text-amber-400"
-                          }`}>
-                            {reg.activo ? "Activo" : "Pendiente"}
-                          </span>
+                          {reg.trial_status === "trial" ? (
+                            <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+                              Trial ({trialDaysLeft}d)
+                            </span>
+                          ) : reg.trial_status === "expired" ? (
+                            <span className="inline-flex items-center rounded-full bg-red-500/10 px-2 py-0.5 text-[10px] font-medium text-red-400">
+                              Trial vencido
+                            </span>
+                          ) : reg.activo ? (
+                            <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+                              Activo
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full bg-zinc-500/10 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
+                              Pendiente
+                            </span>
+                          )}
                         </TableCell>
                       </TableRow>
                     )

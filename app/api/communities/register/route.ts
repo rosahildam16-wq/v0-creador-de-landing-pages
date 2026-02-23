@@ -41,10 +41,11 @@ export async function POST(req: NextRequest) {
     // Find community by code
     let communityId = "general"
     let communityName = "General"
+    let freeTrialDays = 0
     if (code) {
       const { data: comm } = await supabase
         .from("communities")
-        .select("id, nombre")
+        .select("id, nombre, free_trial_days")
         .eq("codigo", code)
         .eq("activa", true)
         .maybeSingle()
@@ -52,12 +53,22 @@ export async function POST(req: NextRequest) {
       if (comm) {
         communityId = comm.id
         communityName = comm.nombre
+        freeTrialDays = comm.free_trial_days || 0
       }
     }
 
     // Insert member into community_members
     const memberId = `reg-${normalizedEmail.replace(/[^a-z0-9]/g, "")}`
     const sponsorTrimmed = (sponsorName || "").trim() || null
+
+    // Calculate trial end date if community offers free trial
+    let trialEndsAt: string | null = null
+    if (freeTrialDays > 0) {
+      const trialEnd = new Date()
+      trialEnd.setDate(trialEnd.getDate() + freeTrialDays)
+      trialEndsAt = trialEnd.toISOString()
+    }
+
     const { error: insertError } = await supabase.from("community_members").insert({
       member_id: memberId,
       community_id: communityId,
@@ -66,6 +77,7 @@ export async function POST(req: NextRequest) {
       password_hash: password, // In production, hash with bcrypt
       discount_code: code || null,
       sponsor_name: sponsorTrimmed,
+      trial_ends_at: trialEndsAt,
     })
 
     if (insertError) {
@@ -88,6 +100,8 @@ export async function POST(req: NextRequest) {
       memberId,
       communityId,
       communityName,
+      trialEndsAt,
+      freeTrialDays,
     })
   } catch (err) {
     console.error("Register error:", err)

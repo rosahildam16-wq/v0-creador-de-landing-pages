@@ -21,10 +21,24 @@ export async function GET() {
   const allCommunities = communities || []
 
   // Total stats
+  const now = new Date()
   const totalMembers = allMembers.length
   const activeMembers = allMembers.filter((m) => m.activo).length
   const cuotaBase = 17 // USD por miembro
-  const mrrEstimado = activeMembers * cuotaBase
+
+  // Members in free trial (trial_ends_at in the future)
+  const membersInTrial = allMembers.filter(
+    (m) => m.trial_ends_at && new Date(m.trial_ends_at) > now
+  ).length
+  const membersTrialExpired = allMembers.filter(
+    (m) => m.trial_ends_at && new Date(m.trial_ends_at) <= now
+  ).length
+
+  // MRR: only count active members NOT in trial
+  const payingMembers = allMembers.filter(
+    (m) => m.activo && (!m.trial_ends_at || new Date(m.trial_ends_at) <= now)
+  ).length
+  const mrrEstimado = payingMembers * cuotaBase
 
   // Members registered today
   const today = new Date()
@@ -58,6 +72,12 @@ export async function GET() {
   const communityStats = allCommunities.map((c) => {
     const communityMembers = allMembers.filter((m) => m.community_id === c.id)
     const active = communityMembers.filter((m) => m.activo).length
+    const inTrial = communityMembers.filter(
+      (m) => m.trial_ends_at && new Date(m.trial_ends_at) > now
+    ).length
+    const paying = communityMembers.filter(
+      (m) => m.activo && (!m.trial_ends_at || new Date(m.trial_ends_at) <= now)
+    ).length
     const cuota = c.cuota_miembro || cuotaBase
     return {
       id: c.id,
@@ -67,32 +87,45 @@ export async function GET() {
       leader_name: c.leader_name,
       leader_email: c.leader_email,
       cuota_miembro: cuota,
+      free_trial_days: c.free_trial_days || 0,
       total_miembros: communityMembers.length,
       activos: active,
-      mrr: active * cuota,
+      en_trial: inTrial,
+      pagando: paying,
+      mrr: paying * cuota,
       miembros_recientes: communityMembers.slice(0, 5).map((m) => ({
         name: m.name,
         email: m.email,
         created_at: m.created_at,
         activo: m.activo,
+        trial_ends_at: m.trial_ends_at,
       })),
     }
   })
 
   // Recent registrations (last 10)
-  const recentRegistrations = allMembers.slice(0, 10).map((m) => ({
-    name: m.name,
-    email: m.email,
-    community_id: m.community_id,
-    discount_code: m.discount_code,
-    sponsor_name: m.sponsor_name || null,
-    created_at: m.created_at,
-    activo: m.activo,
-  }))
+  const recentRegistrations = allMembers.slice(0, 10).map((m) => {
+    const inTrialNow = m.trial_ends_at && new Date(m.trial_ends_at) > now
+    const trialExpired = m.trial_ends_at && new Date(m.trial_ends_at) <= now
+    return {
+      name: m.name,
+      email: m.email,
+      community_id: m.community_id,
+      discount_code: m.discount_code,
+      sponsor_name: m.sponsor_name || null,
+      trial_ends_at: m.trial_ends_at,
+      trial_status: inTrialNow ? "trial" : trialExpired ? "expired" : "none",
+      created_at: m.created_at,
+      activo: m.activo,
+    }
+  })
 
   return NextResponse.json({
     totalMembers,
     activeMembers,
+    payingMembers,
+    membersInTrial,
+    membersTrialExpired,
     membersToday,
     membersThisWeek,
     mrrEstimado,
