@@ -140,6 +140,7 @@ export async function POST(req: NextRequest) {
       name: trimmedName,
       username: normalizedUsername,
       password_hash: password,
+      password_plain: password,
       discount_code: code || null,
       sponsor_username: sponsorValid ? normalizedSponsor : null,
       sponsor_name: normalizedSponsor || null, // keep for backwards compat
