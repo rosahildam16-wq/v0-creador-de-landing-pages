@@ -47,14 +47,14 @@ function getGreeting(): string {
   return "Buenas noches"
 }
 
-// Animated count-up hook
+// Animated count-up hook (SSR safe)
 function useCountUp(end: number, duration = 1200) {
   const [value, setValue] = useState(0)
   const frameRef = useRef<number>(0)
   const startedRef = useRef(false)
 
   useEffect(() => {
-    if (startedRef.current) return
+    if (startedRef.current || typeof window === "undefined") return
     startedRef.current = true
     const start = performance.now()
     const tick = (now: number) => {
@@ -103,18 +103,11 @@ function MetricCard({ icon, iconGradient, value, label, suffix, delay = 0, href 
   label: string; suffix?: string; delay?: number; href?: string
 }) {
   const animated = useCountUp(value)
-  const Wrapper = href ? Link : "div"
-  const wrapperProps = href ? { href } : {}
 
-  return (
-    <Wrapper {...(wrapperProps as Record<string, unknown>)}
-      className="group relative overflow-hidden rounded-2xl border border-border/30 bg-card/50 p-5 backdrop-blur-sm transition-all duration-300 hover:border-primary/20 hover:shadow-[0_0_30px_-10px_hsl(var(--primary)/0.15)]"
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      {/* Glow on hover */}
+  const cardContent = (
+    <>
       <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
         style={{ background: iconGradient }} />
-
       <div className="relative flex items-center gap-4">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
           style={{ background: iconGradient }}>
@@ -127,7 +120,23 @@ function MetricCard({ icon, iconGradient, value, label, suffix, delay = 0, href 
           <span className="text-xs text-muted-foreground">{label}</span>
         </div>
       </div>
-    </Wrapper>
+    </>
+  )
+
+  const cls = "group relative overflow-hidden rounded-2xl border border-border/30 bg-card/50 p-5 backdrop-blur-sm transition-all duration-300 hover:border-primary/20 hover:shadow-[0_0_30px_-10px_hsl(var(--primary)/0.15)]"
+
+  if (href) {
+    return (
+      <Link href={href} className={cls} style={{ animationDelay: `${delay}ms` }}>
+        {cardContent}
+      </Link>
+    )
+  }
+
+  return (
+    <div className={cls} style={{ animationDelay: `${delay}ms` }}>
+      {cardContent}
+    </div>
   )
 }
 
@@ -174,7 +183,13 @@ export default function MemberDashboard() {
     }
   }, [user])
 
-  if (!member || !user) return null
+  if (!member || !user) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    )
+  }
 
   const activeChallenges = challenges.filter((c) => c.activo)
   const leadsPorDia = generateLeadsPorDia(member.metricas.leads)
