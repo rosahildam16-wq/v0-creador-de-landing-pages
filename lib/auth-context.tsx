@@ -3,9 +3,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { TEAM_MEMBERS } from "./team-data"
-import { addNotification } from "./notifications-data"
-import { getCommunityByCode, setMemberCommunity, getLeaderCommunity } from "./communities-data"
-import { updateMemberFunnels } from "./team-data"
+import { getLeaderCommunity } from "./communities-data"
 
 export type UserRole = "super_admin" | "leader" | "member"
 
@@ -152,26 +150,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return true
     }
 
-    // Check registered users
+    // Check registered users in Supabase
     try {
-      const registryRaw = safeGet("mf_registry") || "[]"
-      const registry = JSON.parse(registryRaw) as Array<{ email: string; name: string; password: string }>
-      const registered = registry.find((r) => r.email === normalizedEmail && r.password === password)
-      if (registered) {
-        const memberId = `reg-${normalizedEmail.replace(/[^a-z0-9]/g, "")}`
-        const leaderComm = getLeaderCommunity(normalizedEmail)
-        const userData: AuthUser = {
-          email: normalizedEmail,
-          name: registered.name,
-          role: leaderComm ? "leader" : "member",
-          memberId,
-          communityId: leaderComm?.id,
+      const res = await fetch(`/api/communities/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail, password }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.success) {
+          const leaderComm = getLeaderCommunity(normalizedEmail)
+          const userData: AuthUser = {
+            email: normalizedEmail,
+            name: data.name,
+            role: leaderComm ? "leader" : "member",
+            memberId: data.memberId,
+            communityId: data.communityId || leaderComm?.id,
+          }
+          setUser(userData)
+          setIsAuthenticated(true)
+          safeSet("mf_auth", JSON.stringify(userData))
+          setIsLoading(false)
+          return true
         }
-        setUser(userData)
-        setIsAuthenticated(true)
-        safeSet("mf_auth", JSON.stringify(userData))
-        setIsLoading(false)
-        return true
       }
     } catch { /* noop */ }
 
@@ -181,87 +183,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (name: string, email: string, password: string, discountCode?: string): Promise<boolean> => {
     setIsLoading(true)
-    await new Promise((r) => setTimeout(r, 1200))
 
-    const normalizedEmail = email.toLowerCase().trim()
-    const trimmedName = name.trim()
-    const code = discountCode?.trim().toUpperCase() || ""
-
-    if (!trimmedName || !normalizedEmail || password.length < 6) {
-      setIsLoading(false)
-      return false
-    }
-
-    // Check if already exists as admin
-    if (normalizedEmail === "iajorgeleon21@gmail.com") {
-      setIsLoading(false)
-      return false
-    }
-
-    // Save registered user to localStorage registry
     try {
-      const registryRaw = safeGet("mf_registry") || "[]"
-      const registry = JSON.parse(registryRaw) as Array<{ email: string; name: string; password: string; discountCode?: string; registeredAt?: string }>
-      
-      // Check duplicate
-      if (registry.some((r) => r.email === normalizedEmail)) {
+      const res = await fetch("/api/communities/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password, discountCode }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
         setIsLoading(false)
         return false
       }
 
-      registry.push({
+      const normalizedEmail = email.toLowerCase().trim()
+      const userData: AuthUser = {
         email: normalizedEmail,
-        name: trimmedName,
-        password,
-        discountCode: code || undefined,
-        registeredAt: new Date().toISOString(),
-      })
-      safeSet("mf_registry", JSON.stringify(registry))
-    } catch { /* noop */ }
+        name: name.trim(),
+        role: "member",
+        memberId: data.memberId,
+        communityId: data.communityId,
+      }
 
-    const memberId = `reg-${normalizedEmail.replace(/[^a-z0-9]/g, "")}`
-
-    // Assign community based on discount code
-    const community = code ? getCommunityByCode(code) : undefined
-    const communityId = community?.id || "general"
-    const communityName = community?.nombre || "General"
-
-    setMemberCommunity({
-      memberId,
-      communityId,
-      email: normalizedEmail,
-      name: trimmedName,
-    })
-
-    // Auto-enable community default funnels
-    if (community?.embudos_default && community.embudos_default.length > 0) {
-      updateMemberFunnels(memberId, community.embudos_default)
+      setUser(userData)
+      setIsAuthenticated(true)
+      safeSet("mf_auth", JSON.stringify(userData))
+      setIsLoading(false)
+      return true
+    } catch {
+      setIsLoading(false)
+      return false
     }
-
-    // Send notification to admin and leader
-    const codeLabel = code ? ` | Codigo: ${code}` : ""
-    addNotification({
-      tipo: "team",
-      titulo: "Nuevo registro de miembro",
-      mensaje: `${trimmedName} (${normalizedEmail}) se unio a la comunidad ${communityName}${codeLabel}. Ve a Comunidades para gestionar su acceso.`,
-      timestamp: new Date().toISOString(),
-      leida: false,
-      destinatario: "admin",
-    })
-
-    const userData: AuthUser = {
-      email: normalizedEmail,
-      name: trimmedName,
-      role: "member",
-      memberId,
-      communityId,
-    }
-
-    setUser(userData)
-    setIsAuthenticated(true)
-    safeSet("mf_auth", JSON.stringify(userData))
-    setIsLoading(false)
-    return true
   }
 
   const logout = () => {
