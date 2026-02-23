@@ -12,6 +12,11 @@ const _jetbrains = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbra
 export const metadata: Metadata = {
   title: 'Magic Funnel - Marketing Automation Premium',
   description: 'Convierte visitantes en clientes. La plataforma de marketing automation que las marcas premium eligen para escalar.',
+  icons: {
+    icon: '/favicon.jpg',
+    shortcut: '/favicon.jpg',
+    apple: '/favicon.jpg',
+  },
 }
 
 export const viewport: Viewport = {
