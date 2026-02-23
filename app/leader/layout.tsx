@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { LeaderSidebar } from "@/components/leader/leader-sidebar"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
-import { NotificationBell } from "@/components/shared/notification-bell"
 import { ThemeToggle } from "@/components/shared/theme-toggle"
 
 export default function LeaderLayout({ children }: { children: React.ReactNode }) {
@@ -52,7 +51,6 @@ export default function LeaderLayout({ children }: { children: React.ReactNode }
       <main className="relative z-10 flex-1 overflow-auto">
         <div className="sticky top-0 z-30 flex items-center justify-end gap-2 px-6 py-3 backdrop-blur-sm">
           <ThemeToggle />
-          <NotificationBell />
         </div>
         <div className="mx-auto max-w-7xl px-6 pb-6">
           {children}
