@@ -23,6 +23,7 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [focusedField, setFocusedField] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
+  const [justRegisteredAsLeader, setJustRegisteredAsLeader] = useState(false)
 
   // Username availability
   const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle")
@@ -85,10 +86,11 @@ export default function LoginPage() {
   useEffect(() => {
     if (!authLoading && isAuthenticated && user) {
       if (user.role === "super_admin") router.replace("/admin")
+      else if (user.role === "leader" && justRegisteredAsLeader) router.replace("/leader/elegir-plan")
       else if (user.role === "leader") router.replace("/leader")
       else router.replace("/member")
     }
-  }, [isAuthenticated, authLoading, user, router])
+  }, [isAuthenticated, authLoading, user, router, justRegisteredAsLeader])
 
   if (authLoading || isAuthenticated) {
     return (
@@ -128,6 +130,10 @@ export default function LoginPage() {
         setError("La contrasena debe tener al menos 6 caracteres.")
         setIsSubmitting(false)
         return
+      }
+      // Si no tiene codigo de comunidad, es lider nuevo -> mostrar pantalla de planes
+      if (!discountCode) {
+        setJustRegisteredAsLeader(true)
       }
       const ok = await register(name, email, password, username, discountCode || undefined, sponsorUsername.trim() || undefined)
       if (!ok) {
