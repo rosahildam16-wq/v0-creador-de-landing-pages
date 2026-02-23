@@ -26,6 +26,7 @@ export function VideoPlayer({ onContinue, videoSrc, embedUrl }: Props) {
   // For local video files (backwards compat)
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [videoError, setVideoError] = useState(false)
 
   // Vimeo postMessage listener
   useEffect(() => {
@@ -153,32 +154,48 @@ export function VideoPlayer({ onContinue, videoSrc, embedUrl }: Props) {
   return (
     <div className="relative flex min-h-dvh flex-col items-center justify-center bg-background">
       <div className="relative aspect-[9/16] w-full max-w-md overflow-hidden rounded-lg bg-secondary">
-        <video
-          className="h-full w-full object-cover"
-          playsInline
-          preload="auto"
-          autoPlay={isPlaying}
-          onTimeUpdate={(e) => {
-            const v = e.currentTarget
-            if (v.duration) setProgress((v.currentTime / v.duration) * 100)
-          }}
-          onEnded={() => setTimeout(() => onContinue(), 800)}
-          onCanPlay={() => setIsLoading(false)}
-          onLoadedData={() => setIsLoading(false)}
-          onError={() => setIsLoading(false)}
-          src={videoSrc}
-        >
-          <source src={videoSrc} type="video/mp4" />
-          <source src={videoSrc} type="video/quicktime" />
-        </video>
+        {!videoError ? (
+          <video
+            className="h-full w-full object-cover"
+            playsInline
+            preload="auto"
+            autoPlay={isPlaying}
+            onTimeUpdate={(e) => {
+              const v = e.currentTarget
+              if (v.duration) setProgress((v.currentTime / v.duration) * 100)
+            }}
+            onEnded={() => setTimeout(() => onContinue(), 800)}
+            onCanPlay={() => setIsLoading(false)}
+            onLoadedData={() => setIsLoading(false)}
+            onError={(e) => {
+              console.log("[v0] Video error:", e)
+              setIsLoading(false)
+              setVideoError(true)
+            }}
+          >
+            <source src={videoSrc} type="video/mp4" />
+            <source src={videoSrc} type="video/quicktime" />
+          </video>
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
+            <p className="text-sm text-muted-foreground">El video no pudo cargarse en este navegador.</p>
+            <button
+              type="button"
+              onClick={onContinue}
+              className="rounded-xl bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-transform hover:scale-105 active:scale-95"
+            >
+              Continuar
+            </button>
+          </div>
+        )}
 
-        {isLoading && (
+        {isLoading && !videoError && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/90">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
           </div>
         )}
 
-        {!isLoading && !isPlaying && (
+        {!isLoading && !isPlaying && !videoError && (
           <button type="button" onClick={handleStart}
             className="absolute inset-0 flex items-center justify-center bg-background/60"
             aria-label="Reproducir video">
@@ -188,7 +205,7 @@ export function VideoPlayer({ onContinue, videoSrc, embedUrl }: Props) {
           </button>
         )}
 
-        {isPlaying && (
+        {isPlaying && !videoError && (
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-secondary">
             <div className="h-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }} />
           </div>
