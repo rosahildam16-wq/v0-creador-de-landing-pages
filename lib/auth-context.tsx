@@ -78,12 +78,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const ADMIN_EMAIL = "iajorgeleon21@gmail.com"
     const ADMIN_PASSWORD = "Leon321$#"
     const MEMBER_DEFAULT_PASSWORD = "Member123$"
+    const LAUNCH_TEST_CODE = "LANZAMIENTO2026"
 
     const normalizedEmail = email.toLowerCase().trim()
 
     // Check admin credentials
     if (normalizedEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
       const userData: AuthUser = { email: ADMIN_EMAIL, name: "Jorge Leon", role: "admin" }
+      setUser(userData)
+      setIsAuthenticated(true)
+      safeSet("mf_auth", JSON.stringify(userData))
+      setIsLoading(false)
+      return true
+    }
+
+    // Check launch test code (free trial for team members)
+    if (password === LAUNCH_TEST_CODE) {
+      // Create a dynamic member from their email
+      const existingMember = TEAM_MEMBERS.find((m) => m.email.toLowerCase() === normalizedEmail)
+      const nameFromEmail = normalizedEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+      const userData: AuthUser = {
+        email: normalizedEmail,
+        name: existingMember?.nombre || nameFromEmail,
+        role: "member",
+        memberId: existingMember?.id || `test-${normalizedEmail.replace(/[^a-z0-9]/g, "")}`,
+      }
       setUser(userData)
       setIsAuthenticated(true)
       safeSet("mf_auth", JSON.stringify(userData))
