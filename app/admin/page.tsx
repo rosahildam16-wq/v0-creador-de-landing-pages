@@ -15,7 +15,7 @@ import {
 import { ETAPA_LABELS } from "@/lib/types"
 import type { Lead, EventoActividad } from "@/lib/types"
 import { calcularTemperatura } from "@/lib/lead-scoring"
-import { Users, UserPlus, DollarSign, TrendingUp, Clock, Loader2, Banknote } from "lucide-react"
+import { Users, UserPlus, DollarSign, TrendingUp, Clock, Loader2, Banknote, Shield, CreditCard } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { es } from "date-fns/locale"
 import Link from "next/link"
@@ -60,6 +60,10 @@ function safeGet(key: string): string | null {
 export default function AdminDashboard() {
   const { data, error: fetchError, isLoading } = useSWR("/api/admin/dashboard", fetcher, {
     refreshInterval: 30000,
+  })
+
+  const { data: commStats } = useSWR("/api/communities/stats", fetcher, {
+    refreshInterval: 15000,
   })
 
   const [challenges, setChallenges] = useState<Challenge[]>(DEFAULT_CHALLENGES)
@@ -188,6 +192,208 @@ export default function AdminDashboard() {
           icon={TrendingUp}
         />
       </div>
+
+      {/* ---- COMUNIDADES & BILLING ---- */}
+      {commStats && (
+        <>
+          <div className="mt-2">
+            <h2 className="text-lg font-semibold tracking-tight">Comunidades y Facturacion</h2>
+            <p className="text-xs text-muted-foreground">Miembros registrados, crecimiento y MRR estimado ($17 USD/miembro)</p>
+          </div>
+
+          {/* Community metric cards */}
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <MetricCard
+              title="Total Miembros"
+              value={commStats.totalMembers ?? 0}
+              change={commStats.membersThisWeek ? `+${commStats.membersThisWeek} esta semana` : "Sin registros"}
+              changeType={commStats.membersThisWeek > 0 ? "positive" : "neutral"}
+              icon={Users}
+            />
+            <MetricCard
+              title="Hoy"
+              value={commStats.membersToday ?? 0}
+              change="Registros nuevos"
+              changeType="neutral"
+              icon={UserPlus}
+            />
+            <MetricCard
+              title="MRR Estimado"
+              value={`$${(commStats.mrrEstimado ?? 0).toLocaleString()}`}
+              change={`${commStats.activeMembers ?? 0} activos x $${commStats.cuotaBase ?? 17}`}
+              changeType="positive"
+              icon={DollarSign}
+            />
+            <MetricCard
+              title="Comunidades"
+              value={commStats.communityStats?.length ?? 0}
+              change="Activas"
+              changeType="neutral"
+              icon={Shield}
+            />
+          </div>
+
+          {/* Growth chart + community breakdown */}
+          <div className="grid gap-4 lg:grid-cols-7">
+            {/* Growth chart */}
+            <Card className="border-border/50 lg:col-span-4">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Crecimiento de Miembros (30 dias)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={commStats.growth || []} margin={{ top: 5, right: 5, bottom: 0, left: -20 }}>
+                      <defs>
+                        <linearGradient id="communityGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                          <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis
+                        dataKey="fecha"
+                        tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                        tickLine={false}
+                        axisLine={false}
+                        allowDecimals={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "8px",
+                          fontSize: "12px",
+                          color: "hsl(var(--foreground))",
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="miembros"
+                        stroke="#8b5cf6"
+                        fill="url(#communityGrad)"
+                        strokeWidth={2}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Per-community breakdown */}
+            <Card className="border-border/50 lg:col-span-3">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Desglose por Comunidad</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col gap-4">
+                  {(commStats.communityStats || []).map((c: { id: string; nombre: string; color: string; total_miembros: number; activos: number; mrr: number; cuota_miembro: number; leader_name: string | null; codigo: string | null }) => (
+                    <div key={c.id} className="rounded-xl border border-border/50 p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: c.color }} />
+                        <span className="font-semibold text-sm">{c.nombre}</span>
+                        {c.codigo && (
+                          <span className="ml-auto rounded-full bg-secondary px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
+                            {c.codigo}
+                          </span>
+                        )}
+                      </div>
+                      {c.leader_name && (
+                        <p className="text-[11px] text-muted-foreground mb-2">Lider: {c.leader_name}</p>
+                      )}
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div>
+                          <p className="text-lg font-bold">{c.total_miembros}</p>
+                          <p className="text-[10px] text-muted-foreground">Miembros</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-emerald-400">{c.activos}</p>
+                          <p className="text-[10px] text-muted-foreground">Activos</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-violet-400">${c.mrr}</p>
+                          <p className="text-[10px] text-muted-foreground">MRR</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {(!commStats.communityStats || commStats.communityStats.length === 0) && (
+                    <p className="py-4 text-center text-sm text-muted-foreground">Sin comunidades activas</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent registrations table */}
+          <Card className="border-border/50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Registros Recientes</CardTitle>
+              <Link href="/admin/comunidades" className="text-xs text-primary hover:underline">
+                Ver comunidades
+              </Link>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="text-xs">Nombre</TableHead>
+                    <TableHead className="text-xs">Email</TableHead>
+                    <TableHead className="text-xs">Comunidad</TableHead>
+                    <TableHead className="text-xs">Codigo</TableHead>
+                    <TableHead className="text-xs">Fecha</TableHead>
+                    <TableHead className="text-xs">Estado</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(commStats.recentRegistrations || []).map((reg: { name: string; email: string; community_id: string; discount_code: string | null; created_at: string; activo: boolean }, i: number) => {
+                    const comm = (commStats.communityStats || []).find((c: { id: string }) => c.id === reg.community_id)
+                    return (
+                      <TableRow key={i}>
+                        <TableCell className="py-2 text-sm font-medium">{reg.name}</TableCell>
+                        <TableCell className="py-2 text-xs text-muted-foreground">{reg.email}</TableCell>
+                        <TableCell className="py-2">
+                          <div className="flex items-center gap-1.5">
+                            <div className="h-2 w-2 rounded-full" style={{ backgroundColor: comm?.color || "#6366f1" }} />
+                            <span className="text-xs">{comm?.nombre || reg.community_id}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-2 text-xs font-mono text-muted-foreground">
+                          {reg.discount_code || "-"}
+                        </TableCell>
+                        <TableCell className="py-2 text-xs text-muted-foreground">
+                          {new Date(reg.created_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" })}
+                        </TableCell>
+                        <TableCell className="py-2">
+                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                            reg.activo
+                              ? "bg-emerald-500/10 text-emerald-400"
+                              : "bg-amber-500/10 text-amber-400"
+                          }`}>
+                            {reg.activo ? "Activo" : "Pendiente"}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                  {(!commStats.recentRegistrations || commStats.recentRegistrations.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="py-6 text-center text-sm text-muted-foreground">
+                        Sin registros todavia. Los miembros apareceran aqui cuando se registren.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       {metricas.total > 0 && (
         <>
@@ -346,7 +552,7 @@ export default function AdminDashboard() {
           {/* Quick Access & Leaderboard */}
           <div className="grid gap-4 lg:grid-cols-7">
             <div className="lg:col-span-4">
-              <QuickAccessGrid role="admin" />
+              <QuickAccessGrid role="super_admin" />
             </div>
             {activeChallenges.length > 0 && (
               <div className="lg:col-span-3">
