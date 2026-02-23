@@ -113,3 +113,152 @@ export async function checkApiStatus(): Promise<boolean> {
     return false
   }
 }
+
+// ============================================================
+// RECURRING PAYMENTS / SUBSCRIPTIONS
+// ============================================================
+
+/**
+ * Get an auth token for the NowPayments Recurring API.
+ * Required for subscription endpoints.
+ */
+async function getAuthToken(): Promise<string> {
+  const email = process.env.NOWPAYMENTS_EMAIL
+  const password = process.env.NOWPAYMENTS_PASSWORD
+  if (!email || !password) {
+    throw new Error(
+      "NOWPAYMENTS_EMAIL y NOWPAYMENTS_PASSWORD son necesarias para suscripciones recurrentes."
+    )
+  }
+
+  const res = await fetch(`${API_BASE}/auth`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  })
+
+  if (!res.ok) {
+    const error = await res.text()
+    throw new Error(`NOWPayments auth error: ${res.status} - ${error}`)
+  }
+
+  const data = await res.json()
+  return data.token
+}
+
+/**
+ * Create a recurring payment plan on NowPayments.
+ * Returns the plan ID from NowPayments.
+ */
+export async function createRecurringPlan(params: {
+  title: string
+  intervalDay: number
+  amount: number
+  currency: string
+}): Promise<{ id: string }> {
+  const token = await getAuthToken()
+
+  const res = await fetch(`${API_BASE}/subscriptions/plans`, {
+    method: "POST",
+    headers: {
+      "x-api-key": getApiKey(),
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      title: params.title,
+      interval_day: params.intervalDay,
+      amount: params.amount,
+      currency: params.currency,
+    }),
+  })
+
+  if (!res.ok) {
+    const error = await res.text()
+    throw new Error(`NOWPayments createRecurringPlan error: ${res.status} - ${error}`)
+  }
+
+  return res.json()
+}
+
+/**
+ * Get a subscription email payment link.
+ * NowPayments sends a recurring payment email to the subscriber.
+ */
+export async function createEmailSubscription(params: {
+  planId: string
+  email: string
+  orderId: string
+  ipnCallbackUrl: string
+  successUrl: string
+  cancelUrl: string
+  partiallyPaidUrl?: string
+}): Promise<{ id: string; invoice_url: string }> {
+  const token = await getAuthToken()
+
+  const res = await fetch(`${API_BASE}/subscriptions`, {
+    method: "POST",
+    headers: {
+      "x-api-key": getApiKey(),
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      subscription_plan_id: params.planId,
+      email: params.email,
+      order_id: params.orderId,
+      ipn_callback_url: params.ipnCallbackUrl,
+      success_url: params.successUrl,
+      cancel_url: params.cancelUrl,
+      partially_paid_url: params.partiallyPaidUrl || params.cancelUrl,
+    }),
+  })
+
+  if (!res.ok) {
+    const error = await res.text()
+    throw new Error(`NOWPayments createEmailSubscription error: ${res.status} - ${error}`)
+  }
+
+  return res.json()
+}
+
+/**
+ * Get payments for a specific subscription.
+ */
+export async function getSubscriptionPayments(subscriptionId: string) {
+  const token = await getAuthToken()
+
+  const res = await fetch(`${API_BASE}/subscriptions/${subscriptionId}/payments`, {
+    headers: {
+      "x-api-key": getApiKey(),
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!res.ok) {
+    const error = await res.text()
+    throw new Error(`NOWPayments getSubscriptionPayments error: ${res.status} - ${error}`)
+  }
+
+  return res.json()
+}
+
+/**
+ * Delete/cancel a subscription.
+ */
+export async function cancelSubscription(subscriptionId: string): Promise<void> {
+  const token = await getAuthToken()
+
+  const res = await fetch(`${API_BASE}/subscriptions/${subscriptionId}`, {
+    method: "DELETE",
+    headers: {
+      "x-api-key": getApiKey(),
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!res.ok) {
+    const error = await res.text()
+    throw new Error(`NOWPayments cancelSubscription error: ${res.status} - ${error}`)
+  }
+}

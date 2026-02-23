@@ -3,9 +3,10 @@
 import { useMemo, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, Plus, Link2, ChevronDown } from "lucide-react"
+import { Search, Plus, Link2, ChevronDown, Shield } from "lucide-react"
 import { getTeamMembers } from "@/lib/team-data"
 import { TeamMemberCard } from "@/components/admin/team-member-card"
+import { getAllCommunities, getAllCommunityMembers, type CommunityMember } from "@/lib/communities-data"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,14 +33,27 @@ const FILTER_LABELS: Record<FilterOption, string> = {
 
 export default function EquipoPage() {
   const allMembers = getTeamMembers()
+  const communities = getAllCommunities()
+  const communityMembers = getAllCommunityMembers()
 
   const [search, setSearch] = useState("")
   const [sort, setSort] = useState<SortOption>("reciente")
   const [filter, setFilter] = useState<FilterOption>("leads")
   const [metricView, setMetricView] = useState<MetricViewOption>("publicidad")
+  const [communityFilter, setCommunityFilter] = useState<string>("all")
+
+  // Helper to get community for a member
+  const getMemberComm = (memberId: string): CommunityMember | undefined =>
+    communityMembers.find((cm) => cm.memberId === memberId)
 
   const filtered = useMemo(() => {
     let result = [...allMembers]
+
+    // filter by community
+    if (communityFilter !== "all") {
+      const cmIds = communityMembers.filter((cm) => cm.communityId === communityFilter).map((cm) => cm.memberId)
+      result = result.filter((m) => cmIds.includes(m.id))
+    }
 
     // search
     if (search.trim()) {
@@ -72,7 +86,7 @@ export default function EquipoPage() {
     }
 
     return result
-  }, [allMembers, search, sort, filter])
+  }, [allMembers, search, sort, filter, communityFilter, communityMembers])
 
   const totalLeads = allMembers.reduce((sum, m) => sum + m.metricas.leads, 0)
   const totalActivos = allMembers.filter((m) => m.publicidad_activa).length
@@ -113,6 +127,38 @@ export default function EquipoPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Community filter */}
+          <div className="flex gap-1 mr-2">
+            <button
+              onClick={() => setCommunityFilter("all")}
+              className={cn(
+                "flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                communityFilter === "all"
+                  ? "bg-foreground text-background"
+                  : "bg-secondary text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Todos
+            </button>
+            {communities.filter(c => c.activa).map((comm) => (
+              <button
+                key={comm.id}
+                onClick={() => setCommunityFilter(comm.id)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                  communityFilter === comm.id
+                    ? "bg-foreground text-background"
+                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <div className="h-2 w-2 rounded-full" style={{ backgroundColor: comm.color }} />
+                {comm.nombre}
+              </button>
+            ))}
+          </div>
+
+          <div className="h-4 w-px bg-border/40" />
+
           {/* Sort pills */}
           <span className="text-xs text-muted-foreground">Ordenar por:</span>
           <div className="flex gap-1">

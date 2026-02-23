@@ -3,13 +3,12 @@
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
-import { AdminSidebar } from "@/components/admin/admin-sidebar"
+import { LeaderSidebar } from "@/components/leader/leader-sidebar"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
 import { NotificationBell } from "@/components/shared/notification-bell"
 import { ThemeToggle } from "@/components/shared/theme-toggle"
-import { SubscriptionGuard } from "@/components/subscription-guard"
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function LeaderLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, user } = useAuth()
   const router = useRouter()
 
@@ -17,9 +16,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (!isLoading && !isAuthenticated) {
       router.replace("/login")
     }
-  }, [isAuthenticated, isLoading, router])
+    if (!isLoading && isAuthenticated && user?.role !== "leader" && user?.role !== "super_admin") {
+      router.replace("/member")
+    }
+  }, [isAuthenticated, isLoading, user, router])
 
-  if (isLoading || !isAuthenticated) {
+  if (isLoading || !isAuthenticated || (user?.role !== "leader" && user?.role !== "super_admin")) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -45,24 +47,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           className="ambient-orb-2 absolute right-0 top-0 h-[600px] w-[600px] rounded-full opacity-[0.05]"
           style={{ background: "radial-gradient(circle, hsl(280 65% 55%), transparent 70%)" }}
         />
-        <div
-          className="ambient-orb-3 absolute bottom-0 left-1/3 h-[400px] w-[400px] rounded-full opacity-[0.06]"
-          style={{ background: "radial-gradient(circle, hsl(250 75% 60%), transparent 70%)" }}
-        />
       </div>
-      <AdminSidebar />
+      <LeaderSidebar />
       <main className="relative z-10 flex-1 overflow-auto">
-        {/* Top bar with notifications */}
-        <div className="sticky top-0 z-30 flex items-center justify-end gap-2 px-6 py-3">
+        <div className="sticky top-0 z-30 flex items-center justify-end gap-2 px-6 py-3 backdrop-blur-sm">
           <ThemeToggle />
           <NotificationBell />
         </div>
         <div className="mx-auto max-w-7xl px-6 pb-6">
-          {user?.role === "super_admin" ? children : (
-            <SubscriptionGuard>
-              {children}
-            </SubscriptionGuard>
-          )}
+          {children}
         </div>
       </main>
     </div>

@@ -132,10 +132,36 @@ export const TEAM_MEMBERS: TeamMember[] = [
   },
 ]
 
-export function getTeamMembers(): TeamMember[] {
-  return TEAM_MEMBERS
+export function getTeamMemberById(id: string): TeamMember | undefined {
+  // Check localStorage for updated funnels
+  const member = TEAM_MEMBERS.find((m) => m.id === id)
+  if (!member) return undefined
+  try {
+    const stored = localStorage.getItem(`mf_funnels_${id}`)
+    if (stored) {
+      return { ...member, embudos_asignados: JSON.parse(stored) }
+    }
+  } catch { /* noop */ }
+  return member
 }
 
-export function getTeamMemberById(id: string): TeamMember | undefined {
-  return TEAM_MEMBERS.find((m) => m.id === id)
+export function getTeamMembers(): TeamMember[] {
+  return TEAM_MEMBERS.map((m) => {
+    try {
+      const stored = localStorage.getItem(`mf_funnels_${m.id}`)
+      if (stored) return { ...m, embudos_asignados: JSON.parse(stored) }
+    } catch { /* noop */ }
+    return m
+  })
+}
+
+export function updateMemberFunnels(memberId: string, funnelIds: string[]): void {
+  try {
+    localStorage.setItem(`mf_funnels_${memberId}`, JSON.stringify(funnelIds))
+  } catch { /* noop */ }
+  // Also update the in-memory array for immediate access
+  const member = TEAM_MEMBERS.find((m) => m.id === memberId)
+  if (member) {
+    member.embudos_asignados = funnelIds
+  }
 }

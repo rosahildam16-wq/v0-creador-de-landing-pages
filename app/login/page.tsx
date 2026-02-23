@@ -5,13 +5,17 @@ import { useRouter } from "next/navigation"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
 import { LoginPremiumBg } from "@/components/login-premium-bg"
 import { useAuth } from "@/lib/auth-context"
-import { Eye, EyeOff, ArrowRight, Sparkles, Bot, TrendingUp, Network } from "lucide-react"
+import { Eye, EyeOff, ArrowRight, Sparkles, Bot, TrendingUp, Network, Tag } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { login, isAuthenticated, isLoading: authLoading, user } = useAuth()
+  const { login, register, isAuthenticated, isLoading: authLoading, user } = useAuth()
+  const [mode, setMode] = useState<"login" | "register">("login")
+  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [discountCode, setDiscountCode] = useState("")
+  const [showDiscountField, setShowDiscountField] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
@@ -22,7 +26,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!authLoading && isAuthenticated && user) {
-      router.replace(user.role === "member" ? "/member" : "/admin")
+      if (user.role === "super_admin") router.replace("/admin")
+      else if (user.role === "leader") router.replace("/leader")
+      else router.replace("/member")
     }
   }, [isAuthenticated, authLoading, user, router])
 
@@ -39,17 +45,39 @@ export default function LoginPage() {
     )
   }
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
     setIsSubmitting(true)
-    const ok = await login(email, password)
-    if (ok) {
-      // Redirect will happen via the useEffect watching isAuthenticated + user
+
+    if (mode === "register") {
+      if (!name.trim()) {
+        setError("Ingresa tu nombre completo.")
+        setIsSubmitting(false)
+        return
+      }
+      if (password.length < 6) {
+        setError("La contrasena debe tener al menos 6 caracteres.")
+        setIsSubmitting(false)
+        return
+      }
+      const ok = await register(name, email, password, discountCode || undefined)
+      if (!ok) {
+        setError("Este email ya esta registrado. Intenta iniciar sesion.")
+        setIsSubmitting(false)
+      }
     } else {
-      setError("Credenciales incorrectas. Verifica tu email y contrasena.")
-      setIsSubmitting(false)
+      const ok = await login(email, password)
+      if (!ok) {
+        setError("Credenciales incorrectas. Verifica tu email y contrasena.")
+        setIsSubmitting(false)
+      }
     }
+  }
+
+  const toggleMode = () => {
+    setMode((m) => m === "login" ? "register" : "login")
+    setError("")
   }
 
   const features = [
@@ -153,19 +181,45 @@ export default function LoginPage() {
                 <MagicFunnelLogo size="md" animated />
               </div>
 
+              {/* Mode toggle tabs */}
+              <div className="mb-6 flex rounded-xl border border-white/[0.06] bg-white/[0.02] p-1">
+                <button
+                  type="button"
+                  onClick={() => { setMode("login"); setError("") }}
+                  className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-all duration-300 ${
+                    mode === "login"
+                      ? "bg-violet-600/20 text-violet-300 shadow-sm"
+                      : "text-violet-400/40 hover:text-violet-300/60"
+                  }`}
+                >
+                  Iniciar Sesion
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setMode("register"); setError("") }}
+                  className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-all duration-300 ${
+                    mode === "register"
+                      ? "bg-violet-600/20 text-violet-300 shadow-sm"
+                      : "text-violet-400/40 hover:text-violet-300/60"
+                  }`}
+                >
+                  Registrarse
+                </button>
+              </div>
+
               {/* Header */}
               <div className="mb-8">
                 <div className="flex items-center gap-2 mb-3 justify-center lg:justify-start">
                   <Sparkles className="w-4 h-4 text-violet-400" />
                   <span className="text-[11px] font-bold text-violet-400/80 tracking-[0.2em] uppercase">
-                    Acceso Premium
+                    {mode === "login" ? "Acceso Premium" : "Crear Cuenta"}
                   </span>
                 </div>
                 <h2 className="text-[1.65rem] font-bold text-white tracking-tight text-center lg:text-left">
-                  Bienvenido de vuelta
+                  {mode === "login" ? "Bienvenido de vuelta" : "Unete a Magic Funnel"}
                 </h2>
                 <p className="mt-2 text-sm text-violet-300/40 text-center lg:text-left">
-                  Ingresa tus credenciales para continuar
+                  {mode === "login" ? "Ingresa tus credenciales para continuar" : "Crea tu cuenta y comienza a crecer"}
                 </p>
               </div>
 
@@ -177,7 +231,33 @@ export default function LoginPage() {
               )}
 
               {/* Form */}
-              <form onSubmit={handleLogin} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Name field (register only) */}
+                {mode === "register" && (
+                  <div>
+                    <label htmlFor="login-name" className="block text-xs font-medium text-violet-200/60 mb-2 ml-0.5">
+                      Nombre completo
+                    </label>
+                    <div className={`relative rounded-xl border transition-all duration-300 ${
+                      focusedField === "name"
+                        ? "border-violet-500/40 shadow-[0_0_0_3px_rgba(139,92,246,0.06)]"
+                        : "border-white/[0.06] hover:border-white/[0.10]"
+                    }`}>
+                      <input
+                        id="login-name"
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        onFocus={() => setFocusedField("name")}
+                        onBlur={() => setFocusedField(null)}
+                        placeholder="Tu nombre completo"
+                        className="w-full px-4 py-3 bg-transparent text-white text-sm placeholder:text-violet-400/25 focus:outline-none rounded-xl"
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <label htmlFor="login-email" className="block text-xs font-medium text-violet-200/60 mb-2 ml-0.5">
                     Email
@@ -206,9 +286,11 @@ export default function LoginPage() {
                     <label htmlFor="login-password" className="block text-xs font-medium text-violet-200/60">
                       Contrasena
                     </label>
-                    <button type="button" className="text-[11px] text-violet-400/60 hover:text-violet-400 transition-colors">
-                      Olvidaste tu contrasena?
-                    </button>
+                    {mode === "login" && (
+                      <button type="button" className="text-[11px] text-violet-400/60 hover:text-violet-400 transition-colors">
+                        Olvidaste tu contrasena?
+                      </button>
+                    )}
                   </div>
                   <div className={`relative rounded-xl border transition-all duration-300 ${
                     focusedField === "password"
@@ -237,6 +319,46 @@ export default function LoginPage() {
                   </div>
                 </div>
 
+                {/* Discount code (register only) */}
+                {mode === "register" && (
+                  <div>
+                    {!showDiscountField ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowDiscountField(true)}
+                        className="flex items-center gap-1.5 text-xs text-violet-400/50 hover:text-violet-400 transition-colors"
+                      >
+                        <Tag className="w-3 h-3" />
+                        Tengo un codigo de descuento
+                      </button>
+                    ) : (
+                      <div>
+                        <label htmlFor="login-discount" className="block text-xs font-medium text-violet-200/60 mb-2 ml-0.5">
+                          Codigo de descuento
+                        </label>
+                        <div className={`relative rounded-xl border transition-all duration-300 ${
+                          focusedField === "discount"
+                            ? "border-emerald-500/40 shadow-[0_0_0_3px_rgba(16,185,129,0.06)]"
+                            : "border-white/[0.06] hover:border-white/[0.10]"
+                        }`}>
+                          <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-violet-400/25" />
+                          <input
+                            id="login-discount"
+                            type="text"
+                            value={discountCode}
+                            onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                            onFocus={() => setFocusedField("discount")}
+                            onBlur={() => setFocusedField(null)}
+                            placeholder="Ej: SKALIAVIP"
+                            className="w-full pl-10 pr-4 py-3 bg-transparent text-white text-sm font-mono placeholder:text-violet-400/25 focus:outline-none rounded-xl uppercase"
+                          />
+                        </div>
+                        <p className="mt-1.5 text-[10px] text-violet-300/30">Opcional. Si tienes un codigo, ingresalo para obtener beneficios.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <button
                   type="submit"
                   disabled={isSubmitting}
@@ -246,11 +368,11 @@ export default function LoginPage() {
                     {isSubmitting ? (
                       <>
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Ingresando...
+                        {mode === "login" ? "Ingresando..." : "Creando cuenta..."}
                       </>
                     ) : (
                       <>
-                        Iniciar Sesion
+                        {mode === "login" ? "Iniciar Sesion" : "Crear Cuenta"}
                         <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                       </>
                     )}
@@ -258,11 +380,28 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              <p className="mt-8 text-center text-sm text-violet-300/30">
-                {"No tienes cuenta? "}
-                <a href="/pricing" className="text-violet-400 hover:text-violet-300 font-medium transition-colors">
-                  Ver planes y precios
-                </a>
+              {/* Launch test access */}
+              <div className="mt-6 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] px-4 py-3.5">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-xs font-bold text-emerald-400">Pruebas para lanzamiento</span>
+                </div>
+                <p className="text-[11px] text-emerald-300/50 leading-relaxed">
+                  {'Si eres parte del equipo, ingresa tu email y usa el codigo '}
+                  <span className="font-mono font-bold text-emerald-400">LANZAMIENTO2026</span>
+                  {' como contrasena para acceder gratis.'}
+                </p>
+              </div>
+
+              <p className="mt-6 text-center text-sm text-violet-300/30">
+                {mode === "login" ? "No tienes cuenta? " : "Ya tienes cuenta? "}
+                <button
+                  type="button"
+                  onClick={toggleMode}
+                  className="text-violet-400 hover:text-violet-300 font-medium transition-colors"
+                >
+                  {mode === "login" ? "Registrate aqui" : "Inicia sesion"}
+                </button>
               </p>
             </div>
 

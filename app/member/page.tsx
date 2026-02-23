@@ -6,12 +6,13 @@ import { getTeamMemberById, type TeamMember } from "@/lib/team-data"
 import type { Challenge } from "@/lib/challenges-data"
 import { DEFAULT_CHALLENGES, getRanking } from "@/lib/challenges-data"
 import { PersonalLinkCard } from "@/components/member/personal-link-card"
+import { getMemberCommunity } from "@/lib/communities-data"
 import { ChallengeLeaderboard } from "@/components/shared/challenge-leaderboard"
 import Link from "next/link"
 import {
   Users, Target, GraduationCap, Award, TrendingUp,
   Route, Trophy, Kanban, Bot, Calendar, Flame, Zap,
-  ArrowUpRight, ChevronRight,
+  ArrowUpRight, ChevronRight, Shield,
 } from "lucide-react"
 import {
   AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip,
@@ -204,6 +205,7 @@ export default function MemberDashboard() {
   const activeChallenges = challenges.filter((c) => c.activo)
   const leadsPorDia = generateLeadsPorDia(member.metricas.leads, 42)
   const firstName = member.nombre.split(" ")[0]
+  const memberCommunity = user?.memberId ? getMemberCommunity(user.memberId) : undefined
   const trainingPercent = 37
   const achievements = 3
   const streak = 12
@@ -236,6 +238,20 @@ export default function MemberDashboard() {
 
           {/* Streak & quick status */}
           <div className="mt-3 flex flex-wrap items-center gap-3">
+            {memberCommunity && (
+              <div
+                className="flex items-center gap-1.5 rounded-full border px-3 py-1.5"
+                style={{
+                  borderColor: `${memberCommunity.color}33`,
+                  backgroundColor: `${memberCommunity.color}0A`,
+                }}
+              >
+                <Shield className="h-3.5 w-3.5" style={{ color: memberCommunity.color }} />
+                <span className="text-xs font-semibold" style={{ color: memberCommunity.color }}>
+                  {memberCommunity.nombre}
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/[0.06] px-3 py-1.5">
               <Flame className="h-3.5 w-3.5 text-amber-400" />
               <span className="text-xs font-semibold text-amber-400">{streak} dias de racha</span>

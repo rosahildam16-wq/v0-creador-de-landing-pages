@@ -96,8 +96,34 @@ export const DEFAULT_NOTIFICATIONS: AppNotification[] = [
   },
 ]
 
+/**
+ * Add a dynamic notification (persisted in localStorage).
+ */
+export function addNotification(notif: Omit<AppNotification, "id">) {
+  try {
+    const raw = localStorage.getItem("mf_notifications") || "[]"
+    const list = JSON.parse(raw) as AppNotification[]
+    const full: AppNotification = { ...notif, id: `dyn-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` }
+    list.unshift(full)
+    localStorage.setItem("mf_notifications", JSON.stringify(list.slice(0, 50)))
+  } catch { /* noop */ }
+}
+
+/**
+ * Get stored dynamic notifications.
+ */
+function getDynamicNotifications(): AppNotification[] {
+  try {
+    const raw = localStorage.getItem("mf_notifications") || "[]"
+    return JSON.parse(raw) as AppNotification[]
+  } catch {
+    return []
+  }
+}
+
 export function getNotificationsForRole(role: UserRole): AppNotification[] {
-  return DEFAULT_NOTIFICATIONS
+  const all = [...getDynamicNotifications(), ...DEFAULT_NOTIFICATIONS]
+  return all
     .filter((n) => n.destinatario === "all" || n.destinatario === role)
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 }

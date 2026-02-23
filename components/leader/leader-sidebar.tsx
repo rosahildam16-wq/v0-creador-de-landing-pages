@@ -5,25 +5,31 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
-import { LayoutDashboard, Link2, Users, ChevronLeft, ChevronRight, LogOut, GraduationCap, Kanban, Trophy, Route, CreditCard, MessagesSquare } from "lucide-react"
+import {
+  LayoutDashboard, Users, Kanban, ChevronLeft, ChevronRight, LogOut,
+  Trophy, GraduationCap, Route, MessagesSquare, Link2, CreditCard, Shield,
+} from "lucide-react"
 import { useState } from "react"
+import { getCommunityById } from "@/lib/communities-data"
 
 const NAV_ITEMS = [
-  { href: "/member", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/member/mis-leads", label: "Mis Leads", icon: Users },
-  { href: "/member/pipeline", label: "Pipeline", icon: Kanban },
-  { href: "/member/mi-embudo", label: "Mi Embudo", icon: Route },
-  { href: "/member/retos", label: "Retos", icon: Trophy },
-  { href: "/member/comunidad", label: "Comunidad", icon: MessagesSquare },
-  { href: "/member/academia", label: "Academia", icon: GraduationCap },
-  { href: "/member/mi-link", label: "Mi Link", icon: Link2 },
-  { href: "/member/suscripcion", label: "Suscripcion", icon: CreditCard },
+  { href: "/leader", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/leader/leads", label: "Leads", icon: Users },
+  { href: "/leader/pipeline", label: "Pipeline", icon: Kanban },
+  { href: "/leader/equipo", label: "Mi Equipo", icon: Users },
+  { href: "/leader/embudos", label: "Embudos", icon: Route },
+  { href: "/leader/retos", label: "Retos", icon: Trophy },
+  { href: "/leader/academia", label: "Academia", icon: GraduationCap },
+  { href: "/leader/comunidad", label: "Comunidad", icon: MessagesSquare },
+  { href: "/leader/mi-link", label: "Mi Link", icon: Link2 },
+  { href: "/leader/suscripcion", label: "Suscripcion", icon: CreditCard },
 ]
 
-export function MemberSidebar() {
+export function LeaderSidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const { logout, user } = useAuth()
+  const community = user?.communityId ? getCommunityById(user.communityId) : undefined
 
   return (
     <aside
@@ -41,11 +47,22 @@ export function MemberSidebar() {
         )}
       </div>
 
+      {/* Community badge */}
+      {!collapsed && community && (
+        <div className="mx-3 mt-3 rounded-lg border px-3 py-2" style={{ borderColor: `${community.color}33`, backgroundColor: `${community.color}08` }}>
+          <div className="flex items-center gap-2">
+            <Shield className="h-3.5 w-3.5" style={{ color: community.color }} />
+            <span className="text-xs font-bold" style={{ color: community.color }}>{community.nombre}</span>
+          </div>
+          <p className="mt-0.5 text-[10px] text-muted-foreground">Lider de comunidad</p>
+        </div>
+      )}
+
       {/* Navigation */}
       <nav className="flex flex-1 flex-col gap-1 p-3">
         {NAV_ITEMS.map((item) => {
-          const isActive = item.href === "/member"
-            ? pathname === "/member"
+          const isActive = item.href === "/leader"
+            ? pathname === "/leader"
             : pathname.startsWith(item.href)
 
           return (
@@ -67,7 +84,7 @@ export function MemberSidebar() {
         })}
       </nav>
 
-      {/* Bottom: user + logout + collapse */}
+      {/* Bottom */}
       <div className="border-t border-border/30 p-3 flex flex-col gap-1">
         {!collapsed && user && (
           <div className="px-3 py-2 text-xs text-muted-foreground truncate">

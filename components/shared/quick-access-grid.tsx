@@ -26,12 +26,12 @@ const ADMIN_QUICK_ACCESS: QuickAccessItem[] = [
 ]
 
 interface QuickAccessGridProps {
-  role: "admin" | "member"
+  role: "super_admin" | "leader" | "member"
   items?: QuickAccessItem[]
 }
 
 export function QuickAccessGrid({ role, items }: QuickAccessGridProps) {
-  const accessItems = items ?? (role === "admin" ? ADMIN_QUICK_ACCESS : MEMBER_QUICK_ACCESS)
+  const accessItems = items ?? (role === "super_admin" ? ADMIN_QUICK_ACCESS : MEMBER_QUICK_ACCESS)
 
   return (
     <div className="flex flex-col gap-3">

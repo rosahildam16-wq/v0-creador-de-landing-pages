@@ -5,24 +5,25 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
-import { LayoutDashboard, Users, UsersRound, Kanban, BarChart3, ChevronLeft, ChevronRight, Route, Megaphone, Plug, Zap, LogOut, Trophy, GraduationCap, CreditCard, PanelTop, MessagesSquare } from "lucide-react"
+import { LayoutDashboard, Users, UsersRound, BarChart3, ChevronLeft, ChevronRight, Plug, Zap, LogOut, CreditCard, PanelTop, MessagesSquare, Settings, Globe, Route, Kanban, Megaphone, Trophy, GraduationCap } from "lucide-react"
 import { useState } from "react"
 
 const NAV_ITEMS = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin", label: "Dashboard Global", icon: LayoutDashboard },
+  { href: "/admin/comunidades", label: "Comunidades", icon: MessagesSquare },
   { href: "/admin/embudos", label: "Embudos", icon: Route },
-  { href: "/admin/landing-builder", label: "Magic Builder", icon: PanelTop },
   { href: "/admin/leads", label: "Leads", icon: Users },
   { href: "/admin/pipeline", label: "Pipeline", icon: Kanban },
   { href: "/admin/equipo", label: "Equipo", icon: UsersRound },
-  { href: "/admin/comunidad", label: "Comunidad", icon: MessagesSquare },
+  { href: "/admin/landing-builder", label: "Magic Builder", icon: PanelTop },
   { href: "/admin/retos", label: "Retos", icon: Trophy },
   { href: "/admin/academia", label: "Academia", icon: GraduationCap },
   { href: "/admin/meta-ads", label: "Meta Ads", icon: Megaphone },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/integraciones", label: "Integraciones", icon: Plug },
   { href: "/admin/workflows", label: "Workflows", icon: Zap },
-  { href: "/admin/suscripcion", label: "Suscripcion", icon: CreditCard },
+  { href: "/admin/planes", label: "Planes y Cobros", icon: CreditCard },
+  { href: "/admin/configuracion", label: "Configuracion", icon: Settings },
 ]
 
 export function AdminSidebar() {
