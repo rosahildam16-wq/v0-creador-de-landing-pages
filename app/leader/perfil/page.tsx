@@ -10,7 +10,17 @@ export default function LeaderPerfilPage() {
   const { community, stats, isLoading } = useLeaderCommunity()
   const [saved, setSaved] = useState(false)
   const [nombre, setNombre] = useState(user?.name || "")
+  const [communityName, setCommunityName] = useState("")
+  const [communityNameLoaded, setCommunityNameLoaded] = useState(false)
+  const [savingCommunity, setSavingCommunity] = useState(false)
+  const [savedCommunity, setSavedCommunity] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
+
+  // Sync community name once loaded
+  if (community?.nombre && !communityNameLoaded) {
+    setCommunityName(community.nombre)
+    setCommunityNameLoaded(true)
+  }
 
   const referralLink = user?.username
     ? `${typeof window !== "undefined" ? window.location.origin : ""}/registro?ref=${user.username}`
@@ -19,6 +29,21 @@ export default function LeaderPerfilPage() {
   const handleSave = () => {
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  const handleSaveCommunityName = async () => {
+    if (!communityName.trim() || !user?.email) return
+    setSavingCommunity(true)
+    try {
+      await fetch("/api/communities/my-community", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email, nombre: communityName.trim() }),
+      })
+      setSavedCommunity(true)
+      setTimeout(() => setSavedCommunity(false), 2000)
+    } catch { /* noop */ }
+    setSavingCommunity(false)
   }
 
   const copyLink = () => {
@@ -141,21 +166,40 @@ export default function LeaderPerfilPage() {
 
         {/* Right: Sidebar info */}
         <div className="space-y-6">
-          {/* Community */}
+          {/* Community - editable */}
           <div className="rounded-2xl border border-border/30 bg-card/60 p-5 backdrop-blur-sm">
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
               <Shield className="h-4 w-4 text-primary" />
               Mi comunidad
             </h3>
-            <div className="rounded-xl px-4 py-3" style={{ backgroundColor: `${community?.color || "#8b5cf6"}10` }}>
-              <span className="text-base font-bold" style={{ color: community?.color || "#8b5cf6" }}>
-                {community?.nombre || "Mi Comunidad"}
-              </span>
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-foreground/70">Nombre de la comunidad</label>
+                <input
+                  type="text"
+                  value={communityName}
+                  onChange={(e) => setCommunityName(e.target.value)}
+                  placeholder="Nombre de tu comunidad"
+                  className="w-full rounded-xl border border-border/40 bg-background/60 px-4 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                />
+              </div>
               {community?.codigo && (
-                <p className="mt-0.5 text-xs text-muted-foreground font-mono">
-                  Codigo: {community.codigo}
-                </p>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-foreground/70">Codigo de invitacion</label>
+                  <div className="rounded-xl border border-border/40 bg-background/30 px-4 py-2.5 text-sm text-muted-foreground font-mono">
+                    {community.codigo}
+                  </div>
+                  <p className="mt-1 text-[10px] text-muted-foreground/60">Comparte este codigo para que otros se unan a tu comunidad</p>
+                </div>
               )}
+              <button
+                onClick={handleSaveCommunityName}
+                disabled={savingCommunity || !communityName.trim() || communityName === community?.nombre}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none"
+              >
+                {savedCommunity ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
+                {savedCommunity ? "Guardado" : savingCommunity ? "Guardando..." : "Guardar nombre"}
+              </button>
             </div>
           </div>
 
