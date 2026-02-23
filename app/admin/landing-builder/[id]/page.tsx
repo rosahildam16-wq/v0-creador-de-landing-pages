@@ -22,6 +22,7 @@ type Action =
   | { type: "UPDATE_BLOCK_PROPS"; id: string; props: Record<string, unknown> }
   | { type: "UPDATE_THEME"; theme: LandingTheme }
   | { type: "UPDATE_NAME"; name: string }
+  | { type: "SELECT_BLOCK"; id: string | null }
   | { type: "UNDO" }
   | { type: "REDO" }
 
@@ -109,6 +110,9 @@ function builderReducer(state: BuilderState, action: Action): BuilderState {
       if (!state.config) return state
       const newConfig = { ...state.config, name: action.name }
       return { ...state, config: newConfig }
+    }
+    case "SELECT_BLOCK": {
+      return { ...state, selectedBlockId: action.id }
     }
     case "UNDO": {
       if (state.historyIndex <= 0) return state
@@ -200,7 +204,8 @@ export default function LandingEditorPage() {
     return () => window.removeEventListener("keydown", handleKey)
   }, [handleSave])
 
-  const selectedBlock = state.config?.blocks.find((b) => b.id === state.selectedBlockId) ?? null
+  const selectedBlockId = state.selectedBlockId
+  const selectedBlock = state.config?.blocks.find((b) => b.id === selectedBlockId) ?? null
 
   if (!state.config) {
     return (
@@ -327,9 +332,9 @@ export default function LandingEditorPage() {
             <BuilderCanvas
               blocks={state.config.blocks}
               theme={state.config.theme}
-              selectedBlockId={state.selectedBlockId ?? null}
+              selectedBlockId={selectedBlockId ?? null}
               draggingType={draggingType}
-              onSelectBlock={(id) => dispatch({ type: "UPDATE_NAME", name: state.config!.name }) || (state.selectedBlockId !== id && (state as { selectedBlockId: string | null }).selectedBlockId !== id) ? undefined : undefined}
+              onSelectBlock={(blockId) => dispatch({ type: "SELECT_BLOCK", id: blockId })}
               onDropBlock={(type, index) => dispatch({ type: "ADD_BLOCK", blockType: type as BlockType, index })}
               onMoveBlock={(from, to) => dispatch({ type: "MOVE_BLOCK", fromIndex: from, toIndex: to })}
               onDeleteBlock={(id) => dispatch({ type: "REMOVE_BLOCK", id })}
