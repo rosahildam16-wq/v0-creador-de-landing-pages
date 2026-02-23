@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
 import { LoginPremiumBg } from "@/components/login-premium-bg"
 import { useAuth } from "@/lib/auth-context"
-import { Eye, EyeOff, ArrowRight, Sparkles, Bot, TrendingUp, Network } from "lucide-react"
+import { Eye, EyeOff, ArrowRight, Sparkles, Bot, TrendingUp, Network, Tag } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -14,6 +14,8 @@ export default function LoginPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [discountCode, setDiscountCode] = useState("")
+  const [showDiscountField, setShowDiscountField] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
@@ -57,7 +59,7 @@ export default function LoginPage() {
         setIsSubmitting(false)
         return
       }
-      const ok = await register(name, email, password)
+      const ok = await register(name, email, password, discountCode || undefined)
       if (!ok) {
         setError("Este email ya esta registrado. Intenta iniciar sesion.")
         setIsSubmitting(false)
@@ -314,6 +316,46 @@ export default function LoginPage() {
                     </button>
                   </div>
                 </div>
+
+                {/* Discount code (register only) */}
+                {mode === "register" && (
+                  <div>
+                    {!showDiscountField ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowDiscountField(true)}
+                        className="flex items-center gap-1.5 text-xs text-violet-400/50 hover:text-violet-400 transition-colors"
+                      >
+                        <Tag className="w-3 h-3" />
+                        Tengo un codigo de descuento
+                      </button>
+                    ) : (
+                      <div>
+                        <label htmlFor="login-discount" className="block text-xs font-medium text-violet-200/60 mb-2 ml-0.5">
+                          Codigo de descuento
+                        </label>
+                        <div className={`relative rounded-xl border transition-all duration-300 ${
+                          focusedField === "discount"
+                            ? "border-emerald-500/40 shadow-[0_0_0_3px_rgba(16,185,129,0.06)]"
+                            : "border-white/[0.06] hover:border-white/[0.10]"
+                        }`}>
+                          <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-violet-400/25" />
+                          <input
+                            id="login-discount"
+                            type="text"
+                            value={discountCode}
+                            onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                            onFocus={() => setFocusedField("discount")}
+                            onBlur={() => setFocusedField(null)}
+                            placeholder="Ej: SKALIAVIP"
+                            className="w-full pl-10 pr-4 py-3 bg-transparent text-white text-sm font-mono placeholder:text-violet-400/25 focus:outline-none rounded-xl uppercase"
+                          />
+                        </div>
+                        <p className="mt-1.5 text-[10px] text-violet-300/30">Opcional. Si tienes un codigo, ingresalo para obtener beneficios.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <button
                   type="submit"

@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { TEAM_MEMBERS } from "./team-data"
+import { addNotification } from "./notifications-data"
 
 export type UserRole = "admin" | "member"
 
@@ -17,7 +18,7 @@ interface AuthContextType {
   isAuthenticated: boolean
   user: AuthUser | null
   login: (email: string, password: string) => Promise<boolean>
-  register: (name: string, email: string, password: string) => Promise<boolean>
+  register: (name: string, email: string, password: string, discountCode?: string) => Promise<boolean>
   logout: () => void
   isLoading: boolean
 }
@@ -152,12 +153,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return false
   }
 
-  const register = async (name: string, email: string, password: string): Promise<boolean> => {
+  const register = async (name: string, email: string, password: string, discountCode?: string): Promise<boolean> => {
     setIsLoading(true)
     await new Promise((r) => setTimeout(r, 1200))
 
     const normalizedEmail = email.toLowerCase().trim()
     const trimmedName = name.trim()
+    const code = discountCode?.trim().toUpperCase() || ""
 
     if (!trimmedName || !normalizedEmail || password.length < 6) {
       setIsLoading(false)
@@ -173,7 +175,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Save registered user to localStorage registry
     try {
       const registryRaw = safeGet("mf_registry") || "[]"
-      const registry = JSON.parse(registryRaw) as Array<{ email: string; name: string; password: string }>
+      const registry = JSON.parse(registryRaw) as Array<{ email: string; name: string; password: string; discountCode?: string; registeredAt?: string }>
       
       // Check duplicate
       if (registry.some((r) => r.email === normalizedEmail)) {
@@ -181,9 +183,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return false
       }
 
-      registry.push({ email: normalizedEmail, name: trimmedName, password })
+      registry.push({
+        email: normalizedEmail,
+        name: trimmedName,
+        password,
+        discountCode: code || undefined,
+        registeredAt: new Date().toISOString(),
+      })
       safeSet("mf_registry", JSON.stringify(registry))
     } catch { /* noop */ }
+
+    // Send notification to admin
+    const codeLabel = code ? ` | Codigo: ${code}` : ""
+    addNotification({
+      tipo: "team",
+      titulo: "Nuevo registro de miembro",
+      mensaje: `${trimmedName} (${normalizedEmail}) se ha registrado en la plataforma${codeLabel}. Ve a Equipo para habilitarle los embudos y acceso completo a Skalia VIP.`,
+      timestamp: new Date().toISOString(),
+      leida: false,
+      destinatario: "admin",
+    })
 
     const memberId = `reg-${normalizedEmail.replace(/[^a-z0-9]/g, "")}`
     const userData: AuthUser = {
