@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth-context"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
 import {
   LayoutDashboard, Users, Kanban, ChevronLeft, ChevronRight, LogOut,
-  Trophy, GraduationCap, Route, MessagesSquare, Link2, CreditCard, Shield, Settings,
+  Trophy, GraduationCap, Route, MessagesSquare, Link2, CreditCard, Shield, Settings, UserCircle,
 } from "lucide-react"
 import { useState } from "react"
 import useSWR from "swr"
@@ -106,12 +106,40 @@ export function LeaderSidebar() {
       {/* Bottom */}
       <div className="border-t border-border/30 p-3 flex flex-col gap-1">
         {!collapsed && user && (
-          <div className="px-3 py-2">
-            <p className="text-xs text-foreground font-medium truncate">{user.name}</p>
-            {user.username && (
-              <p className="text-[10px] text-muted-foreground font-mono">@{user.username}</p>
+          <Link
+            href="/leader/perfil"
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-200",
+              pathname === "/leader/perfil"
+                ? "nav-item-active text-primary"
+                : "hover:bg-secondary/50"
             )}
-          </div>
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0">
+              <UserCircle className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-foreground font-medium truncate">{user.name}</p>
+              {user.username && (
+                <p className="text-[10px] text-muted-foreground font-mono">@{user.username}</p>
+              )}
+            </div>
+          </Link>
+        )}
+        {collapsed && user && (
+          <Link
+            href="/leader/perfil"
+            className={cn(
+              "flex items-center justify-center rounded-lg px-0 py-2 transition-all duration-200",
+              pathname === "/leader/perfil"
+                ? "nav-item-active text-primary"
+                : "hover:bg-secondary/50"
+            )}
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <UserCircle className="h-4 w-4" />
+            </div>
+          </Link>
         )}
         <button
           onClick={logout}
