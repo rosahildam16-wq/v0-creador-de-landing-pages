@@ -270,6 +270,5 @@ function FunnelManager({ memberId, initialFunnels }: { memberId: string; initial
         </div>
       </CardContent>
     </Card>
-    </div>
   )
 }
