@@ -156,7 +156,7 @@ export function VideoPlayer({ onContinue, videoSrc, embedUrl }: Props) {
         <video
           className="h-full w-full object-cover"
           playsInline
-          preload="metadata"
+          preload="auto"
           autoPlay={isPlaying}
           onTimeUpdate={(e) => {
             const v = e.currentTarget
@@ -164,9 +164,12 @@ export function VideoPlayer({ onContinue, videoSrc, embedUrl }: Props) {
           }}
           onEnded={() => setTimeout(() => onContinue(), 800)}
           onCanPlay={() => setIsLoading(false)}
+          onLoadedData={() => setIsLoading(false)}
+          onError={() => setIsLoading(false)}
+          src={videoSrc}
         >
-          <source src={videoSrc} type="video/quicktime" />
           <source src={videoSrc} type="video/mp4" />
+          <source src={videoSrc} type="video/quicktime" />
         </video>
 
         {isLoading && (

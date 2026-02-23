@@ -113,7 +113,7 @@ export function FunnelController({ embudoId = "nomada-vip", startAt }: FunnelCon
         {currentExp === 1 && (
           <VideoPlayer
             onContinue={goToNext}
-            videoSrc={embudoId === "franquicia-reset" ? "/images/franquicia-reset.mov" : "/images/nomada-3.mov"}
+            videoSrc={embudoId === "franquicia-reset" ? "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Franquicia%20Reset-MIjtL6oohCxDlaOuPpeaxtNqVtHImz.MOV" : "/images/nomada-3.mov"}
           />
         )}
         {currentExp === 2 && (
