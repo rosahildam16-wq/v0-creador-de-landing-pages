@@ -1,8 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useAuth } from "@/lib/auth-context"
-import { getCommunityById } from "@/lib/communities-data"
+import { useLeaderCommunity } from "@/hooks/use-leader-community"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { GraduationCap, Plus, Play, Trash2, Video } from "lucide-react"
@@ -18,13 +17,14 @@ interface AcademyVideo {
 }
 
 function getVideos(communityId: string): AcademyVideo[] {
+  if (typeof window === "undefined") return []
   try {
     const raw = localStorage.getItem("mf_academy_videos") || "[]"
     return (JSON.parse(raw) as AcademyVideo[]).filter((v) => v.communityId === communityId)
   } catch { return [] }
 }
 
-function saveVideo(video: AcademyVideo) {
+function saveVideoLocal(video: AcademyVideo) {
   try {
     const raw = localStorage.getItem("mf_academy_videos") || "[]"
     const all = JSON.parse(raw) as AcademyVideo[]
@@ -33,7 +33,7 @@ function saveVideo(video: AcademyVideo) {
   } catch { /* noop */ }
 }
 
-function deleteVideo(id: string) {
+function deleteVideoLocal(id: string) {
   try {
     const raw = localStorage.getItem("mf_academy_videos") || "[]"
     const all = (JSON.parse(raw) as AcademyVideo[]).filter((v) => v.id !== id)
@@ -42,8 +42,7 @@ function deleteVideo(id: string) {
 }
 
 export default function LeaderAcademiaPage() {
-  const { user } = useAuth()
-  const community = user?.communityId ? getCommunityById(user.communityId) : undefined
+  const { community, loading } = useLeaderCommunity()
   const [videos, setVideos] = useState<AcademyVideo[]>([])
   const [showForm, setShowForm] = useState(false)
   const [titulo, setTitulo] = useState("")
@@ -52,13 +51,19 @@ export default function LeaderAcademiaPage() {
   const [categoria, setCategoria] = useState("general")
 
   useEffect(() => {
-    if (user?.communityId) setVideos(getVideos(user.communityId))
-  }, [user?.communityId])
+    if (community?.id) setVideos(getVideos(community.id))
+  }, [community?.id])
 
-  if (!community) return <p className="py-10 text-center text-muted-foreground">Comunidad no encontrada.</p>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+      </div>
+    )
+  }
 
   const handleCreate = () => {
-    if (!titulo.trim() || !url.trim()) return
+    if (!titulo.trim() || !url.trim() || !community) return
     const newVideo: AcademyVideo = {
       id: `vid-${Date.now()}`,
       communityId: community.id,
@@ -68,7 +73,7 @@ export default function LeaderAcademiaPage() {
       categoria,
       createdAt: new Date().toISOString(),
     }
-    saveVideo(newVideo)
+    saveVideoLocal(newVideo)
     setVideos((prev) => [newVideo, ...prev])
     setTitulo("")
     setDescripcion("")
@@ -77,7 +82,7 @@ export default function LeaderAcademiaPage() {
   }
 
   const handleDelete = (id: string) => {
-    deleteVideo(id)
+    deleteVideoLocal(id)
     setVideos((prev) => prev.filter((v) => v.id !== id))
   }
 
@@ -87,7 +92,7 @@ export default function LeaderAcademiaPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Academia de {community.nombre}</h1>
+          <h1 className="text-2xl font-bold text-foreground">Academia</h1>
           <p className="text-sm text-muted-foreground">Configura los videos y cursos para tu equipo</p>
         </div>
         <Button onClick={() => setShowForm(!showForm)} className="gap-1.5">
@@ -162,9 +167,9 @@ export default function LeaderAcademiaPage() {
       ) : (
         <Card className="border-border/50">
           <CardContent className="py-16 text-center">
-            <GraduationCap className="mx-auto h-10 w-10 text-muted-foreground/20" />
-            <p className="mt-3 text-sm text-muted-foreground">No hay videos publicados.</p>
-            <p className="mt-1 text-xs text-muted-foreground/60">Agrega videos de YouTube o Vimeo para tu equipo.</p>
+            <GraduationCap className="mx-auto h-12 w-12 text-muted-foreground/15" />
+            <p className="mt-4 text-sm font-medium text-foreground">Crea tu academia de entrenamiento</p>
+            <p className="mt-1.5 text-xs text-muted-foreground">Agrega videos de YouTube o Vimeo para capacitar a tu equipo.</p>
           </CardContent>
         </Card>
       )}

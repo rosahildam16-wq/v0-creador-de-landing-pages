@@ -145,10 +145,21 @@ export function getTeamMemberById(id: string): TeamMember | undefined {
   return member
 }
 
+// Safe storage with sessionStorage fallback
+function safeGetItem(key: string): string | null {
+  try { const v = localStorage.getItem(key); if (v !== null) return v } catch { /* noop */ }
+  try { return sessionStorage.getItem(key) } catch { /* noop */ }
+  return null
+}
+function safeSetItem(key: string, value: string) {
+  try { localStorage.setItem(key, value) } catch { /* noop */ }
+  try { sessionStorage.setItem(key, value) } catch { /* noop */ }
+}
+
 export function getTeamMembers(): TeamMember[] {
   return TEAM_MEMBERS.map((m) => {
     try {
-      const stored = localStorage.getItem(`mf_funnels_${m.id}`)
+      const stored = safeGetItem(`mf_funnels_${m.id}`)
       if (stored) return { ...m, embudos_asignados: JSON.parse(stored) }
     } catch { /* noop */ }
     return m
@@ -157,7 +168,7 @@ export function getTeamMembers(): TeamMember[] {
 
 export function updateMemberFunnels(memberId: string, funnelIds: string[]): void {
   try {
-    localStorage.setItem(`mf_funnels_${memberId}`, JSON.stringify(funnelIds))
+    safeSetItem(`mf_funnels_${memberId}`, JSON.stringify(funnelIds))
   } catch { /* noop */ }
   // Also update the in-memory array for immediate access
   const member = TEAM_MEMBERS.find((m) => m.id === memberId)

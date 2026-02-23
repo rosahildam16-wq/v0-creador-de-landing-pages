@@ -4,8 +4,6 @@ import { useState, useRef, useEffect } from "react"
 import { Bell, Trophy, UserPlus, Users, GraduationCap, BellRing, Check, CheckCheck, X } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import {
-  getNotificationsForRole,
-  getUnreadCount,
   formatTimeAgo,
   type AppNotification,
   type NotificationType,
@@ -39,21 +37,25 @@ export function NotificationBell() {
   useEffect(() => {
     if (!user) return
 
-    const loadNotifs = () => {
-      const notifs = getNotificationsForRole(user.role)
-      setNotifications((prev) => {
-        // Only update if count changed (avoid unnecessary re-renders)
-        if (prev.length !== notifs.length || (notifs[0] && prev[0] && notifs[0].id !== prev[0].id)) {
-          return notifs
-        }
-        return prev
-      })
+    const loadNotifs = async () => {
+      try {
+        const res = await fetch(`/api/notifications?role=${user.role}`)
+        if (!res.ok) return
+        const data = await res.json()
+        const notifs = (data.notifications || []) as AppNotification[]
+        setNotifications((prev) => {
+          if (prev.length !== notifs.length || (notifs[0] && prev[0] && notifs[0].id !== prev[0].id)) {
+            return notifs
+          }
+          return prev
+        })
+      } catch { /* noop */ }
     }
 
     loadNotifs()
 
-    // Poll for new notifications every 5 seconds
-    const interval = setInterval(loadNotifs, 5000)
+    // Poll for new notifications every 8 seconds
+    const interval = setInterval(loadNotifs, 8000)
     return () => clearInterval(interval)
   }, [user])
 
@@ -90,12 +92,13 @@ export function NotificationBell() {
 
   const unreadCount = notifications.filter((n) => !n.leida).length
 
-  function persistReadState(ids: string[]) {
+  async function persistReadState(ids: string[]) {
     try {
-      const raw = localStorage.getItem("mf_notifications") || "[]"
-      const list = JSON.parse(raw) as AppNotification[]
-      const updated = list.map((n) => ids.includes(n.id) ? { ...n, leida: true } : n)
-      localStorage.setItem("mf_notifications", JSON.stringify(updated))
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      })
     } catch { /* noop */ }
   }
 

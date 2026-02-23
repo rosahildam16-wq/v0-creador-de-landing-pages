@@ -1,7 +1,6 @@
 "use client"
 
-import { useAuth } from "@/lib/auth-context"
-import { getCommunityById, getCommunityMembers } from "@/lib/communities-data"
+import { useLeaderCommunity } from "@/hooks/use-leader-community"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Kanban, UserPlus, MessageCircle, PhoneCall, CheckCircle } from "lucide-react"
 
@@ -13,27 +12,25 @@ const PIPELINE_STAGES = [
 ]
 
 export default function LeaderPipelinePage() {
-  const { user } = useAuth()
-  const community = user?.communityId ? getCommunityById(user.communityId) : undefined
-  const members = user?.communityId ? getCommunityMembers(user.communityId) : []
+  const { community, loading } = useLeaderCommunity()
 
-  if (!community) return <p className="py-10 text-center text-muted-foreground">Comunidad no encontrada.</p>
-
-  // Simulated pipeline distribution per stage
-  const stageData = PIPELINE_STAGES.map((stage, i) => ({
-    ...stage,
-    count: Math.max(0, Math.floor(members.length * (4 - i) * 1.5 + Math.random() * 5)),
-  }))
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Pipeline de {community.nombre}</h1>
-        <p className="text-sm text-muted-foreground">Estado del pipeline de ventas de tu comunidad</p>
+        <h1 className="text-2xl font-bold text-foreground">Pipeline</h1>
+        <p className="text-sm text-muted-foreground">Estado del pipeline de ventas de {community?.nombre || "tu comunidad"}</p>
       </div>
 
-      <div className="grid gap-4 grid-cols-4">
-        {stageData.map((stage) => (
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        {PIPELINE_STAGES.map((stage) => (
           <Card key={stage.id} className="border-border/50">
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
@@ -44,7 +41,7 @@ export default function LeaderPipelinePage() {
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-foreground">{stage.count}</p>
+              <p className="text-3xl font-bold text-foreground">0</p>
               <p className="text-[10px] text-muted-foreground mt-0.5">prospectos en esta etapa</p>
             </CardContent>
           </Card>
@@ -52,10 +49,10 @@ export default function LeaderPipelinePage() {
       </div>
 
       <Card className="border-border/50">
-        <CardContent className="py-12 text-center">
-          <Kanban className="mx-auto h-10 w-10 text-muted-foreground/20" />
-          <p className="mt-3 text-sm text-muted-foreground">Pipeline detallado por miembro disponible proximamente.</p>
-          <p className="mt-1 text-xs text-muted-foreground/60">Aqui podras ver el progreso de ventas de cada miembro de tu equipo.</p>
+        <CardContent className="py-16 text-center">
+          <Kanban className="mx-auto h-12 w-12 text-muted-foreground/15" />
+          <p className="mt-4 text-sm font-medium text-foreground">El pipeline detallado por miembro estara disponible aqui</p>
+          <p className="mt-1.5 text-xs text-muted-foreground">Podras ver el progreso de ventas de cada miembro de tu equipo.</p>
         </CardContent>
       </Card>
     </div>

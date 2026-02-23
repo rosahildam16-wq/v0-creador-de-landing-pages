@@ -113,7 +113,7 @@ export function FunnelController({ embudoId = "nomada-vip", startAt }: FunnelCon
         {currentExp === 1 && (
           <VideoPlayer
             onContinue={goToNext}
-            videoSrc={embudoId === "franquicia-reset" ? "/images/franquicia-reset.mov" : "/images/nomada-3.mov"}
+            videoSrc={embudoId === "franquicia-reset" ? "/videos/franquicia-reset.mov" : "/images/nomada-3.mov"}
           />
         )}
         {currentExp === 2 && (

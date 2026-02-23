@@ -9,7 +9,7 @@ export interface AppNotification {
   mensaje: string
   timestamp: string
   leida: boolean
-  destinatario: "all" | "admin" | "member"
+  destinatario: "all" | "admin" | "super_admin" | "leader" | "member"
   icono?: string
   accentColor?: string
 }
@@ -96,16 +96,28 @@ export const DEFAULT_NOTIFICATIONS: AppNotification[] = [
   },
 ]
 
+// Safe storage helpers (same pattern as auth-context for iframe compat)
+function safeGetNotifs(): string {
+  try { return localStorage.getItem("mf_notifications") || "[]" } catch { /* noop */ }
+  try { return sessionStorage.getItem("mf_notifications") || "[]" } catch { /* noop */ }
+  return "[]"
+}
+
+function safeSetNotifs(value: string) {
+  try { localStorage.setItem("mf_notifications", value) } catch { /* noop */ }
+  try { sessionStorage.setItem("mf_notifications", value) } catch { /* noop */ }
+}
+
 /**
- * Add a dynamic notification (persisted in localStorage).
+ * Add a dynamic notification (persisted in storage).
  */
 export function addNotification(notif: Omit<AppNotification, "id">) {
   try {
-    const raw = localStorage.getItem("mf_notifications") || "[]"
+    const raw = safeGetNotifs()
     const list = JSON.parse(raw) as AppNotification[]
     const full: AppNotification = { ...notif, id: `dyn-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` }
     list.unshift(full)
-    localStorage.setItem("mf_notifications", JSON.stringify(list.slice(0, 50)))
+    safeSetNotifs(JSON.stringify(list.slice(0, 50)))
   } catch { /* noop */ }
 }
 
@@ -114,7 +126,7 @@ export function addNotification(notif: Omit<AppNotification, "id">) {
  */
 function getDynamicNotifications(): AppNotification[] {
   try {
-    const raw = localStorage.getItem("mf_notifications") || "[]"
+    const raw = safeGetNotifs()
     return JSON.parse(raw) as AppNotification[]
   } catch {
     return []
@@ -124,7 +136,13 @@ function getDynamicNotifications(): AppNotification[] {
 export function getNotificationsForRole(role: UserRole): AppNotification[] {
   const all = [...getDynamicNotifications(), ...DEFAULT_NOTIFICATIONS]
   return all
-    .filter((n) => n.destinatario === "all" || n.destinatario === role)
+    .filter((n) => {
+      if (n.destinatario === "all") return true
+      if (n.destinatario === role) return true
+      // "admin" notifications go to both super_admin and leader
+      if (n.destinatario === "admin" && (role === "super_admin" || role === "leader")) return true
+      return false
+    })
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 }
 
