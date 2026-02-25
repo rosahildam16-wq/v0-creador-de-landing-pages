@@ -1,4 +1,4 @@
-import { resend } from "./resend"
+import { getResend } from "./resend"
 import { WelcomeEmail } from "@/components/emails/welcome-email"
 
 export async function sendWelcomeEmail({
@@ -11,6 +11,7 @@ export async function sendWelcomeEmail({
     communityCode: string
 }) {
     try {
+        const resend = getResend();
         const { data, error } = await resend.emails.send({
             from: "Magic Funnel <onboarding@resend.dev>", // Cambiar por dominio propio luego
             to: [email],

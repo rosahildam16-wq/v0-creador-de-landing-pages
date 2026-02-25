@@ -1,16 +1,21 @@
 import { Resend } from 'resend';
 
-// Initialize with a fallback or lazy getter to prevent build errors if the key is missing
-const apiKey = process.env.RESEND_API_KEY;
+let _resend: Resend | null = null;
 
-// Export an object that mimics the Resend instance but checks for the key
-export const resend = apiKey
-    ? new Resend(apiKey)
-    : {
-        emails: {
-            send: async () => {
-                console.error("Resend API Key is missing. Email cannot be sent.");
-                return { data: null, error: new Error("Missing Resend API Key") };
+export function getResend() {
+    if (_resend) return _resend;
+
+    const apiKey = process.env.RESEND_API_KEY;
+
+    if (!apiKey) {
+        console.warn("Resend API Key is missing. Email will not be sent.");
+        return {
+            emails: {
+                send: async () => ({ data: null, error: new Error("Missing Key") })
             }
-        }
-    } as unknown as Resend;
+        } as unknown as Resend;
+    }
+
+    _resend = new Resend(apiKey);
+    return _resend;
+}
