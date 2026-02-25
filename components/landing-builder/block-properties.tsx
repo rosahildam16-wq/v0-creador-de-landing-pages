@@ -493,7 +493,7 @@ function BlockEditor({
                   </div>
                 </div>
               )}
-              createItem={() => ({ author: "Nuevo miembro", content: "Contenido del post...", timeAgo: "hace 1 hora", likes: 0, comments: 0, category: "General" })}
+              createItem={() => ({ author: "Nuevo miembro", content: "Contenido del post...", timeAgo: "hace 1 hora", likes: 0, comments: 0, category: "General", badge: "" })}
             />
             <ListEditor
               label="Leaderboard"
@@ -519,6 +519,51 @@ function BlockEditor({
                 </div>
               )}
               createItem={() => ({ name: "Nuevo miembro", points: 100, level: 1, badge: "Bronce" })}
+            />
+          </>
+        )
+      case "whatsapp_final":
+        return (
+          <>
+            {textInput("Titulo del Chat", "title")}
+            <ListEditor
+              label="Mensajes"
+              items={(p.messages as Array<{ id: string; text: string; sender: "agent" | "user"; timestamp: string }>) ?? []}
+              onUpdate={(items) => updateProp("messages", items)}
+              renderItem={(item, onChange) => (
+                <div className="flex flex-1 flex-col gap-1">
+                  <textarea
+                    value={item.text}
+                    onChange={(e) => onChange({ ...item, text: e.target.value })}
+                    placeholder="Mensaje"
+                    rows={2}
+                    className="rounded-md border border-border/40 bg-muted/30 px-2 py-1.5 text-xs text-foreground outline-none"
+                  />
+                  <div className="flex gap-2">
+                    <select
+                      value={item.sender}
+                      onChange={(e) => onChange({ ...item, sender: e.target.value as "agent" | "user" })}
+                      className="flex-1 rounded-md border border-border/40 bg-muted/30 px-2 py-1 text-[10px] text-foreground"
+                    >
+                      <option value="agent">Agente</option>
+                      <option value="user">Usuario (Yo)</option>
+                    </select>
+                    <input
+                      type="text"
+                      value={item.timestamp}
+                      onChange={(e) => onChange({ ...item, timestamp: e.target.value })}
+                      placeholder="Hora"
+                      className="w-20 rounded-md border border-border/40 bg-muted/30 px-2 py-1 text-[10px] text-foreground outline-none"
+                    />
+                  </div>
+                </div>
+              )}
+              createItem={() => ({
+                id: Math.random().toString(36).substr(2, 9),
+                text: "Nuevo mensaje...",
+                sender: "agent",
+                timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+              })}
             />
           </>
         )

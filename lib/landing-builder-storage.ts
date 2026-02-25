@@ -7,7 +7,7 @@ function generateId(): string {
   return `landing_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
 }
 
-function generateBlockId(): string {
+export function generateBlockId(): string {
   return `block_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
 }
 

@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import { AuthProvider } from "@/lib/auth-context"
 import { ThemeProvider } from "@/lib/theme-context"
+import { Toaster } from "sonner"
 
 import './globals.css'
 
@@ -38,6 +39,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             {children}
+            <Toaster position="bottom-right" richColors theme="dark" />
           </AuthProvider>
         </ThemeProvider>
       </body>

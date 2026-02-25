@@ -132,7 +132,7 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
   const currentSlide = activeSlides[activeSlide]
   const currentSlideHasVideo = !!currentSlide?.videoEmbed
   const isLast = activeSlide === activeSlides.length - 1
-  const canAdvance = currentSlideHasVideo ? !!videoFinished[activeSlide] : true
+  const canAdvance = videoFinished[activeSlide] || !currentSlideHasVideo
 
   // ── Toggle play/pause for Vimeo via postMessage ──
   const toggleVimeoPlay = useCallback((slideIndex: number) => {
@@ -263,19 +263,6 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
     setTimeout(() => setTransitioning(false), 400)
   }, [canAdvance, transitioning, isLast, onContinue])
 
-  // ── Force advance (skip video lock) ──
-  const forceNext = useCallback(() => {
-    if (transitioning) return
-    setVideoFinished((prev) => ({ ...prev, [activeSlide]: true }))
-    if (isLast) {
-      onContinue()
-      return
-    }
-    setTransitioning(true)
-    setActiveSlide((prev) => prev + 1)
-    setTimeout(() => setTransitioning(false), 400)
-  }, [transitioning, activeSlide, isLast, onContinue])
-
   // ── Touch swipe detection ──
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartYRef.current = e.touches[0].clientY
@@ -283,13 +270,10 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
 
   const onTouchEnd = useCallback((e: React.TouchEvent) => {
     const diff = touchStartYRef.current - e.changedTouches[0].clientY
-    // If video finished, normal threshold. Otherwise, stronger swipe (120px) to force-advance
     if (diff > 60 && canAdvance) {
       goNext()
-    } else if (diff > 120 && !canAdvance) {
-      forceNext()
     }
-  }, [goNext, forceNext, canAdvance])
+  }, [goNext, canAdvance])
 
   const handleDoubleTap = useCallback(() => {
     const now = Date.now()
@@ -452,10 +436,16 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
             </div>
 
             {/* Right sidebar actions */}
-            <div className="absolute bottom-20 right-2 z-20 flex flex-col items-center gap-2">
+            <div className="absolute bottom-12 right-2 z-20 flex flex-col items-center gap-2">
               {/* Profile pic */}
               <div className="relative mb-1">
-                <div className="h-10 w-10 rounded-full border-2 border-white bg-neutral-600" />
+                <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-white bg-neutral-800">
+                  <img
+                    src="/images/avatar_tiktok.jpg"
+                    alt="Profile"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
                 <div className="absolute -bottom-1 left-1/2 flex h-4 w-4 -translate-x-1/2 items-center justify-center rounded-full bg-red-500">
                   <Plus className="h-2.5 w-2.5 text-white" strokeWidth={3} />
                 </div>
@@ -521,32 +511,15 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
               <div className="h-8 w-8 rounded-lg border border-white/20 bg-neutral-800" />
             </div>
 
-            {/* Bottom info - username + caption/title */}
-            <div className="absolute bottom-14 left-3 right-16 z-20">
-              <p
-                className="text-[15px] font-bold text-white"
-                style={{ textShadow: "0 1px 4px rgba(0,0,0,0.7)" }}
-              >
-                {slide.username}
-              </p>
+            {/* Bottom info - title (caption) only */}
+            <div className="absolute bottom-10 left-3 right-16 z-20">
               {slide.caption && (
                 <p
-                  className="mt-1 text-[13px] text-white/90"
+                  className="text-[15px] font-bold text-white"
                   style={{ textShadow: "0 1px 4px rgba(0,0,0,0.7)" }}
                 >
                   {slide.caption}
                 </p>
-              )}
-              {slide.music && (
-                <div className="mt-1.5 flex items-center gap-1.5">
-                  <Music className="h-3 w-3 text-white/70" />
-                  <p
-                    className="truncate text-[11px] text-white/70"
-                    style={{ textShadow: "0 1px 4px rgba(0,0,0,0.7)" }}
-                  >
-                    {slide.music}
-                  </p>
-                </div>
               )}
             </div>
 

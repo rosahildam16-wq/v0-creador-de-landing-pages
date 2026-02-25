@@ -19,22 +19,16 @@ import { playMessageReceived, playVoiceNote } from "@/lib/sounds"
 
 interface Props {
   onContinue: () => void
+  title?: string
+  customMessages?: Array<{
+    id: string
+    text: string
+    sender: "agent" | "user"
+    timestamp: string
+  }>
 }
 
-type MessageItem =
-  | { type: "text"; text: string; delay: number }
-  | { type: "audio"; duration: string; delay: number }
 
-const messages: MessageItem[] = [
-  { type: "text", text: "Lei lo que pusiste.", delay: 1000 },
-  { type: "text", text: "Dejame ser claro: nadie promete seguridad absoluta.", delay: 3500 },
-  { type: "text", text: "Pero quedarte donde estas\u2026 \u00bfeso si te la da?", delay: 6500 },
-  { type: "audio", duration: "0:04", delay: 9500 },
-  { type: "text", text: "No se trata de viajar.", delay: 13000 },
-  { type: "text", text: "Se trata de no llegar tarde.", delay: 16000 },
-  { type: "text", text: "Si decides avanzar, te acompano.", delay: 19000 },
-  { type: "text", text: "Si no\u2026 que sea una decision consciente.", delay: 22000 },
-]
 
 function VoiceMessage({ duration, timeStr }: { duration: string; timeStr: string }) {
   const [isPlaying, setIsPlaying] = useState(false)
@@ -151,7 +145,14 @@ function VoiceMessage({ duration, timeStr }: { duration: string; timeStr: string
   )
 }
 
-export function WhatsAppFinal({ onContinue }: Props) {
+const defaultMessages: Array<{ id: string; text: string; sender: "agent" | "user"; timestamp: string }> = [
+  { id: "1", text: "Lei lo que pusiste.", sender: "agent", timestamp: "10:00" },
+  { id: "2", text: "Dejame ser claro: nadie promete seguridad absoluta.", sender: "agent", timestamp: "10:01" },
+  { id: "3", text: "Pero quedarte donde estas... ¿eso si te la da?", sender: "agent", timestamp: "10:02" },
+]
+
+export function WhatsAppFinal({ onContinue, title = "Mejor amigo", customMessages }: Props) {
+  const activeMessages = customMessages || defaultMessages
   const [visibleMessages, setVisibleMessages] = useState<number[]>([])
   const [isTyping, setIsTyping] = useState(false)
   const [showCTA, setShowCTA] = useState(false)
@@ -159,30 +160,43 @@ export function WhatsAppFinal({ onContinue }: Props) {
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = []
+    let currentDelay = 800
 
-    messages.forEach((msg, i) => {
-      const typingTimer = setTimeout(() => {
-        setIsTyping(true)
-      }, msg.delay - 1200)
-      timers.push(typingTimer)
+    activeMessages.forEach((msg, i) => {
+      if (msg.sender === "user") {
+        // User messages appear instantly in this simplified simulation
+        const msgTimer = setTimeout(() => {
+          setVisibleMessages((prev) => [...prev, i])
+        }, currentDelay)
+        timers.push(msgTimer)
+        currentDelay += 500
+      } else {
+        const typingTimer = setTimeout(() => {
+          setIsTyping(true)
+        }, currentDelay)
+        timers.push(typingTimer)
 
-      const msgTimer = setTimeout(() => {
-        setIsTyping(false)
-        setVisibleMessages((prev) => [...prev, i])
-        playMessageReceived()
-      }, msg.delay)
-      timers.push(msgTimer)
+        currentDelay += 1500
+
+        const msgTimer = setTimeout(() => {
+          setIsTyping(false)
+          setVisibleMessages((prev) => [...prev, i])
+          playMessageReceived()
+        }, currentDelay)
+        timers.push(msgTimer)
+        currentDelay += 800
+      }
     })
 
     const ctaTimer = setTimeout(() => {
       setShowCTA(true)
-    }, 25000)
+    }, currentDelay + 1000)
     timers.push(ctaTimer)
 
     return () => {
       for (const t of timers) clearTimeout(t)
     }
-  }, [])
+  }, [activeMessages])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -199,10 +213,10 @@ export function WhatsAppFinal({ onContinue }: Props) {
           <ArrowLeft className="h-5 w-5" style={{ color: "#aebac1" }} />
         </button>
         <div className="flex h-9 w-9 items-center justify-center rounded-full" style={{ backgroundColor: "#2a3942" }}>
-          <span className="text-sm font-semibold" style={{ color: "#aebac1" }}>M</span>
+          <span className="text-sm font-semibold" style={{ color: "#aebac1" }}>{title[0].toUpperCase()}</span>
         </div>
         <div className="flex-1 pl-1">
-          <p className="text-[15px] font-normal" style={{ color: "#e9edef" }}>Mejor amigo</p>
+          <p className="text-[15px] font-normal" style={{ color: "#e9edef" }}>{title}</p>
           <p className="text-[12px]" style={{ color: "#00a884" }}>en linea</p>
         </div>
         <div className="flex items-center gap-4 pr-1">
@@ -225,32 +239,27 @@ export function WhatsAppFinal({ onContinue }: Props) {
         </div>
 
         {visibleMessages.map((idx) => {
-          const msg = messages[idx]
-          const isFirst = idx === 0
-
-          if (msg.type === "audio") {
-            return (
-              <div key={idx} className="animate-fade-in mb-1 max-w-[85%] self-start">
-                <VoiceMessage duration={msg.duration} timeStr={timeStr} />
-              </div>
-            )
-          }
+          const msg = activeMessages[idx]
+          const isSent = msg.sender === "user"
+          const isFirst = idx === 0 || activeMessages[idx - 1].sender !== msg.sender
 
           return (
-            <div key={idx} className="animate-fade-in mb-1 max-w-[85%] self-start">
+            <div key={idx} className={`animate-fade-in mb-1 max-w-[85%] ${isSent ? "self-end" : "self-start"}`}>
               <div
-                className={isFirst ? "wa-bubble-incoming" : ""}
+                className={isFirst ? (isSent ? "wa-bubble-sent" : "wa-bubble-incoming") : ""}
                 style={{
-                  backgroundColor: "#202c33",
-                  borderRadius: isFirst ? "0 8px 8px 8px" : "8px",
+                  backgroundColor: isSent ? "#005c4b" : "#202c33",
+                  borderRadius: isFirst
+                    ? (isSent ? "8px 0 8px 8px" : "0 8px 8px 8px")
+                    : "8px",
                   padding: "6px 8px 4px 9px",
                 }}
               >
                 <p className="text-[14.2px] leading-[19px] break-words" style={{ color: "#e9edef" }}>
                   {msg.text}
                   <span className="float-right ml-2 mt-1 flex items-center gap-1" style={{ lineHeight: "14px" }}>
-                    <span className="text-[11px]" style={{ color: "#8696a0" }}>{timeStr}</span>
-                    <CheckCheck className="h-[14px] w-[14px] inline-block" style={{ color: "#53bdeb" }} />
+                    <span className="text-[11px]" style={{ color: isSent ? "#6fbfa0" : "#8696a0" }}>{msg.timestamp}</span>
+                    <CheckCheck className="h-[14px] w-[14px] inline-block" style={{ color: isSent ? "#53bdeb" : "#8696a0" }} />
                   </span>
                 </p>
               </div>

@@ -66,15 +66,15 @@ export function CallInterface({ onContinue, audioSrc = "/audio/call-voice.mp3", 
       // Play voice audio once active
       const audio = new Audio(audioSrc)
       voiceAudioRef.current = audio
-      audio.play().catch(() => {})
+      audio.play().catch(() => { })
       audio.onended = () => {
         stopDrone()
         playCallEnd()
         setPhase("ended")
-        // Auto-advance to next experience after a brief pause
+        // Auto-advance to next experience immediately after call ends
         setTimeout(() => {
           onContinue()
-        }, 2000)
+        }, 500)
       }
     }, 1500)
   }
@@ -86,7 +86,7 @@ export function CallInterface({ onContinue, audioSrc = "/audio/call-voice.mp3", 
     setPhase("ended")
     setTimeout(() => {
       onContinue()
-    }, 2000)
+    }, 500)
   }
 
   const handleHangUp = () => {
@@ -99,7 +99,7 @@ export function CallInterface({ onContinue, audioSrc = "/audio/call-voice.mp3", 
     setPhase("ended")
     setTimeout(() => {
       onContinue()
-    }, 2000)
+    }, 500)
   }
 
   // === INCOMING CALL (iPhone style) ===
@@ -220,11 +220,10 @@ export function CallInterface({ onContinue, audioSrc = "/audio/call-voice.mp3", 
                 <button
                   type="button"
                   onClick={() => setIsMuted(!isMuted)}
-                  className={`flex h-[60px] w-[60px] items-center justify-center rounded-full transition-colors ${
-                    isMuted
-                      ? "bg-[#f5f5f7] text-[#1c1c1e]"
-                      : "bg-[#2c2c2e] text-[#f5f5f7]"
-                  }`}
+                  className={`flex h-[60px] w-[60px] items-center justify-center rounded-full transition-colors ${isMuted
+                    ? "bg-[#f5f5f7] text-[#1c1c1e]"
+                    : "bg-[#2c2c2e] text-[#f5f5f7]"
+                    }`}
                   aria-label={isMuted ? "Activar micro" : "Silenciar"}
                 >
                   <MicOff className="h-6 w-6" />
@@ -261,17 +260,7 @@ export function CallInterface({ onContinue, audioSrc = "/audio/call-voice.mp3", 
               <PhoneOff className="h-8 w-8 text-[#f5f5f7]" />
             </button>
           </>
-        ) : (
-          /* Ended state */
-          <div className="w-full animate-fade-in px-4">
-            <Button
-              onClick={onContinue}
-              className="w-full bg-[#34c759] py-6 text-lg font-semibold text-[#f5f5f7] hover:bg-[#34c759]/90"
-            >
-              CONTINUAR
-            </Button>
-          </div>
-        )}
+        ) : null}
       </div>
     </div>
   )

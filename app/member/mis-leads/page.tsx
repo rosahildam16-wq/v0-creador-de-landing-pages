@@ -21,6 +21,7 @@ import {
   Search, Download, ChevronLeft, ChevronRight, Loader2, Users, ArrowUpDown,
 } from "lucide-react"
 import { format } from "date-fns"
+import { cn } from "@/lib/utils"
 import useSWR from "swr"
 import type { Lead } from "@/lib/types"
 
@@ -53,15 +54,11 @@ export default function MemberLeadsPage() {
   const { user } = useAuth()
   const member = TEAM_MEMBERS.find((m) => m.id === user?.memberId)
 
-  const { data: allLeads, isLoading } = useSWR<Lead[]>("/api/admin/leads", fetcher, {
-    refreshInterval: 15000,
-  })
-
-  // Filter leads assigned to this member
-  const leads = useMemo(() => {
-    if (!allLeads || !member) return []
-    return allLeads.filter((l) => l.asignado_a === member.id || member.embudos_asignados.includes(l.embudo_id))
-  }, [allLeads, member])
+  const { data: leads, isLoading, mutate } = useSWR<Lead[]>(
+    user?.email ? `/api/member/leads?email=${encodeURIComponent(user.email)}` : null,
+    fetcher,
+    { refreshInterval: 10000 }
+  )
 
   const [search, setSearch] = useState("")
   const [tempFilter, setTempFilter] = useState<string>("todas")
@@ -69,9 +66,10 @@ export default function MemberLeadsPage() {
   const [sortKey, setSortKey] = useState<SortKey>("nombre")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
   const [page, setPage] = useState(0)
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   const leadsConScore = useMemo(
-    () => leads.map((lead) => ({ ...lead, ...calcularTemperatura(lead) })),
+    () => (leads || []).map((lead) => ({ ...lead, ...calcularTemperatura(lead) })),
     [leads]
   )
 
@@ -110,6 +108,23 @@ export default function MemberLeadsPage() {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"))
     else { setSortKey(key); setSortDir("asc") }
     setPage(0)
+  }
+
+  const handleUpdateEtapa = async (leadId: string, nuevaEtapa: EtapaPipeline) => {
+    setUpdatingId(leadId)
+    try {
+      const res = await fetch("/api/member/leads", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lead_id: leadId, etapa: nuevaEtapa }),
+      })
+      if (!res.ok) throw new Error("Error al actualizar")
+      mutate()
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setUpdatingId(null)
+    }
   }
 
   const handleExport = () => {
@@ -174,17 +189,21 @@ export default function MemberLeadsPage() {
         </CardContent>
       </Card>
 
-      {leads.length === 0 && (
-        <Card className="border-dashed border-border">
-          <CardContent className="flex flex-col items-center justify-center p-10">
-            <Users className="mb-3 h-10 w-10 text-muted-foreground/50" />
-            <h3 className="mb-1 text-lg font-semibold">Sin leads todavia</h3>
-            <p className="text-center text-sm text-muted-foreground">Tus leads apareceran aqui cuando ingresen por tu embudo.</p>
+      {(leads || []).length === 0 && (
+        <Card className="border-dashed border-border/50 bg-white/[0.01]">
+          <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/5">
+              <Users className="h-8 w-8 text-primary/40" />
+            </div>
+            <h3 className="mb-2 text-xl font-bold">Aún no tienes leads</h3>
+            <p className="max-w-[280px] text-sm text-muted-foreground">
+              Tus prospectos aparecerán aquí automáticamente cuando completen tus formularios.
+            </p>
           </CardContent>
         </Card>
       )}
 
-      {leads.length > 0 && (
+      {(leads || []).length > 0 && (
         <Card className="border-border/50">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -199,14 +218,51 @@ export default function MemberLeadsPage() {
                 </TableHeader>
                 <TableBody>
                   {paginated.map((lead) => (
-                    <TableRow key={lead.id}>
-                      <TableCell className="py-3"><span className="font-medium">{lead.nombre}</span></TableCell>
-                      <TableCell className="py-3"><Badge variant="outline" className={getEtapaBadgeClasses(lead.etapa)}>{ETAPA_LABELS[lead.etapa]}</Badge></TableCell>
-                      <TableCell className="py-3"><ScoreBars score={lead.score} temperatura={lead.temperatura} /></TableCell>
-                      <TableCell className="py-3"><WhatsAppStatus tipoEmbudo={lead.tipo_embudo} whatsappCitaEnviado={lead.whatsapp_cita_enviado} compraCompletada={lead.compra_completada} /></TableCell>
+                    <TableRow key={lead.id} className="group hover:bg-white/[0.02]">
+                      <TableCell className="py-4">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-foreground">{lead.nombre}</span>
+                          <span className="text-[10px] text-muted-foreground uppercase tracking-tight">{lead.email}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <Select
+                          value={lead.etapa}
+                          onValueChange={(v) => handleUpdateEtapa(lead.id, v as EtapaPipeline)}
+                          disabled={updatingId === lead.id}
+                        >
+                          <SelectTrigger className={cn(
+                            "h-9 w-[170px] border-none bg-transparent font-medium focus:ring-0",
+                            getEtapaBadgeClasses(lead.etapa as EtapaPipeline)
+                          )}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ETAPA_ORDER.map((e) => (
+                              <SelectItem key={e} value={e} className="text-xs">{ETAPA_LABELS[e]}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <ScoreBars score={lead.score} temperatura={lead.temperatura} />
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <div className="flex items-center gap-2">
+                          <WhatsAppStatus tipoEmbudo={lead.tipo_embudo} whatsappCitaEnviado={lead.whatsapp_cita_enviado} compraCompletada={lead.compra_completada} />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-full text-[#25D366] hover:bg-[#25D366]/10 hover:text-[#25D366]"
+                            onClick={() => window.open(`https://wa.me/${lead.whatsapp.replace(/\D/g, '')}`, '_blank')}
+                          >
+                            <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-2.32 0-4.591.398-6.726 1.147-.263.094-.529.141-.794.141-.412 0-.819-.117-1.173-.341-.454-.287-.768-.748-.871-1.278l-.164-.812c-.001-.001 0-.001 0-.002l-.11-.54c-.131-.645.143-1.309.684-1.652.544-.343 1.258-.335 1.791.021l1.523 1.015c.427.284.664.767.625 1.272l-.039.492c2.08-.131 4.22-.131 6.3 0l-.039-.492c-.039-.505.197-.988.625-1.272l1.523-1.015c.535-.357 1.247-.364 1.791-.021.541.343.815 1.007.684 1.652l-.11.54c0 .001 0 .001 0 .002l-.164.812c-.104.53-.417.991-.871 1.278-.354.224-.761.341-1.173.341-.265 0-.531-.047-.794-.141-2.135-.749-4.406-1.147-6.726-1.147z" /></svg>
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
-                  {paginated.length === 0 && leads.length > 0 && (
+                  {paginated.length === 0 && (leads || []).length > 0 && (
                     <TableRow><TableCell colSpan={4} className="h-24 text-center text-sm text-muted-foreground">No se encontraron leads con estos filtros.</TableCell></TableRow>
                   )}
                 </TableBody>

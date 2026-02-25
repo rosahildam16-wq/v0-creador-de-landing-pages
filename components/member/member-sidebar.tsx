@@ -16,7 +16,7 @@ const NAV_ITEMS = [
   { href: "/member/retos", label: "Retos", icon: Trophy },
   { href: "/member/comunidad", label: "Comunidad", icon: MessagesSquare },
   { href: "/member/academia", label: "Academia", icon: GraduationCap },
-  { href: "/member/mi-link", label: "Mi Link", icon: Link2 },
+  { href: "/member/mi-embudo", label: "Mi Embudo", icon: Link2 },
   { href: "/member/suscripcion", label: "Suscripcion", icon: CreditCard },
 ]
 

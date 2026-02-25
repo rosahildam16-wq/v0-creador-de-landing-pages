@@ -12,6 +12,7 @@ export type BlockType =
   | "video"
   | "gallery"
   | "community"
+  | "whatsapp_final"
 
 export interface LandingBlock {
   id: string
@@ -164,6 +165,7 @@ export const BLOCK_CATALOG: BlockMeta[] = [
   { type: "video", label: "Video", description: "Video embebido", icon: "Play", category: "media" },
   { type: "gallery", label: "Galeria", description: "Galeria de imagenes", icon: "Image", category: "media" },
   { type: "community", label: "Comunidad", description: "Comunidad interactiva", icon: "Users", category: "content" },
+  { type: "whatsapp_final", label: "WhatsApp Chat", description: "Experiencia de WhatsApp interactiva", icon: "MessageSquare", category: "conversion" },
 ]
 
 export type TemplateKey = "venta" | "leads" | "evento"

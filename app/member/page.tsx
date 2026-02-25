@@ -17,6 +17,10 @@ import {
 import {
   AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip,
 } from "recharts"
+import useSWR from "swr"
+import type { Lead } from "@/lib/types"
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
 function safeGet(key: string): string | null {
   try { return localStorage.getItem(key) ?? sessionStorage.getItem(key) } catch { return null }
@@ -180,15 +184,41 @@ export default function MemberDashboard() {
     if (stored) { try { setChallenges(JSON.parse(stored)) } catch { /* defaults */ } }
   }, [])
 
+  const { data: leads, isLoading: leadsLoading } = useSWR<Lead[]>(
+    user?.email ? `/api/member/leads?email=${encodeURIComponent(user.email)}` : null,
+    fetcher,
+    { refreshInterval: 10000 }
+  )
+
   useEffect(() => {
-    if (user?.memberId) {
-      const m = getTeamMemberById(user.memberId)
-      if (m) setMember(m)
+    if (user) {
+      const m = user.memberId ? getTeamMemberById(user.memberId) : null
+      if (m) {
+        setMember(m)
+      } else {
+        // Fallback member if not in static list
+        const memberCommunity = user.memberId ? getMemberCommunity(user.memberId) : undefined
+        const defaultFunnelIds = memberCommunity?.embudos_default || []
+
+        setMember({
+          id: user.memberId || "new-member",
+          nombre: user.name || "Socio",
+          email: user.email || "",
+          avatar_initials: user.name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "S",
+          publicidad_activa: false,
+          fecha_renovacion: null,
+          metricas: { leads: 0, cerrados: 0, afiliados: 0 },
+          publicidad: { inversion_total: 0, saldo_disponible: 0, leads_totales: 0, leads_cerrados: 0 },
+          organico: { saldo_disponible: 0, leads_totales: 0, leads_cerrados: 0 },
+          embudos_asignados: defaultFunnelIds,
+          fecha_ingreso: new Date().toISOString().split('T')[0],
+        })
+      }
     }
   }, [user])
 
   const getMemberPosition = useCallback((challenge: Challenge): number => {
-    if (!member) return 0
+    if (!member || !member.id) return 0
     const ranking = getRanking(challenge)
     const entry = ranking.find((r) => r.member.id === member.id)
     return entry?.posicion ?? 0
@@ -203,7 +233,13 @@ export default function MemberDashboard() {
   }
 
   const activeChallenges = challenges.filter((c) => c.activo)
-  const leadsPorDia = generateLeadsPorDia(member.metricas.leads, 42)
+
+  // Safely calculate lead metrics
+  const leadsArray = Array.isArray(leads) ? leads : []
+  const totalLeads = leadsArray.length
+  const hotLeads = leadsArray.filter(l => l.etapa === 'cerrado' || l.etapa === 'presentado').length
+
+  const leadsPorDia = generateLeadsPorDia(totalLeads, 42)
   const firstName = member.nombre.split(" ")[0]
   const memberCommunity = user?.memberId ? getMemberCommunity(user.memberId) : undefined
   const trainingPercent = 37
@@ -275,7 +311,7 @@ export default function MemberDashboard() {
         <MetricCard
           icon={<Users className="h-5 w-5 text-white" />}
           iconGradient="linear-gradient(135deg, #10b981, #059669)"
-          value={member.metricas.leads}
+          value={totalLeads}
           label="Leads totales"
           delay={0}
           href="/member/mis-leads"
@@ -283,7 +319,7 @@ export default function MemberDashboard() {
         <MetricCard
           icon={<Target className="h-5 w-5 text-white" />}
           iconGradient="linear-gradient(135deg, #ef4444, #dc2626)"
-          value={member.metricas.cerrados}
+          value={hotLeads}
           label="Leads calientes"
           delay={80}
           href="/member/pipeline"

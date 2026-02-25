@@ -14,6 +14,7 @@ interface BuilderCanvasProps {
   onDropBlock: (type: string, index: number) => void
   onMoveBlock: (fromIndex: number, toIndex: number) => void
   onDeleteBlock: (id: string) => void
+  onUpdateProp?: (id: string, key: string, value: any) => void
 }
 
 export function BuilderCanvas({
@@ -25,6 +26,7 @@ export function BuilderCanvas({
   onDropBlock,
   onMoveBlock,
   onDeleteBlock,
+  onUpdateProp,
 }: BuilderCanvasProps) {
   const [dropIndex, setDropIndex] = useState<number | null>(null)
   const [dragFromIndex, setDragFromIndex] = useState<number | null>(null)
@@ -111,6 +113,7 @@ export function BuilderCanvas({
                   onMoveDown={i < blocks.length - 1 ? () => onMoveBlock(i, i + 1) : undefined}
                   onDragStart={() => setDragFromIndex(i)}
                   onDragEnd={() => setDragFromIndex(null)}
+                  onUpdateProp={onUpdateProp}
                 />
                 {/* Drop zone after each block */}
                 <DropZone
@@ -151,11 +154,10 @@ function DropZone({
       onDrop={(e) => onDrop(e, index)}
     >
       <div
-        className={`mx-auto h-1 rounded-full transition-all duration-200 ${
-          isActive
-            ? "w-full bg-primary shadow-[0_0_12px_rgba(124,58,237,0.4)]"
-            : "w-0 bg-transparent"
-        }`}
+        className={`mx-auto h-1 rounded-full transition-all duration-200 ${isActive
+          ? "w-full bg-primary shadow-[0_0_12px_rgba(124,58,237,0.4)]"
+          : "w-0 bg-transparent"
+          }`}
       />
       {isActive && (
         <p className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[10px] font-medium text-primary">
@@ -179,6 +181,7 @@ function CanvasBlock({
   onMoveDown,
   onDragStart,
   onDragEnd,
+  onUpdateProp,
 }: {
   block: LandingBlock
   index: number
@@ -191,14 +194,14 @@ function CanvasBlock({
   onMoveDown?: () => void
   onDragStart: () => void
   onDragEnd: () => void
+  onUpdateProp?: (id: string, key: string, value: any) => void
 }) {
   return (
     <div
-      className={`group relative mx-4 cursor-pointer overflow-hidden rounded-lg transition-all duration-200 ${
-        isSelected
-          ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
-          : "hover:ring-1 hover:ring-border/60"
-      } ${isDraggedOver ? "opacity-50" : ""}`}
+      className={`group relative mx-4 cursor-pointer overflow-hidden rounded-lg transition-all duration-200 ${isSelected
+        ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+        : "hover:ring-1 hover:ring-border/60"
+        } ${isDraggedOver ? "opacity-50" : ""}`}
       onClick={(e) => {
         e.stopPropagation()
         onSelect()
@@ -242,8 +245,8 @@ function CanvasBlock({
       </div>
 
       {/* Rendered block */}
-      <div className="pointer-events-none">
-        <BlockRenderer block={block} theme={theme} />
+      <div className={isSelected ? "" : "pointer-events-none"}>
+        <BlockRenderer block={block} theme={theme} onUpdateProp={onUpdateProp} />
       </div>
     </div>
   )

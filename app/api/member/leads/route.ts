@@ -20,7 +20,8 @@ export async function GET(req: NextRequest) {
             .maybeSingle()
 
         if (memberError || !member) {
-            return NextResponse.json({ error: "Miembro no encontrado" }, { status: 404 })
+            // If member not found in DB yet, return empty list instead of error to avoid UI crash
+            return NextResponse.json([])
         }
 
         // 2. Fetch leads for this community

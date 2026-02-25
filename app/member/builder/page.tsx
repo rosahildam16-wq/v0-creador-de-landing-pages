@@ -5,57 +5,39 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-    Plus, Plane, Layout, Sparkles, ArrowRight, MousePointer2,
-    Rocket, Search, Filter, MoreHorizontal, Copy, Trash2,
-    Eye, Settings, Zap, Users, Target, MousePointer
+    Plus, Layout, Sparkles, ArrowRight,
+    Rocket, Search, Filter, Copy, Trash2,
+    Eye, Zap, Users, Target
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-
-// Mock data for initial UI
-const MOCK_FUNNELS = [
-    {
-        id: "f1",
-        name: "Embudo de Lanzamiento 2026",
-        steps: 3,
-        visits: 1240,
-        leads: 342,
-        conversion: "27.5%",
-        status: "active",
-        type: "Webinar",
-        color: "from-violet-500 to-fuchsia-500",
-    },
-    {
-        id: "f2",
-        name: "Captación de Líderes VIP",
-        steps: 2,
-        visits: 850,
-        leads: 120,
-        conversion: "14.1%",
-        status: "draft",
-        type: "Lead Magnet",
-        color: "from-blue-500 to-cyan-500",
-    },
-    {
-        id: "f3",
-        name: "Cuestionario de Diagnóstico",
-        steps: 4,
-        visits: 2100,
-        leads: 890,
-        conversion: "42.3%",
-        status: "active",
-        type: "Quiz Funnel",
-        color: "from-emerald-500 to-teal-500",
-    }
-]
+import { getLandings, deleteLanding } from "@/lib/landing-builder-storage"
+import { LandingConfig } from "@/lib/landing-builder-types"
 
 export default function MagicBuilderHub() {
     const router = useRouter()
     const [searchTerm, setSearchTerm] = useState("")
     const [mounted, setMounted] = useState(false)
+    const [landings, setLandings] = useState<LandingConfig[]>([])
 
-    useEffect(() => { setMounted(true) }, [])
+    useEffect(() => {
+        setMounted(true)
+        setLandings(getLandings())
+    }, [])
+
+    const handleDelete = (e: React.MouseEvent, id: string) => {
+        e.preventDefault()
+        e.stopPropagation()
+        if (confirm("¿Estás seguro de que quieres eliminar este embudo?")) {
+            deleteLanding(id)
+            setLandings(getLandings())
+        }
+    }
 
     if (!mounted) return null
+
+    const filteredLandings = landings.filter(l =>
+        l.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
 
     return (
         <div className="min-h-screen p-8 max-w-7xl mx-auto space-y-12 pb-24">
@@ -106,10 +88,10 @@ export default function MagicBuilderHub() {
             {/* --- STATS MINI GRID --- */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                    { label: "Visitas Totales", val: "12,400", icon: Eye, color: "text-blue-400" },
-                    { label: "Leads Generados", val: "2,890", icon: Users, color: "text-emerald-400" },
-                    { label: "Conv. Promedio", val: "23.4%", icon: Target, color: "text-violet-400" },
-                    { label: "Embudos Activos", val: "8", icon: Rocket, color: "text-fuchsia-400" },
+                    { label: "Visitas Totales", val: "0", icon: Eye, color: "text-blue-400" },
+                    { label: "Leads Generados", val: "0", icon: Users, color: "text-emerald-400" },
+                    { label: "Conv. Promedio", val: "0%", icon: Target, color: "text-violet-400" },
+                    { label: "Embudos Activos", val: landings.length.toString(), icon: Rocket, color: "text-fuchsia-400" },
                 ].map((s, i) => (
                     <motion.div
                         key={i}
@@ -154,7 +136,7 @@ export default function MagicBuilderHub() {
             {/* --- GRID OF FUNNELS --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <AnimatePresence>
-                    {MOCK_FUNNELS.map((f, i) => (
+                    {filteredLandings.map((f, i) => (
                         <Link
                             key={f.id}
                             href={`/member/builder/${f.id}`}
@@ -170,14 +152,14 @@ export default function MagicBuilderHub() {
                             >
 
                                 {/* Visual Header */}
-                                <div className={cn("h-40 rounded-[1.8rem] bg-gradient-to-br p-6 relative overflow-hidden", f.color)}>
+                                <div className={cn("h-40 rounded-[1.8rem] bg-gradient-to-br p-6 relative overflow-hidden", f.theme.primaryColor.includes('#') ? "bg-violet-600" : f.theme.primaryColor)}>
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 blur-[60px]" />
                                     <div className="absolute bottom-0 left-0 w-32 h-32 bg-black/20 blur-[60px]" />
 
                                     <div className="relative h-full flex flex-col justify-between">
                                         <div className="flex justify-between items-start">
                                             <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-[10px] font-black uppercase text-white">
-                                                {f.type}
+                                                {f.status}
                                             </div>
                                             <div className="h-8 w-8 rounded-full bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <ArrowRight className="w-4 h-4 text-white" />
@@ -186,14 +168,14 @@ export default function MagicBuilderHub() {
 
                                         <div className="flex items-end justify-between">
                                             <div className="flex -space-x-2">
-                                                {[1, 2, 3].map(step => (
-                                                    <div key={step} className="w-8 h-8 rounded-lg border-2 border-black/10 bg-white/10 backdrop-blur-md flex items-center justify-center text-[10px] font-bold text-white">
-                                                        {step}
+                                                {f.blocks.slice(0, 3).map((_, idx) => (
+                                                    <div key={idx} className="w-8 h-8 rounded-lg border-2 border-black/10 bg-white/10 backdrop-blur-md flex items-center justify-center text-[10px] font-bold text-white">
+                                                        {idx + 1}
                                                     </div>
                                                 ))}
                                             </div>
                                             <div className="text-[10px] font-black text-white/70">
-                                                {f.steps} Pasos
+                                                {f.blocks.length} Bloques
                                             </div>
                                         </div>
                                     </div>
@@ -206,21 +188,21 @@ export default function MagicBuilderHub() {
                                             {f.name}
                                         </h3>
                                         <div className="flex items-center gap-2 mt-2">
-                                            <div className={cn("h-1.5 w-1.5 rounded-full", f.status === 'active' ? "bg-emerald-500" : "bg-amber-500")} />
+                                            <div className={cn("h-1.5 w-1.5 rounded-full", f.status === 'published' ? "bg-emerald-500" : "bg-amber-500")} />
                                             <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">
-                                                {f.status === 'active' ? "En Línea" : "Borrador"}
+                                                {f.status === 'published' ? "En Línea" : "Borrador"}
                                             </span>
                                         </div>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
-                                            <div className="text-[10px] font-black uppercase tracking-widest text-white/20">Leads</div>
-                                            <div className="text-lg font-black text-white">{f.leads}</div>
+                                            <div className="text-[10px] font-black uppercase tracking-widest text-white/20">Actualizado</div>
+                                            <div className="text-sm font-black text-white">{new Date(f.updatedAt).toLocaleDateString()}</div>
                                         </div>
                                         <div className="space-y-1">
                                             <div className="text-[10px] font-black uppercase tracking-widest text-white/20">Conversión</div>
-                                            <div className="text-lg font-black text-emerald-400">{f.conversion}</div>
+                                            <div className="text-lg font-black text-emerald-400">0%</div>
                                         </div>
                                     </div>
                                 </div>
@@ -230,16 +212,28 @@ export default function MagicBuilderHub() {
                                     <button className="p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all">
                                         <Eye className="w-4 h-4 text-white/60" />
                                     </button>
-                                    <button className="p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all">
-                                        <Copy className="w-4 h-4 text-white/60" />
-                                    </button>
-                                    <button className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-all">
+                                    <button
+                                        onClick={(e) => handleDelete(e, f.id)}
+                                        className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-all"
+                                    >
                                         <Trash2 className="w-4 h-4 text-red-400/60" />
                                     </button>
                                 </div>
                             </motion.div>
                         </Link>
                     ))}
+
+                    {filteredLandings.length === 0 && (
+                        <div className="col-span-full py-20 text-center space-y-4">
+                            <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mx-auto">
+                                <Sparkles className="w-10 h-10 text-white/10" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-black text-white/40 uppercase">No hay embudos aun</h3>
+                                <p className="text-xs text-white/20 font-medium mt-2">Haz clic en "Nuevo Embudo" para comenzar la magia.</p>
+                            </div>
+                        </div>
+                    )}
                 </AnimatePresence>
             </div>
 
@@ -261,3 +255,4 @@ export default function MagicBuilderHub() {
         </div>
     )
 }
+

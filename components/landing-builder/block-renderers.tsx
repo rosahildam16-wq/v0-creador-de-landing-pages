@@ -8,6 +8,7 @@ import {
   MessageSquare, HelpCircle, Play, ChevronDown, ChevronUp, Check,
   Heart, MessageCircle, Share2, Search, Crown, Trophy, Award, TrendingUp, Users,
 } from "lucide-react"
+import { WhatsAppFinal } from "@/components/experiences/exp8-whatsapp-final"
 
 const ICON_MAP: Record<string, React.ElementType> = {
   Sparkles, AlertTriangle, Clock, TrendingDown, Frown,
@@ -25,7 +26,7 @@ function themeRadius(br: string) {
 }
 
 // --- HERO ---
-function HeroBlock({ props, theme }: { props: Record<string, unknown>; theme: LandingTheme }) {
+function HeroBlock({ props, theme, onUpdate }: { props: Record<string, unknown>; theme: LandingTheme; onUpdate?: (key: string, value: any) => void }) {
   const p = props as { title: string; subtitle: string; ctaText: string; badgeText: string; backgroundStyle: string; alignment: string }
   const isCenter = p.alignment === "center"
   return (
@@ -47,10 +48,22 @@ function HeroBlock({ props, theme }: { props: Record<string, unknown>; theme: La
             {p.badgeText}
           </span>
         )}
-        <h1 className="mb-4 text-4xl font-bold leading-tight tracking-tight md:text-5xl" style={{ color: theme.textColor }}>
+        <h1
+          className="mb-4 text-4xl font-bold leading-tight tracking-tight md:text-5xl outline-none focus:ring-2 focus:ring-primary/20 rounded-md transition-all px-1 -mx-1"
+          style={{ color: theme.textColor }}
+          contentEditable
+          suppressContentEditableWarning
+          onBlur={(e) => onUpdate?.("title", e.currentTarget.textContent)}
+        >
           {p.title}
         </h1>
-        <p className="mb-8 text-lg opacity-80" style={{ color: theme.textColor }}>
+        <p
+          className="mb-8 text-lg opacity-80 outline-none focus:ring-2 focus:ring-primary/20 rounded-md transition-all px-1 -mx-1"
+          style={{ color: theme.textColor }}
+          contentEditable
+          suppressContentEditableWarning
+          onBlur={(e) => onUpdate?.("subtitle", e.currentTarget.textContent)}
+        >
           {p.subtitle}
         </p>
         <button
@@ -68,12 +81,19 @@ function HeroBlock({ props, theme }: { props: Record<string, unknown>; theme: La
 }
 
 // --- PROBLEM ---
-function ProblemBlock({ props, theme }: { props: Record<string, unknown>; theme: LandingTheme }) {
+function ProblemBlock({ props, theme, onUpdate }: { props: Record<string, unknown>; theme: LandingTheme; onUpdate?: (key: string, value: any) => void }) {
   const p = props as { sectionTitle: string; painPoints: Array<{ icon: string; text: string }>; accentColor: string }
   return (
     <section className="px-6 py-16" style={{ background: theme.backgroundColor, color: theme.textColor }}>
       <div className="mx-auto max-w-3xl">
-        <h2 className="mb-10 text-center text-3xl font-bold">{p.sectionTitle}</h2>
+        <h2
+          className="mb-10 text-center text-3xl font-bold outline-none focus:ring-2 focus:ring-primary/20 rounded-md transition-all px-1 -mx-1"
+          contentEditable
+          suppressContentEditableWarning
+          onBlur={(e) => onUpdate?.("sectionTitle", e.currentTarget.textContent)}
+        >
+          {p.sectionTitle}
+        </h2>
         <div className="flex flex-col gap-4">
           {p.painPoints.map((pp, i) => {
             const Icon = getIcon(pp.icon)
@@ -82,7 +102,18 @@ function ProblemBlock({ props, theme }: { props: Record<string, unknown>; theme:
                 style={{ borderColor: `${p.accentColor || theme.accentColor}33`, background: `${p.accentColor || theme.accentColor}08`, borderRadius: themeRadius(theme.borderRadius) }}
               >
                 <Icon className="mt-0.5 h-5 w-5 shrink-0" style={{ color: p.accentColor || theme.accentColor }} />
-                <span className="text-base">{pp.text}</span>
+                <span
+                  className="text-base flex-1 outline-none focus:ring-2 focus:ring-primary/20 rounded-md transition-all px-1 -mx-1"
+                  contentEditable
+                  suppressContentEditableWarning
+                  onBlur={(e) => {
+                    const next = [...p.painPoints]
+                    next[i] = { ...next[i], text: e.currentTarget.textContent || "" }
+                    onUpdate?.("painPoints", next)
+                  }}
+                >
+                  {pp.text}
+                </span>
               </div>
             )
           })}
@@ -93,13 +124,20 @@ function ProblemBlock({ props, theme }: { props: Record<string, unknown>; theme:
 }
 
 // --- BENEFITS ---
-function BenefitsBlock({ props, theme }: { props: Record<string, unknown>; theme: LandingTheme }) {
+function BenefitsBlock({ props, theme, onUpdate }: { props: Record<string, unknown>; theme: LandingTheme; onUpdate?: (key: string, value: any) => void }) {
   const p = props as { sectionTitle: string; benefits: Array<{ icon: string; title: string; description: string }>; layout: string }
   const isGrid = p.layout === "grid"
   return (
     <section className="px-6 py-16" style={{ background: theme.backgroundColor, color: theme.textColor }}>
       <div className="mx-auto max-w-4xl">
-        <h2 className="mb-10 text-center text-3xl font-bold">{p.sectionTitle}</h2>
+        <h2
+          className="mb-10 text-center text-3xl font-bold outline-none focus:ring-2 focus:ring-primary/20 rounded-md transition-all px-1 -mx-1"
+          contentEditable
+          suppressContentEditableWarning
+          onBlur={(e) => onUpdate?.("sectionTitle", e.currentTarget.textContent)}
+        >
+          {p.sectionTitle}
+        </h2>
         <div className={isGrid ? "grid grid-cols-1 gap-6 md:grid-cols-2" : "flex flex-col gap-4"}>
           {p.benefits.map((b, i) => {
             const Icon = getIcon(b.icon)
@@ -720,9 +758,38 @@ function CommunityBlock({ props, theme }: { props: Record<string, unknown>; them
   )
 }
 
+// --- WHATSAPP FINAL ---
+function WhatsAppBlock({ props, theme }: { props: Record<string, unknown>; theme: LandingTheme }) {
+  return (
+    <section className="px-6 py-16" style={{ background: theme.backgroundColor }}>
+      <div className="mx-auto max-w-[400px] overflow-hidden rounded-[2rem] border-8 border-black shadow-2xl">
+        <div className="h-[600px] overflow-hidden overflow-y-auto">
+          <WhatsAppFinal
+            onContinue={() => { console.log("Continue clicked") }}
+            title={props.title as string}
+            customMessages={props.messages as any[]}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // --- Main renderer ---
-export function BlockRenderer({ block, theme }: { block: LandingBlock; theme: LandingTheme }) {
-  const map: Record<string, React.ComponentType<{ props: Record<string, unknown>; theme: LandingTheme }>> = {
+export function BlockRenderer({
+  block,
+  theme,
+  onUpdateProp
+}: {
+  block: LandingBlock;
+  theme: LandingTheme;
+  onUpdateProp?: (id: string, key: string, value: any) => void
+}) {
+  const map: Record<string, React.ComponentType<{
+    props: Record<string, unknown>;
+    theme: LandingTheme;
+    onUpdate?: (key: string, value: any) => void
+  }>> = {
     hero: HeroBlock,
     problem: ProblemBlock,
     benefits: BenefitsBlock,
@@ -734,9 +801,16 @@ export function BlockRenderer({ block, theme }: { block: LandingBlock; theme: La
     video: VideoBlock,
     gallery: GalleryBlock,
     community: CommunityBlock,
+    whatsapp_final: WhatsAppBlock,
   }
 
   const Component = map[block.type]
   if (!Component) return null
-  return <Component props={block.props} theme={theme} />
+  return (
+    <Component
+      props={block.props}
+      theme={theme}
+      onUpdate={onUpdateProp ? (key, val) => onUpdateProp(block.id, key, val) : undefined}
+    />
+  )
 }

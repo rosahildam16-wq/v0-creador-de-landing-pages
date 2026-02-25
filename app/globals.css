@@ -1043,3 +1043,14 @@
 .member-badge-pulse {
   animation: member-badge-pulse 3s ease-in-out infinite;
 }
+
+/* ========== PREMIUM VIDEO PLAYER EFFECTS ========== */
+
+@keyframes scanline {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(1100%); }
+}
+
+.animate-scanline {
+  animation: scanline 4s linear infinite;
+}

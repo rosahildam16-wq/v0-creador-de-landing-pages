@@ -175,6 +175,13 @@ export function getDefaultProps(type: BlockType): Record<string, unknown> {
       showCategories: true,
       layout: "split",
     } satisfies CommunityProps,
+    whatsapp_final: {
+      title: "Chat con Mentor",
+      messages: [
+        { type: "text", text: "Lei lo que pusiste.", delay: 1000 },
+        { type: "text", text: "Dejame ser claro: nadie promete seguridad absoluta.", delay: 3500 },
+      ],
+    },
   }
 
   return defaults[type]

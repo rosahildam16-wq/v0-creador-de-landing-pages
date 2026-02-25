@@ -38,13 +38,28 @@ export default function MemberEmbudoPage() {
   const [selectedEmbudo, setSelectedEmbudo] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
 
-  const { data: allLeads, isLoading } = useSWR<Lead[]>("/api/admin/leads", fetcher, {
-    refreshInterval: 15000,
-  })
+  const { data: allLeads, isLoading } = useSWR<Lead[]>(
+    user?.email ? `/api/member/leads?email=${encodeURIComponent(user.email)}` : null,
+    fetcher,
+    { refreshInterval: 15000 }
+  )
 
-  if (!member) return null
+  // Fallback if member is not in static list
+  const memberCommunity = user?.memberId ? getMemberCommunity(user.memberId) : undefined
+  const defaultFunnelIds = memberCommunity?.embudos_default || ["nomada-vip"]
 
-  const embudosAsignados = EMBUDOS.filter((e) => member.embudos_asignados.includes(e.id))
+  const finalMember = member || {
+    id: user?.memberId || "new-member",
+    nombre: user?.name || "Socio",
+    email: user?.email || "",
+    embudos_asignados: defaultFunnelIds
+  }
+
+  const ids = (finalMember.embudos_asignados && finalMember.embudos_asignados.length > 0)
+    ? finalMember.embudos_asignados
+    : defaultFunnelIds
+
+  const embudosAsignados = EMBUDOS.filter((e) => ids.includes(e.id))
   const activeEmbudo = selectedEmbudo
     ? embudosAsignados.find((e) => e.id === selectedEmbudo)
     : embudosAsignados[0] || null
@@ -54,7 +69,7 @@ export default function MemberEmbudoPage() {
   )
 
   const handleCopy = (embudoId: string) => {
-    const url = `${window.location.origin}/funnel/${embudoId}?ref=${member.id}`
+    const url = `${window.location.origin}/funnel/${embudoId}?ref=${finalMember.id}`
     navigator.clipboard.writeText(url)
     setCopied(embudoId)
     setTimeout(() => setCopied(null), 2000)
@@ -155,7 +170,7 @@ export default function MemberEmbudoPage() {
               </p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 overflow-x-auto rounded-lg bg-background/60 px-3 py-2.5 text-xs text-foreground font-mono">
-                  {typeof window !== "undefined" ? window.location.origin : ""}/funnel/{activeEmbudo.id}?ref={member.id}
+                  {typeof window !== "undefined" ? window.location.origin : ""}/funnel/{activeEmbudo.id}?ref={finalMember.id}
                 </code>
                 <button
                   onClick={() => handleCopy(activeEmbudo.id)}
