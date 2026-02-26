@@ -46,9 +46,7 @@ export default function MemberEmbudoPage() {
   )
 
   const finalMember = member!
-  const ids = finalMember.embudos_asignados && finalMember.embudos_asignados.length > 0
-    ? finalMember.embudos_asignados
-    : ["nomada-vip"]
+  const ids = finalMember.embudos_asignados || []
 
   const embudosAsignados = EMBUDOS.filter((e) => ids.includes(e.id))
   const activeEmbudo = selectedEmbudo
@@ -61,7 +59,11 @@ export default function MemberEmbudoPage() {
 
     // If regular member, only show their own leads
     if (user?.role === "member") {
-      return l.asignado_a === user.name
+      const isMine = l.asignado_a === user.username || l.asignado_a === user.name
+      // Also check if assigned by community if member is in Skalia VIP and it matches
+      const isInMyCommunity = l.community_id && l.community_id === user.communityId
+
+      return isMine || isInMyCommunity
     }
     // Leaders see all leads for the community
     return true

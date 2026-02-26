@@ -145,13 +145,24 @@ export function getTeamMemberById(id: string): TeamMember | undefined {
   return member
 }
 
+import { getMemberCommunity, getCommunityById } from "./communities-data"
+
 export function getMemberData(user: { memberId?: string, name?: string, email?: string } | null): TeamMember | null {
   if (!user) return null
 
   const m = user.memberId ? getTeamMemberById(user.memberId) : null
+
+  // If we found a static member, return it (they might have custom assignments)
   if (m) return m
 
   // Fallback for members not in the static list
+  // Get community default funnels: use session id first, then localStorage check
+  const commId = (user as any)?.communityId || (user.memberId ? getMemberCommunity(user.memberId)?.id : undefined)
+  const community = commId ? getCommunityById(commId) : undefined
+  const defaultFunnels = community?.embudos_default && community.embudos_default.length > 0
+    ? community.embudos_default
+    : ["nomada-vip"]
+
   return {
     id: user.memberId || "new-member",
     nombre: user.name || "Socio",
@@ -162,7 +173,7 @@ export function getMemberData(user: { memberId?: string, name?: string, email?: 
     metricas: { leads: 0, cerrados: 0, afiliados: 0 },
     publicidad: { inversion_total: 0, saldo_disponible: 0, leads_totales: 0, leads_cerrados: 0 },
     organico: { saldo_disponible: 0, leads_totales: 0, leads_cerrados: 0 },
-    embudos_asignados: [],
+    embudos_asignados: defaultFunnels,
     fecha_ingreso: new Date().toISOString().split('T')[0],
   }
 }
