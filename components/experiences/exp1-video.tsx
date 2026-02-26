@@ -71,10 +71,10 @@ export function VideoPlayer({ onContinue, videoSrc, embedUrl }: Props) {
     setStarted(true)
   }
 
-  // Pre-process URL to ensure mobile-friendly params
+  // Pre-process URL to ensure mobile-friendly params and HIDE ALL CONTROLS
   const finalSrc = src.includes("?")
-    ? `${src}&badge=0&autopause=0&playsinline=1`
-    : `${src}?badge=0&autopause=0&playsinline=1`
+    ? `${src}&badge=0&autopause=0&playsinline=1&controls=0&title=0&byline=0&portrait=0&dnt=1`
+    : `${src}?badge=0&autopause=0&playsinline=1&controls=0&title=0&byline=0&portrait=0&dnt=1`
 
   return (
     <div className="relative flex min-h-dvh flex-col items-center justify-center bg-black overflow-hidden">
