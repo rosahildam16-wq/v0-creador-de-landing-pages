@@ -319,6 +319,18 @@
   transform: translateY(0);
 }
 
+@keyframes glass-card-float {
+  0%, 100% { transform: translateY(0) rotateX(0deg) rotateY(0deg); }
+  25% { transform: translateY(-4px) rotateX(0.5deg) rotateY(0.2deg); }
+  50% { transform: translateY(-2px) rotateX(-0.2deg) rotateY(-0.5deg); }
+  75% { transform: translateY(-5px) rotateX(0.3deg) rotateY(0.4deg); }
+}
+
+.glass-card-float {
+  animation: glass-card-float 10s ease-in-out infinite;
+  perspective: 1000px;
+}
+
 .mf-shimmer-btn {
   background: linear-gradient(135deg, #7c3aed 0%, #a855f7 25%, #d946ef 50%, #a855f7 75%, #7c3aed 100%);
   background-size: 200% auto;

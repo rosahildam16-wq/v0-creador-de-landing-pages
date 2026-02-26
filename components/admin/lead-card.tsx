@@ -52,6 +52,13 @@ export function LeadCard({ lead, isDragging, onDragStart, onDragEnd, onClick }: 
             <TemperatureBadge temperatura={temperatura} score={score} />
             <span className="text-[10px] text-muted-foreground">{timeAgo}</span>
           </div>
+          {lead.asignado_a && lead.asignado_a !== "Sin asignar" && (
+            <div className="pt-1 border-t border-border/10">
+              <span className="text-[8px] font-black uppercase text-primary/60 tracking-widest italic leading-none">
+                Socio: {lead.asignado_a}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>

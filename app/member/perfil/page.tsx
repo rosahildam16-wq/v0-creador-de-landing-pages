@@ -4,15 +4,17 @@ import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { getMemberData } from "@/lib/team-data"
 import { EMBUDOS } from "@/lib/embudos-config"
-import { User, Mail, Shield, Calendar, Filter, Lock, Save, Check } from "lucide-react"
-
+import { User, Mail, Shield, Calendar, Filter, Lock, Save, Check, Trophy, CreditCard, Zap } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 import { useSearchParams } from "next/navigation"
 
 export default function MemberPerfilPage() {
   const { user } = useAuth()
   const searchParams = useSearchParams()
   const member = getMemberData(user)
-  
+
   // Initialize tab from URL if present
   const initialTab = searchParams.get("tab") as "perfil" | "suscripcion" | "config"
   const [activeTab, setActiveTab] = useState<"perfil" | "suscripcion" | "config">(initialTab || "perfil")
@@ -71,7 +73,7 @@ export default function MemberPerfilPage() {
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Main Content Area */}
         <div className="lg:col-span-8 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          
+
           {activeTab === "perfil" && (
             <>
               {/* Avatar + Info */}
@@ -139,7 +141,7 @@ export default function MemberPerfilPage() {
             <div className="space-y-6 animate-in fade-in duration-400">
               <Card className="border-primary/20 bg-primary/5 shadow-2xl shadow-primary/5 overlow-hidden relative">
                 <div className="absolute top-0 right-0 p-6">
-                   <Shield className="h-20 w-20 text-primary/5 rotate-12" />
+                  <Shield className="h-20 w-20 text-primary/5 rotate-12" />
                 </div>
                 <CardContent className="p-8">
                   <div className="flex items-center gap-4 mb-6">
@@ -151,7 +153,7 @@ export default function MemberPerfilPage() {
                       <p className="text-sm text-primary font-bold">¡Tienes acceso a todo!</p>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
                     <div className="p-4 rounded-2xl bg-background/40 border border-border/10">
                       <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Estado</p>
@@ -252,8 +254,8 @@ export default function MemberPerfilPage() {
 
         {/* Info Sidebar */}
         <div className="lg:col-span-4 space-y-6">
-           {/* Member Since */}
-           <div className="rounded-2xl border border-border/30 bg-card/60 p-6 backdrop-blur-sm shadow-sm">
+          {/* Member Since */}
+          <div className="rounded-2xl border border-border/30 bg-card/60 p-6 backdrop-blur-sm shadow-sm">
             <h3 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
               <Calendar className="h-3.5 w-3.5 text-primary" /> Historial
             </h3>
@@ -271,20 +273,20 @@ export default function MemberPerfilPage() {
 
           {/* Stats Bar */}
           <div className="rounded-2xl border border-border/30 bg-card/60 p-6 backdrop-blur-sm shadow-sm space-y-4">
-             <div className="flex items-center justify-between">
-               <span className="text-xs font-bold text-foreground">Leads totales</span>
-               <span className="text-sm font-bold text-primary">{member.metricas.leads}</span>
-             </div>
-             <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-                <div className="h-full bg-primary w-[70%]" />
-             </div>
-             <div className="flex items-center justify-between">
-               <span className="text-xs font-bold text-foreground">Conversión</span>
-               <span className="text-sm font-bold text-emerald-400">12%</span>
-             </div>
-             <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-                <div className="h-full bg-emerald-400 w-[45%]" />
-             </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-foreground">Leads totales</span>
+              <span className="text-sm font-bold text-primary">{member.metricas.leads}</span>
+            </div>
+            <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+              <div className="h-full bg-primary w-[70%]" />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-foreground">Conversión</span>
+              <span className="text-sm font-bold text-emerald-400">12%</span>
+            </div>
+            <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+              <div className="h-full bg-emerald-400 w-[45%]" />
+            </div>
           </div>
 
           {/* Embudos List */}

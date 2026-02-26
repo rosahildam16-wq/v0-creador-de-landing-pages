@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import {
   ArrowRight,
   CheckCircle2,
@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DiagnosticQuiz } from "./diagnostic-quiz"
+import { getMemberBySlug } from "@/lib/team-data"
 
 // ─── Particle canvas background ───
 function ParticleField() {
@@ -119,12 +120,13 @@ function Typewriter({ lines, onComplete }: { lines: string[]; onComplete?: () =>
   )
 }
 
-interface Props {
+interface SalesPageProps {
   leadId?: string | null
   onTrack?: () => void
+  referrer?: string
 }
 
-export function SalesPage({ leadId, onTrack }: Props) {
+export function SalesPage({ leadId, onTrack, referrer }: SalesPageProps) {
   const [isSticky, setIsSticky] = useState(false)
   const [tracked, setTracked] = useState(false)
   const [quizOpen, setQuizOpen] = useState(false)
@@ -137,12 +139,12 @@ export function SalesPage({ leadId, onTrack }: Props) {
   // 30 minute countdown
   const [timeLeft, setTimeLeft] = useState(1800)
 
-  const notifications = [
+  const notifications = useMemo(() => [
     { name: "Andrés G.", action: "acaba de agendar su llamada", time: "hace 2 min" },
     { name: "Marta R.", action: "completó el diagnóstico con éxito", time: "hace 5 min" },
     { name: "Carlos L.", action: "fue aceptado en el programa", time: "hace 12 min" },
     { name: "Lucía M.", action: "acaba de recibir su llave de acceso", time: "hace 8 min" },
-  ]
+  ], [])
 
   useEffect(() => {
     const saved = sessionStorage.getItem("sales-timer-v5")
@@ -172,7 +174,7 @@ export function SalesPage({ leadId, onTrack }: Props) {
       clearTimeout(t2)
       clearInterval(s)
     }
-  }, [])
+  }, [notifications.length])
 
   useEffect(() => {
     if (timeLeft <= 0) return
@@ -193,7 +195,24 @@ export function SalesPage({ leadId, onTrack }: Props) {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  const whatsappUrl = `https://wa.me/15558865145?text=${encodeURIComponent("Hola, acabo de completar el diagnóstico RESET y he sido aprobado. Quiero agendar mi llamada de admisión.")}`
+  const waConfig = useMemo(() => {
+    let num = "15558865145" // Default
+    let msg = "Hola, acabo de completar el diagnóstico RESET y he sido aprobado. Quiero agendar mi llamada de admisión."
+
+    if (referrer) {
+      const member = getMemberBySlug(referrer)
+      if (member) {
+        if (member.whatsapp_number) num = member.whatsapp_number
+        if (member.whatsapp_message) msg = member.whatsapp_message
+      }
+    }
+
+    return {
+      url: `https://wa.me/${num}?text=${encodeURIComponent(msg)}`,
+    }
+  }, [referrer])
+
+  const whatsappUrl = waConfig.url
 
   if (booting) {
     return (

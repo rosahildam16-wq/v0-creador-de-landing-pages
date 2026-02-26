@@ -24,6 +24,7 @@ export interface Embudo {
   color: string
   etapas: EtapaEmbudo[]
   ghl?: EmbudoGHLConfig
+  persuasiveText?: string
 }
 
 export const EMBUDOS: Embudo[] = [
@@ -76,6 +77,11 @@ export const EMBUDOS: Embudo[] = [
     fecha_creacion: "2026-02-15",
     color: "hsl(var(--chart-3))",
     ghl: { enabled: true, tag: "mf_franquicia_reset" },
+    persuasiveText: `🚀 ¿Buscas una segunda fuente de ingresos en internet? 
+
+Te presento la *Franquicia Reset*: un modelo de negocio basado en un concepto *100% replicable* y un sistema que ya automatiza el *90% del proceso* por ti. 🪄✨
+
+Mira cómo funciona aquí:`,
     etapas: [
       { id: 1, label: "Video Hook", icon: "Play", description: "Video inicial de captacion" },
       { id: 2, label: "Llamada Simulada", icon: "Phone", description: "Experiencia de llamada" },

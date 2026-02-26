@@ -25,6 +25,8 @@ export interface TeamMember {
   progreso_academia: number
   sponsorId?: string
   fecha_ingreso: string
+  whatsapp_number?: string
+  whatsapp_message?: string
 }
 
 export const TEAM_MEMBERS: TeamMember[] = [
@@ -102,6 +104,13 @@ export function getTeamMemberById(id: string): TeamMember | undefined {
     if (storedProgress) {
       result.progreso_academia = Number(storedProgress)
     }
+
+    // Load WhatsApp config from storage if available
+    const storedNum = safeGetItem(`mf_wa_num_${id}`)
+    const storedMsg = safeGetItem(`mf_wa_msg_${id}`)
+    if (storedNum) result.whatsapp_number = storedNum
+    if (storedMsg) result.whatsapp_message = storedMsg
+
     return result
   } catch { /* noop */ }
   return member
@@ -111,7 +120,33 @@ import { getMemberCommunity, getCommunityById } from "./communities-data"
 
 export function getMemberBySlug(slug: string): TeamMember | undefined {
   if (!slug) return undefined
-  return TEAM_MEMBERS.find((m) => m.id === slug || m.email.split('@')[0].replace(/[._-]/g, "") === slug.replace(/[._-]/g, ""))
+  // Normalize slug for comparison
+  const normalizedSlug = slug.toLowerCase().replace(/[._-]/g, "")
+
+  const baseMember = TEAM_MEMBERS.find((m) => {
+    const memberIdMatch = m.id.toLowerCase() === slug.toLowerCase()
+    const emailPrefixMatch = m.email.split('@')[0].toLowerCase().replace(/[._-]/g, "") === normalizedSlug
+    return memberIdMatch || emailPrefixMatch
+  })
+
+  if (baseMember) {
+    return getTeamMemberById(baseMember.id)
+  }
+
+  return undefined
+}
+
+export function updateMemberWhatsApp(memberId: string, number: string, message: string): void {
+  try {
+    safeSetItem(`mf_wa_num_${memberId}`, number)
+    safeSetItem(`mf_wa_msg_${memberId}`, message)
+  } catch { /* noop */ }
+
+  const member = TEAM_MEMBERS.find((m) => m.id === memberId)
+  if (member) {
+    member.whatsapp_number = number
+    member.whatsapp_message = message
+  }
 }
 
 export function getMemberData(user: { memberId?: string, name?: string, email?: string } | null): TeamMember | null {

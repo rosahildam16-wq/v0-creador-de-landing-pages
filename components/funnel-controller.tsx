@@ -217,9 +217,9 @@ export function FunnelController({ embudoId = "nomada-vip", startAt, referrer }:
           />
         )}
         {currentExp === 8 && embudoId !== "franquicia-reset" && (
-          <SalesPage leadId={leadIdRef.current} onTrack={() => trackStep(8)} />
+          <SalesPage leadId={leadIdRef.current} onTrack={() => trackStep(8)} referrer={referrer} />
         )}
-        {currentExp === 9 && <SalesPage leadId={leadIdRef.current} onTrack={() => trackStep(9)} />}
+        {currentExp === 9 && <SalesPage leadId={leadIdRef.current} onTrack={() => trackStep(9)} referrer={referrer} />}
       </div>
     </main>
   )

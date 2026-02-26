@@ -325,11 +325,15 @@ export default function MemberEmbudoPage() {
                       type="text"
                       placeholder="Ej: 573123456789"
                       className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-foreground outline-none focus:border-primary/50 transition-all font-mono"
-                      value={typeof window !== "undefined" ? localStorage.getItem(`mf_wa_num_${user?.memberId}`) || "" : ""}
+                      value={finalMember.whatsapp_number || ""}
                       onChange={(e) => {
                         const val = e.target.value.replace(/[^0-9]/g, "");
-                        localStorage.setItem(`mf_wa_num_${user?.memberId}`, val);
-                        // Trigger re-render by setting a dummy state if needed, but for now we'll just use a local state for the input
+                        import("@/lib/team-data").then(m => {
+                          m.updateMemberWhatsApp(finalMember.id, val, finalMember.whatsapp_message || "");
+                          // We need to trigger a re-render. Since we're using local state or SWR might be overkill,
+                          // we'll just force a selectedEmbudo set to same to re-render.
+                          setSelectedEmbudo(activeEmbudo.id);
+                        });
                       }}
                     />
                   </div>
@@ -342,14 +346,15 @@ export default function MemberEmbudoPage() {
                         "¡Hola! Vengo del sistema RESET, estoy listo para empezar mi transformación. ¿Me das el acceso?",
                         "He terminado el proceso de RESET. Quiero hablar con un asesor para activar mi motor de ventas."
                       ].map((msg, i) => {
-                        const isSelected = (typeof window !== "undefined" ? localStorage.getItem(`mf_wa_msg_${user?.memberId}`) : null) === msg || (i === 0 && !localStorage.getItem(`mf_wa_msg_${user?.memberId}`));
+                        const isSelected = finalMember.whatsapp_message === msg || (!finalMember.whatsapp_message && i === 0);
                         return (
                           <button
                             key={i}
                             onClick={() => {
-                              localStorage.setItem(`mf_wa_msg_${user?.memberId}`, msg);
-                              // Force update
-                              setSelectedEmbudo(activeEmbudo.id);
+                              import("@/lib/team-data").then(m => {
+                                m.updateMemberWhatsApp(finalMember.id, finalMember.whatsapp_number || "", msg);
+                                setSelectedEmbudo(activeEmbudo.id);
+                              });
                             }}
                             className={cn(
                               "text-left p-3 rounded-xl border text-xs transition-all duration-200",

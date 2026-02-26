@@ -51,31 +51,40 @@ export async function POST(request: Request) {
 
     if (body.ref) {
       try {
-        const { createAdminClient } = await import("@/lib/supabase/admin")
-        const supabase = createAdminClient()
-        if (supabase) {
-          const refsToTry = [
-            body.ref,                         // exact match (jorge_leon)
-            body.ref.replace(/-/g, "_"),      // slug to username (jorge-leon -> jorge_leon)
-            body.ref.replace(/-/g, ""),       // slug to username (jorge-leon -> jorgeleon)
-          ]
+        // First try static team members (Sync & memory fast)
+        const { getMemberBySlug } = await import("@/lib/team-data")
+        const staticMember = getMemberBySlug(body.ref)
+        if (staticMember) {
+          asignadoA = staticMember.id // Or staticMember.nombre
+          // If we had community association in TEAM_MEMBERS, we'd use it here
+        } else {
+          // Then try Supabase
+          const { createAdminClient } = await import("@/lib/supabase/admin")
+          const supabase = createAdminClient()
+          if (supabase) {
+            const refsToTry = [
+              body.ref,                         // exact match (jorge_leon)
+              body.ref.replace(/-/g, "_"),      // slug to username (jorge-leon -> jorge_leon)
+              body.ref.replace(/-/g, ""),       // slug to username (jorge-leon -> jorgeleon)
+            ]
 
-          let foundMember = null
-          for (const r of [...new Set(refsToTry)]) {
-            const { data } = await supabase
-              .from("community_members")
-              .select("community_id, name, username")
-              .or(`member_id.eq."${r}",username.eq."${r}"`)
-              .maybeSingle()
-            if (data) {
-              foundMember = data
-              break
+            let foundMember = null
+            for (const r of [...new Set(refsToTry)]) {
+              const { data } = await supabase
+                .from("community_members")
+                .select("community_id, name, username")
+                .or(`member_id.eq."${r}",username.eq."${r}"`)
+                .maybeSingle()
+              if (data) {
+                foundMember = data
+                break
+              }
             }
-          }
 
-          if (foundMember) {
-            communityId = foundMember.community_id
-            asignadoA = foundMember.username || foundMember.name
+            if (foundMember) {
+              communityId = foundMember.community_id
+              asignadoA = foundMember.username || foundMember.name
+            }
           }
         }
       } catch (err) {

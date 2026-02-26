@@ -42,12 +42,16 @@ export function PersonalLinkCard({ memberId }: PersonalLinkCardProps) {
   const baseUrl = typeof window !== "undefined" ? window.location.origin : ""
   const personalLink = `${baseUrl}/r/${memberSlug}/${selectedFunnel}`
 
+  const shareText = currentFunnel?.persuasiveText
+    ? `${currentFunnel.persuasiveText}\n${personalLink}`
+    : `🚀 Mira el nuevo embudo: *${currentFunnel?.nombre}*\n${personalLink}`
+
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(personalLink)
+      await navigator.clipboard.writeText(shareText)
     } catch {
-      const input = document.createElement("input")
-      input.value = personalLink
+      const input = document.createElement("textarea")
+      input.value = shareText
       document.body.appendChild(input)
       input.select()
       document.execCommand("copy")
@@ -62,7 +66,7 @@ export function PersonalLinkCard({ memberId }: PersonalLinkCardProps) {
       try {
         await navigator.share({
           title: currentFunnel?.nombre || "Mi embudo",
-          text: "Mira esto:",
+          text: shareText,
           url: personalLink,
         })
       } catch { /* cancelled */ }

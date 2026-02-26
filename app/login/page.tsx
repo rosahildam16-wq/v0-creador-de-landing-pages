@@ -84,11 +84,12 @@ export default function LoginPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const ref = params.get("ref") || params.get("sponsor")
-    if (ref && mode === "register") {
+    if (ref) {
+      setMode("register")
       setSponsorUsername(ref.toLowerCase())
       setShowDiscountField(false) // prioritise sponsor
     }
-  }, [mode])
+  }, [])
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -134,7 +135,7 @@ export default function LoginPage() {
         return
       }
       if (password.length < 6) {
-        setError("La contrasena debe tener al menos 6 caracteres.")
+        setError("La contraseña debe tener al menos 6 caracteres.")
         setIsSubmitting(false)
         return
       }
@@ -152,7 +153,7 @@ export default function LoginPage() {
     } else {
       const ok = await login(email, password)
       if (!ok) {
-        setError("Credenciales incorrectas. Verifica tu email y contrasena.")
+        setError("Credenciales incorrectas. Verifica tu email y contraseña.")
         setIsSubmitting(false)
       }
     }
@@ -164,9 +165,9 @@ export default function LoginPage() {
   }
 
   const features = [
-    { icon: Bot, label: "IA Avanzada", desc: "Automatizacion inteligente que aprende y optimiza" },
-    { icon: TrendingUp, label: "Marketing Elite", desc: "Embudos de alta conversion con analytics en tiempo real" },
-    { icon: Network, label: "Red Multinivel", desc: "Escalamiento con estructura de equipos integrada" },
+    { icon: Bot, label: "IA Avanzada", desc: "Automatización inteligente que aprende y optimiza" },
+    { icon: TrendingUp, label: "Marketing Elite", desc: "Embudos de alta conversión con analytics en tiempo real" },
+    { icon: Network, label: "Estructura Global", desc: "Escalamiento con estructura de equipos integrada" },
   ]
 
   return (
@@ -197,17 +198,18 @@ export default function LoginPage() {
 
             {/* Headline */}
             <div className={`transition-all duration-1000 delay-300 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
-              <h1 className="text-5xl xl:text-[3.5rem] font-bold leading-[1.08] tracking-tight text-white">
+              <h1 className="text-5xl xl:text-[4rem] font-extrabold leading-[1.05] tracking-tight text-white">
                 <span className="text-balance">
-                  {"¿Pensabas que la "}
-                  <span className="premium-gradient-text">magia no existe</span>
-                  {"? es hora de "}
-                  <span className="premium-gradient-text">comprobarlo</span>
+                  {"Pensabas que la "}
+                  <span className="premium-gradient-text">magia</span>
+                  {" no existía..."}
+                  <br />
+                  <span className="premium-gradient-text">vamos a comprobarlo.</span>
                 </span>
               </h1>
-              <p className="mt-6 text-lg leading-relaxed text-violet-200/60 max-w-md">
-                Embudos automatizados, IA predictiva y herramientas multinivel.
-                La plataforma que transforma contactos en comunidades rentables.
+              <p className="mt-8 text-xl leading-relaxed text-violet-200/40 max-w-sm font-medium">
+                Embudos de alta conversión, IA predictiva y marketing de élite.
+                Todo en un solo lugar.
               </p>
             </div>
 
@@ -250,14 +252,16 @@ export default function LoginPage() {
 
         {/* ---- RIGHT PANEL: Login form ---- */}
         <div className="flex flex-1 items-center justify-center px-6 py-12 lg:px-12">
-          <div className={`w-full max-w-[420px] transition-all duration-1000 delay-300 ${mounted ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-10 scale-[0.97]"}`}>
+          <div className={`w-full max-w-[420px] glass-card-float transition-all duration-1000 delay-300 ${mounted ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-10 scale-[0.97]"}`}>
 
             {/* Glass card */}
-            <div className="relative rounded-2xl border border-white/[0.06] bg-white/[0.015] backdrop-blur-2xl p-8 lg:p-10">
+            <div className="relative rounded-[2.5rem] border border-white/[0.08] bg-white/[0.01] backdrop-blur-[40px] p-8 lg:p-12 shadow-[0_24px_80px_-15px_rgba(0,0,0,0.5)] overflow-hidden">
+              {/* Internal glow effects */}
+              <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-violet-500/10 rounded-full blur-[80px] pointer-events-none" />
+              <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-fuchsia-500/5 rounded-full blur-[80px] pointer-events-none" />
+
               {/* Top glow bar */}
-              <div className="absolute -top-px left-12 right-12 h-px bg-gradient-to-r from-transparent via-violet-500/50 to-transparent" />
-              {/* Corner glow */}
-              <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-60 h-40 bg-violet-600/8 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -top-px left-20 right-20 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
 
               {/* Mobile logo */}
               <div className="flex justify-center mb-8 lg:hidden">
@@ -265,23 +269,23 @@ export default function LoginPage() {
               </div>
 
               {/* Mode toggle tabs */}
-              <div className="mb-6 flex rounded-xl border border-white/[0.06] bg-white/[0.02] p-1">
+              <div className="mb-8 flex rounded-[1.2rem] border border-white/[0.06] bg-white/[0.02] p-1.5 backdrop-blur-md">
                 <button
                   type="button"
                   onClick={() => { setMode("login"); setError("") }}
-                  className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-all duration-300 ${mode === "login"
-                    ? "bg-violet-600/20 text-violet-300 shadow-sm"
-                    : "text-violet-400/40 hover:text-violet-300/60"
+                  className={`flex-1 rounded-[0.9rem] py-2.5 text-xs font-bold transition-all duration-500 ${mode === "login"
+                    ? "bg-violet-600/30 text-white shadow-[0_4px_12px_rgba(124,58,237,0.2)]"
+                    : "text-violet-300/30 hover:text-white/40"
                     }`}
                 >
-                  Iniciar Sesion
+                  Iniciar Sesión
                 </button>
                 <button
                   type="button"
                   onClick={() => { setMode("register"); setError("") }}
-                  className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-all duration-300 ${mode === "register"
-                    ? "bg-violet-600/20 text-violet-300 shadow-sm"
-                    : "text-violet-400/40 hover:text-violet-300/60"
+                  className={`flex-1 rounded-[0.9rem] py-2.5 text-xs font-bold transition-all duration-500 ${mode === "register"
+                    ? "bg-violet-600/30 text-white shadow-[0_4px_12px_rgba(124,58,237,0.2)]"
+                    : "text-violet-300/30 hover:text-white/40"
                     }`}
                 >
                   Registrarse
@@ -296,11 +300,11 @@ export default function LoginPage() {
                     {mode === "login" ? "Acceso Premium" : "Crear Cuenta"}
                   </span>
                 </div>
-                <h2 className="text-[1.65rem] font-bold text-white tracking-tight text-center lg:text-left">
-                  {mode === "login" ? "Bienvenido de vuelta" : "Unete a Magic Funnel"}
+                <h2 className="text-3xl font-bold text-white tracking-tight text-center lg:text-left">
+                  {mode === "login" ? "Bienvenido" : "Crea tu cuenta"}
                 </h2>
-                <p className="mt-2 text-sm text-violet-300/40 text-center lg:text-left">
-                  {mode === "login" ? "Ingresa tus credenciales para continuar" : "Crea tu cuenta y comienza a crecer"}
+                <p className="mt-2.5 text-sm text-violet-200/20 text-center lg:text-left font-medium">
+                  {mode === "login" ? "Ingresa para gestionar tu magia" : "Únete a la nueva era del marketing"}
                 </p>
               </div>
 
@@ -331,7 +335,7 @@ export default function LoginPage() {
                         onFocus={() => setFocusedField("name")}
                         onBlur={() => setFocusedField(null)}
                         placeholder="Tu nombre completo"
-                        className="w-full px-4 py-3 bg-transparent text-white text-sm placeholder:text-violet-400/25 focus:outline-none rounded-xl"
+                        className="w-full px-5 py-4 bg-white/[0.02] text-white text-sm placeholder:text-violet-400/20 focus:outline-none rounded-2xl transition-all"
                         required
                       />
                     </div>
@@ -354,7 +358,7 @@ export default function LoginPage() {
                       onFocus={() => setFocusedField("email")}
                       onBlur={() => setFocusedField(null)}
                       placeholder="tu@empresa.com"
-                      className="w-full px-4 py-3 bg-transparent text-white text-sm placeholder:text-violet-400/25 focus:outline-none rounded-xl"
+                      className="w-full px-5 py-4 bg-white/[0.02] text-white text-sm placeholder:text-violet-400/20 focus:outline-none rounded-2xl transition-all"
                       required
                     />
                   </div>
@@ -363,11 +367,11 @@ export default function LoginPage() {
                 <div>
                   <div className="flex items-center justify-between mb-2 ml-0.5">
                     <label htmlFor="login-password" className="block text-xs font-medium text-violet-200/60">
-                      Contrasena
+                      Contraseña
                     </label>
                     {mode === "login" && (
                       <button type="button" className="text-[11px] text-violet-400/60 hover:text-violet-400 transition-colors">
-                        Olvidaste tu contrasena?
+                        ¿Olvidaste tu contraseña?
                       </button>
                     )}
                   </div>
@@ -382,15 +386,15 @@ export default function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       onFocus={() => setFocusedField("password")}
                       onBlur={() => setFocusedField(null)}
-                      placeholder="Ingresa tu contrasena"
-                      className="w-full px-4 py-3 bg-transparent text-white text-sm placeholder:text-violet-400/25 focus:outline-none rounded-xl pr-12"
+                      placeholder="Ingresa tu contraseña"
+                      className="w-full px-5 py-4 bg-white/[0.02] text-white text-sm placeholder:text-violet-400/20 focus:outline-none rounded-2xl pr-12 transition-all"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-violet-400/30 hover:text-violet-300/60 transition-colors"
-                      aria-label={showPassword ? "Ocultar contrasena" : "Mostrar contrasena"}
+                      aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -422,7 +426,7 @@ export default function LoginPage() {
                           onFocus={() => setFocusedField("username")}
                           onBlur={() => setFocusedField(null)}
                           placeholder="tu_usuario"
-                          className="w-full pl-10 pr-10 py-3 bg-transparent text-white text-sm font-mono placeholder:text-violet-400/25 focus:outline-none rounded-xl"
+                          className="w-full pl-11 pr-11 py-4 bg-white/[0.02] text-white text-sm font-mono placeholder:text-violet-400/20 focus:outline-none rounded-2xl transition-all"
                           required
                         />
                         {/* Status indicator */}
@@ -469,7 +473,7 @@ export default function LoginPage() {
                           onFocus={() => setFocusedField("sponsor")}
                           onBlur={() => setFocusedField(null)}
                           placeholder="usuario_de_quien_te_invito"
-                          className="w-full pl-10 pr-10 py-3 bg-transparent text-white text-sm font-mono placeholder:text-violet-400/25 focus:outline-none rounded-xl"
+                          className="w-full pl-11 pr-11 py-4 bg-white/[0.02] text-white text-sm font-mono placeholder:text-violet-400/20 focus:outline-none rounded-2xl transition-all"
                         />
                         <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
                           {sponsorStatus === "checking" && (
@@ -519,7 +523,7 @@ export default function LoginPage() {
                               onFocus={() => setFocusedField("discount")}
                               onBlur={() => setFocusedField(null)}
                               placeholder="Ej: MIEQUIPO2026"
-                              className="w-full pl-10 pr-4 py-3 bg-transparent text-white text-sm font-mono placeholder:text-violet-400/25 focus:outline-none rounded-xl uppercase"
+                              className="w-full pl-11 pr-4 py-4 bg-white/[0.02] text-white text-sm font-mono placeholder:text-violet-400/20 focus:outline-none rounded-2xl uppercase transition-all"
                             />
                           </div>
                           <p className="mt-1.5 text-[10px] text-violet-300/30">Si tu lider te dio un codigo, ingresalo para unirte a su comunidad.</p>
@@ -571,43 +575,10 @@ export default function LoginPage() {
                 </button>
               </p>
 
-              {/* TEST SHORTCUT BUTTONS */}
-              <div className="mt-10 pt-8 border-t border-white/[0.05]">
-                <p className="text-[10px] font-bold text-violet-400/40 tracking-[0.2em] uppercase text-center mb-4">
-                  Accesos Directos (Explorar Interfaz)
-                </p>
-                <div className="grid grid-cols-1 gap-3">
-                  <button
-                    onClick={async () => {
-                      setIsSubmitting(true)
-                      await login("iajorgeleon21@gmail.com", "Leon321$#")
-                      setIsSubmitting(false)
-                    }}
-                    className="flex items-center justify-between px-4 py-3 rounded-xl border border-violet-500/20 bg-violet-500/[0.03] text-violet-200 text-xs hover:bg-violet-500/10 transition-all group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Sparkles className="w-4 h-4 text-violet-400" />
-                      <span>Entrar como Super Admin</span>
-                    </div>
-                    <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all translate-x-[-4px] group-hover:translate-x-0" />
-                  </button>
-
-                  <button
-                    onClick={async () => {
-                      setIsSubmitting(true)
-                      await login("test_member@magic.com", "test1234")
-                      setIsSubmitting(false)
-                    }}
-                    className="flex items-center justify-between px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02] text-violet-200 text-xs hover:border-violet-500/20 hover:bg-violet-500/[0.03] transition-all group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Users className="w-4 h-4 text-violet-400/60" />
-                      <span>Entrar como Miembro</span>
-                    </div>
-                    <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all translate-x-[-4px] group-hover:translate-x-0" />
-                  </button>
-                </div>
-              </div>
+              {/* Footer */}
+              <p className="mt-8 text-center text-[10px] text-violet-300/10 leading-relaxed max-w-[280px] mx-auto">
+                Al ingresar, aceptas nuestros términos de servicio y políticas de privacidad.
+              </p>
             </div>
 
             {/* Bottom links */}

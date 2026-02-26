@@ -6,6 +6,7 @@ import { getMemberData, type TeamMember } from "@/lib/team-data"
 import type { Challenge } from "@/lib/challenges-data"
 import { DEFAULT_CHALLENGES, getRanking } from "@/lib/challenges-data"
 import { PersonalLinkCard } from "@/components/member/personal-link-card"
+import { MagicReferralCard } from "@/components/member/magic-referral-card"
 import { getMemberCommunity } from "@/lib/communities-data"
 import { ChallengeLeaderboard } from "@/components/shared/challenge-leaderboard"
 import { MetaAdsSection } from "@/components/member/meta-ads-section"
@@ -296,6 +297,12 @@ export default function MemberDashboard() {
           </div>
         </div>
       </div>
+
+      {/* === MAGIC REFERRAL LINK (TEAM) === */}
+      <MagicReferralCard
+        username={user?.username || user?.memberId || "socio"}
+        displayName={member.nombre}
+      />
 
       {/* === BENTO METRICS GRID === */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

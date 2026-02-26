@@ -409,6 +409,9 @@ export default function LeadsPage() {
                       </button>
                     </TableHead>
                     <TableHead className="text-xs font-semibold uppercase tracking-wide">
+                      Socio
+                    </TableHead>
+                    <TableHead className="text-xs font-semibold uppercase tracking-wide">
                       Acciones
                     </TableHead>
                   </TableRow>
@@ -458,6 +461,13 @@ export default function LeadsPage() {
                           whatsappCitaEnviado={lead.whatsapp_cita_enviado}
                           compraCompletada={lead.compra_completada}
                         />
+                      </TableCell>
+
+                      {/* Socio */}
+                      <TableCell className="py-3">
+                        <span className="text-xs font-semibold text-primary/80 uppercase tracking-tighter">
+                          {lead.asignado_a || "Sin asignar"}
+                        </span>
                       </TableCell>
 
                       {/* Acciones */}
