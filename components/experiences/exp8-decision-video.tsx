@@ -253,26 +253,47 @@ export function DecisionVideo({
   }
 
   // LOCAL VIDEO MODE
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    if (started && videoRef.current) {
+      const playPromise = videoRef.current.play()
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.error("Video play error:", error)
+        })
+      }
+    }
+  }, [started])
+
   return (
     <div className="relative flex min-h-dvh flex-col items-center justify-center bg-black">
       <ParticleField />
       <div className="relative aspect-[9/16] w-full max-w-md overflow-hidden bg-black shadow-2xl border-x border-white/5">
-        <video className="h-full w-full object-cover" playsInline preload="metadata"
-          autoPlay={started}
+        <video
+          ref={videoRef}
+          className="h-full w-full object-cover"
+          playsInline
+          preload="auto"
           onEnded={() => setVideoEnded(true)}
-          onCanPlay={() => setIsLoading(false)}>
-          <source src={videoSrc} type="video/quicktime" />
+          onCanPlay={() => setIsLoading(false)}
+        >
           <source src={videoSrc} type="video/mp4" />
+          <source src={videoSrc} type="video/quicktime" />
         </video>
 
         {isLoading && started && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
             <Loader2 className="h-10 w-10 animate-spin text-primary/60" />
           </div>
         )}
 
         {!started && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm">
+            <div className="mb-8 text-center animate-in fade-in slide-in-from-bottom duration-1000">
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary block mb-3">Protocolo Fase 08</span>
+              <h2 className="text-3xl font-black italic uppercase text-white leading-none">ÚLTIMA <br /> DECISIÓN</h2>
+            </div>
             <button type="button" onClick={handleStart}
               className="group relative flex h-24 w-24 items-center justify-center rounded-3xl border border-primary/20 bg-primary/5 transition-all hover:scale-110 active:scale-95"
               aria-label="Reproducir video">
@@ -283,7 +304,7 @@ export function DecisionVideo({
         )}
 
         {videoEnded && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-xl px-10 text-center animate-in fade-in zoom-in duration-700">
+          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 backdrop-blur-xl px-10 text-center animate-in fade-in zoom-in duration-700">
             <div className="mb-10">
               <div className="mx-auto mb-6 h-1 w-10 bg-primary" />
               <h3 className="text-4xl font-black italic uppercase text-white leading-[0.85] tracking-tighter">EL MOMENTO <br /> <span className="text-primary italic-none">ES AHORA</span></h3>

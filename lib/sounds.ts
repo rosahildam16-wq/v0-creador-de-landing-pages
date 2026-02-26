@@ -11,8 +11,20 @@ function getCtx() {
 
 // Resume audio context (must be called from user interaction)
 export function resumeAudio() {
-  const ctx = getCtx()
-  if (ctx.state === "suspended") ctx.resume()
+  try {
+    const ctx = getCtx()
+    if (ctx.state === "suspended") {
+      ctx.resume()
+    }
+    // Mobile double-unlock: play a silent buffer
+    const buffer = ctx.createBuffer(1, 1, 22050)
+    const source = ctx.createBufferSource()
+    source.buffer = buffer
+    source.connect(ctx.destination)
+    source.start(0)
+  } catch (e) {
+    console.error("Audio unlock error", e)
+  }
 }
 
 // Simple beep tone
@@ -104,6 +116,20 @@ export function playMessageReceived() {
   resumeAudio()
   playTone(900, 0.08, "sine", 0.1)
   setTimeout(() => playTone(1100, 0.1, "sine", 0.1), 80)
+}
+
+// === WHATSAPP: typing sound (subtle click) ===
+export function playTypingSound() {
+  resumeAudio()
+  const freq = 150 + Math.random() * 50
+  playTone(freq, 0.05, "sine", 0.02)
+}
+
+// === GENERAL: restricted access alert ===
+export function playRestrictedAlert() {
+  resumeAudio()
+  playTone(200, 0.2, "square", 0.05)
+  setTimeout(() => playTone(150, 0.3, "square", 0.05), 200)
 }
 
 // === WHATSAPP: voice note (synthesized speech-like sound ~4 seconds) ===

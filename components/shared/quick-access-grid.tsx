@@ -20,6 +20,7 @@ const MEMBER_QUICK_ACCESS: QuickAccessItem[] = [
 
 const ADMIN_QUICK_ACCESS: QuickAccessItem[] = [
   { label: "Embudos", href: "/admin/embudos", icon: Route, description: "Gestion de embudos" },
+  { label: "Usuarios", href: "/admin/usuarios", icon: Users, description: "Gestion de accesos" },
   { label: "Academia", href: "/admin/academia", icon: GraduationCap, description: "Gestion de cursos" },
   { label: "Retos", href: "/admin/retos", icon: Trophy, description: "Concursos del equipo" },
   { label: "Pipeline", href: "/admin/pipeline", icon: Kanban, description: "Gestion de ventas" },

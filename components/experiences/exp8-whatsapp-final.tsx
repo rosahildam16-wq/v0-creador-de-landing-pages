@@ -15,7 +15,7 @@ import {
   CheckCheck,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { playMessageReceived, playVoiceNote } from "@/lib/sounds"
+import { playMessageReceived, playVoiceNote, playTypingSound } from "@/lib/sounds"
 
 interface Props {
   onContinue: () => void
@@ -201,6 +201,12 @@ export function WhatsAppFinal({ onContinue, title = "Mejor amigo", customMessage
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [visibleMessages, isTyping])
+
+  useEffect(() => {
+    if (!isTyping) return
+    const interval = setInterval(playTypingSound, 150)
+    return () => clearInterval(interval)
+  }, [isTyping])
 
   const now = new Date()
   const timeStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2, "0")}`

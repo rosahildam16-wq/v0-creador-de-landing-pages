@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { Search, Eye, EyeOff, Copy, Check, KeyRound, Shield, Users, RefreshCw, ChevronDown } from "lucide-react"
+import { Search, Eye, EyeOff, Copy, Check, KeyRound, Shield, Users, RefreshCw, ChevronDown, Trash2, Plus, X } from "lucide-react"
+import { toast } from "sonner"
 
 interface AdminUser {
   id: number
@@ -27,6 +28,18 @@ export default function AdminUsuariosPage() {
   const [roleFilter, setRoleFilter] = useState<"all" | "leader" | "member">("all")
   const [visiblePasswords, setVisiblePasswords] = useState<Set<number>>(new Set())
   const [copiedId, setCopiedId] = useState<number | null>(null)
+
+  // Add User Modal State
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [newUser, setNewUser] = useState({
+    name: "",
+    email: "",
+    username: "",
+    password: "",
+    role: "member",
+    communityId: "general"
+  })
 
   const fetchUsers = async () => {
     if (!user?.email) return
@@ -58,6 +71,63 @@ export default function AdminUsuariosPage() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
+  const handleDelete = async (userId: number, username: string) => {
+    if (!user?.email) return
+    if (!confirm(`¿Estás seguro de que deseas eliminar al usuario @${username}? Esta acción borrará también sus datos relacionados.`)) return
+
+    try {
+      const res = await fetch(`/api/admin/users?email=${encodeURIComponent(user.email)}&id=${userId}`, {
+        method: "DELETE"
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success("Usuario eliminado correctamente")
+        fetchUsers()
+      } else {
+        toast.error(data.error || "Error al eliminar")
+      }
+    } catch (err) {
+      toast.error("Error de conexion")
+    }
+  }
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user?.email) return
+    setIsSubmitting(true)
+
+    try {
+      const res = await fetch(`/api/admin/users`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adminEmail: user.email,
+          userData: newUser
+        })
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success("Usuario creado")
+        setIsAddModalOpen(false)
+        setNewUser({
+          name: "",
+          email: "",
+          username: "",
+          password: "",
+          role: "member",
+          communityId: "general"
+        })
+        fetchUsers()
+      } else {
+        toast.error(data.error || "Error al crear")
+      }
+    } catch (err) {
+      toast.error("Error de conexion")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   const filtered = users.filter(u => {
     const matchSearch = !search ||
       u.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -78,9 +148,18 @@ export default function AdminUsuariosPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Usuarios y Soporte</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Gestiona credenciales de todos los usuarios para soporte tecnico</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Usuarios y Soporte</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Gestiona credenciales de todos los usuarios para soporte tecnico</p>
+        </div>
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90 active:scale-95"
+        >
+          <Plus className="h-4 w-4" />
+          Agregar Usuario
+        </button>
       </div>
 
       {/* Stats */}
@@ -172,7 +251,7 @@ export default function AdminUsuariosPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm border-collapse">
               <thead>
                 <tr className="border-b border-border/30">
                   <th className="px-4 py-3 font-medium text-muted-foreground">Usuario</th>
@@ -183,6 +262,7 @@ export default function AdminUsuariosPage() {
                   <th className="px-4 py-3 font-medium text-muted-foreground">Patrocinador</th>
                   <th className="px-4 py-3 font-medium text-muted-foreground">Trial</th>
                   <th className="px-4 py-3 font-medium text-muted-foreground">Registro</th>
+                  <th className="px-4 py-3 font-medium text-muted-foreground text-right pr-6">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -219,12 +299,9 @@ export default function AdminUsuariosPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                        u.role === "leader"
-                          ? "bg-amber-500/10 text-amber-500"
-                          : "bg-primary/10 text-primary"
-                      }`}>
-                        {u.role === "leader" ? "Lider" : "Miembro"}
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${roleLabel(u.role).class
+                        }`}>
+                        {roleLabel(u.role).text}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground font-mono">{u.communityId}</td>
@@ -233,11 +310,10 @@ export default function AdminUsuariosPage() {
                     </td>
                     <td className="px-4 py-3">
                       {u.trialEndsAt ? (
-                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                          trialActive(u.trialEndsAt)
-                            ? "bg-emerald-500/10 text-emerald-500"
-                            : "bg-destructive/10 text-destructive"
-                        }`}>
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${trialActive(u.trialEndsAt)
+                          ? "bg-emerald-500/10 text-emerald-500"
+                          : "bg-destructive/10 text-destructive"
+                          }`}>
                           {trialActive(u.trialEndsAt) ? "Activo" : "Vencido"}
                         </span>
                       ) : (
@@ -245,7 +321,16 @@ export default function AdminUsuariosPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
-                      {u.createdAt ? new Date(u.createdAt).toLocaleDateString("es", { day: "2-digit", month: "short", year: "numeric" }) : "-"}
+                      {new Date(u.createdAt).toLocaleDateString("es-ES", { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </td>
+                    <td className="px-4 py-3 text-right pr-6">
+                      <button
+                        onClick={() => handleDelete(u.id, u.username)}
+                        className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                        title="Eliminar usuario"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -255,6 +340,103 @@ export default function AdminUsuariosPage() {
         )}
       </div>
 
+      {/* Add User Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold">Agregar Nuevo Usuario</h2>
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="rounded-lg p-2 text-muted-foreground hover:bg-secondary"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateUser} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Nombre Completo</label>
+                <input
+                  required
+                  type="text"
+                  value={newUser.name}
+                  onChange={e => setNewUser({ ...newUser, name: e.target.value })}
+                  className="w-full rounded-xl border border-border bg-background px-4 py-2.5 outline-none focus:border-primary/50"
+                  placeholder="Ej: Juan Perez"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Email</label>
+                <input
+                  required
+                  type="email"
+                  value={newUser.email}
+                  onChange={e => setNewUser({ ...newUser, email: e.target.value })}
+                  className="w-full rounded-xl border border-border bg-background px-4 py-2.5 outline-none focus:border-primary/50"
+                  placeholder="juan@ejemplo.com"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Username</label>
+                  <input
+                    required
+                    type="text"
+                    value={newUser.username}
+                    onChange={e => setNewUser({ ...newUser, username: e.target.value })}
+                    className="w-full rounded-xl border border-border bg-background px-4 py-2.5 outline-none focus:border-primary/50"
+                    placeholder="juan123"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Contrasena</label>
+                  <input
+                    required
+                    type="text"
+                    value={newUser.password}
+                    onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+                    className="w-full rounded-xl border border-border bg-background px-4 py-2.5 outline-none focus:border-primary/50"
+                    placeholder="Min 6 caracteres"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Rol</label>
+                  <select
+                    value={newUser.role}
+                    onChange={e => setNewUser({ ...newUser, role: e.target.value })}
+                    className="w-full rounded-xl border border-border bg-background px-4 py-2.5 outline-none focus:border-primary/50"
+                  >
+                    <option value="member">Miembro</option>
+                    <option value="leader">Lider</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Comunidad ID</label>
+                  <input
+                    type="text"
+                    value={newUser.communityId}
+                    onChange={e => setNewUser({ ...newUser, communityId: e.target.value })}
+                    className="w-full rounded-xl border border-border bg-background px-4 py-2.5 outline-none focus:border-primary/50"
+                    placeholder="general"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full rounded-xl bg-primary py-3 font-bold text-primary-foreground transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
+              >
+                {isSubmitting ? "Creando..." : "Crear Usuario"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Security notice */}
       <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
         <p className="text-xs text-amber-500/80">
@@ -263,4 +445,11 @@ export default function AdminUsuariosPage() {
       </div>
     </div>
   )
+}
+
+function roleLabel(role: string) {
+  switch (role) {
+    case 'leader': return { text: 'Lider', class: 'bg-amber-500/10 text-amber-500' };
+    default: return { text: 'Miembro', class: 'bg-primary/10 text-primary' };
+  }
 }

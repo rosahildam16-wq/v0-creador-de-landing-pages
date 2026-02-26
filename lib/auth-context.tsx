@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true)
     await new Promise((r) => setTimeout(r, 1200))
 
-    const ADMIN_EMAIL = "iajorgeleon21@gmail.com"
+    const ADMIN_EMAIL = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || "iajorgeleon21@gmail.com"
     const ADMIN_PASSWORD = "Leon321$#"
     const MEMBER_DEFAULT_PASSWORD = "Member123$"
     const LAUNCH_TEST_CODE = "LANZAMIENTO2026"
@@ -181,12 +181,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (res.ok) {
         const data = await res.json()
         if (data.success) {
-          const dbRole = data.role === "leader" ? "leader" : "member"
+          let dbRole: UserRole = "member"
+          if (data.role === "super_admin") dbRole = "super_admin"
+          else if (data.role === "leader") dbRole = "leader"
+
           const userData: AuthUser = {
             email: normalizedEmail,
             name: data.name,
             username: data.username,
-            role: dbRole as UserRole,
+            role: dbRole,
             memberId: data.memberId,
             communityId: data.communityId,
           }

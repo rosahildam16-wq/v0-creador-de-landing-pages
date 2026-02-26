@@ -16,6 +16,8 @@ import {
   X,
 } from "lucide-react"
 
+import { playSwipe, playRestrictedAlert } from "@/lib/sounds"
+
 interface Props {
   onContinue: () => void
   firstVideoEmbed?: string
@@ -26,6 +28,7 @@ interface Props {
 interface VideoSlide {
   image?: string
   videoEmbed?: string
+  videoSrc?: string
   overlayText: string[]
   username: string
   caption: string
@@ -128,14 +131,43 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
   const lastTapRef = useRef(0)
   const touchStartYRef = useRef(0)
   const playIconTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   const currentSlide = activeSlides[activeSlide]
-  const currentSlideHasVideo = !!currentSlide?.videoEmbed
+  const currentSlideHasVideo = !!currentSlide?.videoEmbed || !!currentSlide?.videoSrc
   const isLast = activeSlide === activeSlides.length - 1
   const canAdvance = videoFinished[activeSlide] || !currentSlideHasVideo
 
-  // ── Toggle play/pause for Vimeo via postMessage ──
-  const toggleVimeoPlay = useCallback((slideIndex: number) => {
+  // Play restricted alert on mount
+  useEffect(() => {
+    playRestrictedAlert()
+  }, [])
+
+  // ── Toggle play/pause (Vimeo or Local) ──
+  const togglePlay = useCallback((slideIndex: number) => {
+    const slide = activeSlides[slideIndex]
+
+    // Case 1: Local Video
+    if (slide.videoSrc && slideIndex === activeSlide) {
+      if (videoRef.current) {
+        if (videoPlaying[slideIndex]) {
+          videoRef.current.pause()
+          setVideoPlaying((prev) => ({ ...prev, [slideIndex]: false }))
+          setShowPlayIcon((prev) => ({ ...prev, [slideIndex]: true }))
+        } else {
+          videoRef.current.play()
+          setVideoPlaying((prev) => ({ ...prev, [slideIndex]: true }))
+          setShowPlayIcon((prev) => ({ ...prev, [slideIndex]: true }))
+          if (playIconTimerRef.current) clearTimeout(playIconTimerRef.current)
+          playIconTimerRef.current = setTimeout(() => {
+            setShowPlayIcon((prev) => ({ ...prev, [slideIndex]: false }))
+          }, 600)
+        }
+      }
+      return
+    }
+
+    // Case 2: Vimeo
     const iframe = document.getElementById(`vimeo-player-${slideIndex}`) as HTMLIFrameElement
     if (!iframe?.contentWindow) return
 
@@ -155,7 +187,7 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
         setShowPlayIcon((prev) => ({ ...prev, [slideIndex]: false }))
       }, 600)
     }
-  }, [videoPlaying])
+  }, [videoPlaying, activeSlide, activeSlides])
 
   // ── Vimeo / YouTube: listen for postMessage to detect video end ──
   useEffect(() => {
@@ -342,7 +374,20 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
             }}
           >
             {/* Background image or video */}
-            {slide.videoEmbed ? (
+            {slide.videoSrc ? (
+              <video
+                ref={i === activeSlide ? videoRef : null}
+                src={slide.videoSrc}
+                className="absolute inset-0 h-full w-full object-cover"
+                playsInline
+                muted={i !== activeSlide}
+                onEnded={() => setVideoFinished((prev) => ({ ...prev, [i]: true }))}
+                onPlay={() => setVideoPlaying((prev) => ({ ...prev, [i]: true }))}
+                onPause={() => setVideoPlaying((prev) => ({ ...prev, [i]: false }))}
+                // Case for auto-play when it becomes active
+                autoPlay={i === activeSlide}
+              />
+            ) : slide.videoEmbed ? (
               <>
                 {/* Load iframe for active slide and next slide for preloading */}
                 {(i === activeSlide || i === activeSlide + 1) ? (
@@ -368,40 +413,6 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
                 <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-[3] h-16"
                   style={{ background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)" }}
                 />
-
-                {/* Custom play/pause overlay button */}
-                {i === activeSlide && !videoFinished[i] && (
-                  <button
-                    type="button"
-                    className="absolute inset-0 z-[4] flex items-center justify-center"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      toggleVimeoPlay(i)
-                    }}
-                    aria-label={videoPlaying[i] ? "Pausar" : "Reproducir"}
-                  >
-                    {/* Show play icon when paused, or brief pause icon feedback */}
-                    {(!videoPlaying[i] || showPlayIcon[i]) && (
-                      <div className={`flex h-16 w-16 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-opacity ${videoPlaying[i] ? "opacity-0" : "opacity-100"}`}>
-                        {videoPlaying[i] ? (
-                          <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
-                            <rect x="6" y="4" width="4" height="16" rx="1" />
-                            <rect x="14" y="4" width="4" height="16" rx="1" />
-                          </svg>
-                        ) : (
-                          <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
-                            <path d="M8 5.14v14.72a1 1 0 0 0 1.5.86l11.5-7.36a1 1 0 0 0 0-1.72L9.5 4.28a1 1 0 0 0-1.5.86z" />
-                          </svg>
-                        )}
-                      </div>
-                    )}
-                  </button>
-                )}
-
-                {/* When video ends, cover iframe to hide Vimeo end screen */}
-                {videoFinished[i] && (
-                  <div className="absolute inset-0 z-[6] bg-black" />
-                )}
               </>
             ) : (
               <img
@@ -410,6 +421,40 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
                 className="absolute inset-0 h-full w-full object-cover"
                 draggable={false}
               />
+            )}
+
+            {/* Custom play/pause overlay button */}
+            {i === activeSlide && currentSlideHasVideo && !videoFinished[i] && (
+              <button
+                type="button"
+                className="absolute inset-0 z-[4] flex items-center justify-center"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  togglePlay(i)
+                }}
+                aria-label={videoPlaying[i] ? "Pausar" : "Reproducir"}
+              >
+                {/* Show play icon when paused, or brief pause icon feedback */}
+                {(!videoPlaying[i] || showPlayIcon[i]) && (
+                  <div className={`flex h-16 w-16 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-opacity ${videoPlaying[i] ? "opacity-0" : "opacity-100"}`}>
+                    {videoPlaying[i] ? (
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
+                        <rect x="6" y="4" width="4" height="16" rx="1" />
+                        <rect x="14" y="4" width="4" height="16" rx="1" />
+                      </svg>
+                    ) : (
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
+                        <path d="M8 5.14v14.72a1 1 0 0 0 1.5.86l11.5-7.36a1 1 0 0 0 0-1.72L9.5 4.28a1 1 0 0 0-1.5.86z" />
+                      </svg>
+                    )}
+                  </div>
+                )}
+              </button>
+            )}
+
+            {/* When video ends, cover to hide end screen */}
+            {videoFinished[i] && (
+              <div className="absolute inset-0 z-[6] bg-black" />
             )}
 
             {/* Double-tap heart animation */}

@@ -384,11 +384,11 @@ export function ResetLanding({ leadId, onTrack }: Props) {
         <div className="relative z-10 mx-auto max-w-2xl flex flex-col items-center text-center">
           <div className="mb-10 flex flex-col items-center">
             <div className="mb-6 h-1 w-12 bg-primary rounded-full" />
-            <h1 className="text-[52px] md:text-[72px] font-black leading-[0.85] tracking-[-0.05em] uppercase italic text-white flex flex-col">
-              BIENVENIDO <br /> <span className="text-primary italic-none">AL 1%</span>
+            <h1 className="text-[42px] md:text-[72px] font-black leading-[0.85] tracking-[-0.05em] uppercase italic text-white flex flex-col">
+              HAS PASADO <br /> <span className="text-primary italic-none">EL FILTRO</span>
             </h1>
             <p className="mt-8 max-w-md text-lg md:text-xl font-medium text-neutral-400 text-balance">
-              Has pasado el filtro. Has completado el embudo. Esta es tu **admisión prioritaria** al sistema RESET.
+              Y completaste tu primer acceso para la Franquicia Reset.
             </p>
           </div>
 
@@ -434,7 +434,7 @@ export function ResetLanding({ leadId, onTrack }: Props) {
         <div className="mx-auto max-w-2xl">
           <div className="mb-20 text-center">
             <span className="inline-block px-3 py-1 bg-black text-white text-[10px] font-black uppercase italic mb-4">RESET TECHNOLOGY</span>
-            <h2 className="text-[48px] md:text-[64px] font-black uppercase italic leading-[0.9] tracking-tighter">
+            <h2 className="text-[32px] md:text-[64px] font-black uppercase italic leading-[0.9] tracking-tighter">
               INFRAESTRUCTURA <br /> <span className="text-primary italic-none">LLAVE EN MANO</span>
             </h2>
             <p className="mt-6 text-neutral-500 font-medium text-lg">Mientras otros intentan venderte cursos, nosotros te entregamos el motor completo.</p>
@@ -524,7 +524,7 @@ export function ResetLanding({ leadId, onTrack }: Props) {
       {/* ── FINAL CTAS ── */}
       <section id="reset-booking" className="py-32 px-6 bg-gradient-to-b from-[#030303] to-[#0a1a1a]">
         <div className="mx-auto max-w-md text-center">
-          <h2 className="text-[44px] font-black uppercase italic mb-10 leading-[0.9]">
+          <h2 className="text-[32px] md:text-[44px] font-black uppercase italic mb-10 leading-[0.9]">
             Tu transformación <br /> no es <span className="text-primary">negociable</span>
           </h2>
           <Button

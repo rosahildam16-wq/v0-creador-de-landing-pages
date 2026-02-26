@@ -165,7 +165,7 @@ export function FunnelController({ embudoId = "nomada-vip", startAt }: FunnelCon
                     shares: "73.5 mil",
                   },
                   {
-                    videoEmbed: "https://player.vimeo.com/video/1168000494?api=1&badge=0&autopause=0&player_id=0&app_id=58479&controls=0&title=0&byline=0&portrait=0&playsinline=1&keyboard=0",
+                    videoSrc: "/videos/tiktok-2.mov",
                     overlayText: [],
                     username: "reset.system",
                     caption: "El Sistema",
@@ -212,7 +212,7 @@ export function FunnelController({ embudoId = "nomada-vip", startAt }: FunnelCon
         {currentExp === 8 && embudoId === "franquicia-reset" && (
           <DecisionVideo
             onContinue={goToNext}
-            embedUrl="https://player.vimeo.com/video/1168001952?autoplay=1&muted=1&controls=0&title=0&byline=0&portrait=0&badge=0&dnt=1&keyboard=0&pip=0&speed=0"
+            videoSrc="/videos/fase8-decision.mov"
           />
         )}
         {currentExp === 8 && embudoId !== "franquicia-reset" && (
