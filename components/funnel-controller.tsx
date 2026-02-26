@@ -113,8 +113,8 @@ export function FunnelController({ embudoId = "nomada-vip", startAt }: FunnelCon
         {currentExp === 1 && (
           <VideoPlayer
             onContinue={goToNext}
-            embedUrl={embudoId === "franquicia-reset" ? "https://player.vimeo.com/video/1167958594?autoplay=1&muted=0&badge=0&autopause=0&playsinline=1&controls=0&title=0&byline=0&portrait=0&dnt=1" : undefined}
-            videoSrc={embudoId === "nomada-vip" ? "/images/nomada-3.mov" : undefined}
+            embedUrl={embudoId === "franquicia-reset" ? undefined : undefined}
+            videoSrc={embudoId === "franquicia-reset" ? "/videos/reset-intro.mp4" : (embudoId === "nomada-vip" ? "/images/nomada-3.mov" : undefined)}
           />
         )}
         {currentExp === 2 && (
