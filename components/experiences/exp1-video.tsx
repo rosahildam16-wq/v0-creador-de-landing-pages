@@ -38,9 +38,10 @@ export function VideoPlayer({ onContinue, videoSrc, embedUrl }: Props) {
 
         if (data.event === "ready") {
           setIsLoading(false)
-          // Tell Vimeo to start playing and enable finish tracking
           if (iframeRef.current?.contentWindow) {
             iframeRef.current.contentWindow.postMessage(JSON.stringify({ method: "addEventListener", value: "finish" }), "*")
+            iframeRef.current.contentWindow.postMessage(JSON.stringify({ method: "setVolume", value: 1 }), "*")
+            iframeRef.current.contentWindow.postMessage(JSON.stringify({ method: "setMuted", value: false }), "*")
             iframeRef.current.contentWindow.postMessage(JSON.stringify({ method: "play" }), "*")
           }
         }
