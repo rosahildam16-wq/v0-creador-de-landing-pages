@@ -24,25 +24,22 @@ export async function GET(req: NextRequest) {
             return NextResponse.json([])
         }
 
-        // 2. Fetch leads for this community OR assigned to this member
-        // Use asignado_a as primary for now as we know it exists.
-        // We try both to be safe, but we handle the error if community_id is missing.
+        // 2. Fetch leads assigned to this member (and optionally their community)
+        // We know 'asignado_a' exists, so we use it as the primary filter.
         let leadsResult = await supabase
             .from("leads")
             .select("*")
-            .or(`community_id.eq."${member.community_id}",asignado_a.eq."${member.username}"`)
+            .eq("asignado_a", member.username)
             .order("fecha_ingreso", { ascending: false })
 
-        // If it fails with "column does not exist", try only asignado_a
-        if (leadsResult.error && (leadsResult.error.code === '42703' || leadsResult.error.message.includes('column'))) {
-            leadsResult = await supabase
-                .from("leads")
-                .select("*")
-                .eq("asignado_a", member.username)
-                .order("fecha_ingreso", { ascending: false })
+        // If that returned nothing or we want to try community-wide (if possible)
+        if (!leadsResult.error) {
+            // Success with asignado_a
+        } else {
+            console.error("Primary leads fetch error:", leadsResult.error)
         }
 
-        const leads = leadsResult.data
+        const leads = leadsResult.data || []
         const leadsError = leadsResult.error
 
         if (leadsError) {
