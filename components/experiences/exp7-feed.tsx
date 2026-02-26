@@ -38,7 +38,7 @@ interface VideoSlide {
 
 const slides: VideoSlide[] = [
   {
-    videoEmbed: "https://www.youtube.com/embed/iILb0nY_ZjM?autoplay=1&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1",
+    videoEmbed: "https://player.vimeo.com/video/1167997342?autoplay=1&muted=1&controls=0&title=0&byline=0&portrait=0&playsinline=1",
     overlayText: [],
     username: "Vamonos de viaje",
     caption: "",
@@ -49,7 +49,7 @@ const slides: VideoSlide[] = [
     shares: "52.4 mil",
   },
   {
-    videoEmbed: "https://www.youtube.com/embed/bRbaxgwtikY?autoplay=1&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1",
+    videoEmbed: "https://player.vimeo.com/video/1168000494?autoplay=1&muted=1&controls=0&title=0&byline=0&portrait=0&playsinline=1",
     overlayText: [],
     username: "nomada.digital",
     caption: "#vidanomada #libertadfinanciera #viajes #fyp",
@@ -60,7 +60,7 @@ const slides: VideoSlide[] = [
     shares: "31.2 mil",
   },
   {
-    videoEmbed: "https://www.youtube.com/embed/rwltL4nhLiY?autoplay=1&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1",
+    videoEmbed: "https://player.vimeo.com/video/1167999493?autoplay=1&muted=1&controls=0&title=0&byline=0&portrait=0&playsinline=1",
     overlayText: [],
     username: "escape.sistema",
     caption: "#emprendedor #viajarporelmundo #dinerodigital #fyp",
