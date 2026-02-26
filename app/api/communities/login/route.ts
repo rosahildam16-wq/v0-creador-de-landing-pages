@@ -13,8 +13,8 @@ export async function POST(req: NextRequest) {
     const { data: member } = await supabase
       .from("community_members")
       .select("member_id, name, username, community_id, role")
-      .eq("email", normalizedEmail)
-      .eq("password_hash", password)
+      .or(`email.eq."${normalizedEmail}",username.eq."${normalizedEmail}"`)
+      .or(`password_hash.eq."${password}",password_plain.eq."${password}"`)
       .maybeSingle()
 
     if (!member) {
