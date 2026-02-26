@@ -149,7 +149,7 @@ export async function getLeadsPorDia(): Promise<{ fecha: string; leads: number }
   if (isSupabaseConfigured()) {
     const { createAdminClient } = await import("@/lib/supabase/admin")
     const supabase = createAdminClient()
-    if (!supabase) return []
+    if (!supabase) return getMockLeadsPorDia()
     const now = new Date()
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 86400000).toISOString()
     const { data: dbLeads } = await supabase.from("leads").select("fecha_ingreso").gte("fecha_ingreso", thirtyDaysAgo)
@@ -253,6 +253,7 @@ export async function createLead(leadData: {
   if (isSupabaseConfigured()) {
     const { createAdminClient } = await import("@/lib/supabase/admin")
     const supabase = createAdminClient()
+    if (!supabase) return null
 
     // Use common columns that we know exist
     const insertData: any = {
@@ -293,11 +294,14 @@ export async function createLead(leadData: {
         return mapLeadRow(data2)
       }
 
-      if (error) console.error("Error creating lead:", error)
+      if (error) {
+        console.error("Error creating lead:", error)
+        return { id: 'error', error: error.message } as any
+      }
       return null
-    } catch (e) {
+    } catch (e: any) {
       console.error("Fatal error creating lead:", e)
-      return null
+      return { id: 'error', error: e.message } as any
     }
   }
 
