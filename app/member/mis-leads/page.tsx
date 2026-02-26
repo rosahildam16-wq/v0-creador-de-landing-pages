@@ -16,7 +16,7 @@ import { WhatsAppStatus } from "@/components/admin/whatsapp-status"
 import { ETAPA_LABELS, ETAPA_ORDER, type EtapaPipeline } from "@/lib/types"
 import { calcularTemperatura, type Temperatura } from "@/lib/lead-scoring"
 import { useAuth } from "@/lib/auth-context"
-import { TEAM_MEMBERS } from "@/lib/team-data"
+import { getMemberData } from "@/lib/team-data"
 import {
   Search, Download, ChevronLeft, ChevronRight, Loader2, Users, ArrowUpDown,
 } from "lucide-react"
@@ -52,7 +52,7 @@ function getEtapaBadgeClasses(etapa: EtapaPipeline): string {
 
 export default function MemberLeadsPage() {
   const { user } = useAuth()
-  const member = TEAM_MEMBERS.find((m) => m.id === user?.memberId)
+  const member = getMemberData(user)
 
   const { data: leads, isLoading, mutate } = useSWR<Lead[]>(
     user?.email ? `/api/member/leads?email=${encodeURIComponent(user.email)}` : null,

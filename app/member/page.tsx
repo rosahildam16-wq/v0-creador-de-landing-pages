@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { getTeamMemberById, type TeamMember } from "@/lib/team-data"
+import { getMemberData, type TeamMember } from "@/lib/team-data"
 import type { Challenge } from "@/lib/challenges-data"
 import { DEFAULT_CHALLENGES, getRanking } from "@/lib/challenges-data"
 import { PersonalLinkCard } from "@/components/member/personal-link-card"
@@ -192,28 +192,7 @@ export default function MemberDashboard() {
 
   useEffect(() => {
     if (user) {
-      const m = user.memberId ? getTeamMemberById(user.memberId) : null
-      if (m) {
-        setMember(m)
-      } else {
-        // Fallback member if not in static list
-        const memberCommunity = user.memberId ? getMemberCommunity(user.memberId) : undefined
-        const defaultFunnelIds = memberCommunity?.embudos_default || []
-
-        setMember({
-          id: user.memberId || "new-member",
-          nombre: user.name || "Socio",
-          email: user.email || "",
-          avatar_initials: user.name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "S",
-          publicidad_activa: false,
-          fecha_renovacion: null,
-          metricas: { leads: 0, cerrados: 0, afiliados: 0 },
-          publicidad: { inversion_total: 0, saldo_disponible: 0, leads_totales: 0, leads_cerrados: 0 },
-          organico: { saldo_disponible: 0, leads_totales: 0, leads_cerrados: 0 },
-          embudos_asignados: defaultFunnelIds,
-          fecha_ingreso: new Date().toISOString().split('T')[0],
-        })
-      }
+      setMember(getMemberData(user))
     }
   }, [user])
 

@@ -2,20 +2,20 @@
 
 import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { getTeamMemberById } from "@/lib/team-data"
+import { getMemberData } from "@/lib/team-data"
 import { EMBUDOS } from "@/lib/embudos-config"
-import { User, Mail, Shield, Calendar, Funnel, Lock, Save, Check } from "lucide-react"
+import { User, Mail, Shield, Calendar, Filter, Lock, Save, Check } from "lucide-react"
 
 export default function MemberPerfilPage() {
   const { user } = useAuth()
-  const member = user?.memberId ? getTeamMemberById(user.memberId) : null
+  const member = getMemberData(user)
   const [saved, setSaved] = useState(false)
   const [nombre, setNombre] = useState(member?.nombre || user?.name || "")
   const [email] = useState(member?.email || user?.email || "")
 
   if (!member || !user) return null
 
-  const embudosActivos = EMBUDOS.filter((e) => member.embudos_asignados.includes(e.id))
+  const embudosActivos = EMBUDOS.filter((e) => member.embudos_asignados?.includes(e.id))
 
   const handleSave = () => {
     setSaved(true)
@@ -148,7 +148,7 @@ export default function MemberPerfilPage() {
           {/* Embudos */}
           <div className="rounded-2xl border border-border/30 bg-card/60 p-5 backdrop-blur-sm">
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-              <Funnel className="h-4 w-4 text-primary" />
+              <Filter className="h-4 w-4 text-primary" />
               Mis embudos
             </h3>
             {embudosActivos.length > 0 ? (

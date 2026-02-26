@@ -145,6 +145,28 @@ export function getTeamMemberById(id: string): TeamMember | undefined {
   return member
 }
 
+export function getMemberData(user: { memberId?: string, name?: string, email?: string } | null): TeamMember | null {
+  if (!user) return null
+
+  const m = user.memberId ? getTeamMemberById(user.memberId) : null
+  if (m) return m
+
+  // Fallback for members not in the static list
+  return {
+    id: user.memberId || "new-member",
+    nombre: user.name || "Socio",
+    email: user.email || "",
+    avatar_initials: user.name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "S",
+    publicidad_activa: false,
+    fecha_renovacion: null,
+    metricas: { leads: 0, cerrados: 0, afiliados: 0 },
+    publicidad: { inversion_total: 0, saldo_disponible: 0, leads_totales: 0, leads_cerrados: 0 },
+    organico: { saldo_disponible: 0, leads_totales: 0, leads_cerrados: 0 },
+    embudos_asignados: [],
+    fecha_ingreso: new Date().toISOString().split('T')[0],
+  }
+}
+
 // Safe storage with sessionStorage fallback
 function safeGetItem(key: string): string | null {
   try { const v = localStorage.getItem(key); if (v !== null) return v } catch { /* noop */ }

@@ -5,7 +5,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { EMBUDOS } from "@/lib/embudos-config"
 import { useAuth } from "@/lib/auth-context"
-import { getTeamMemberById } from "@/lib/team-data"
+import { getMemberData } from "@/lib/team-data"
+import { getMemberCommunity } from "@/lib/communities-data"
 import {
   Rocket, ArrowRight, CheckCircle2, Eye, Copy, Check,
   Layers, ChevronRight, ExternalLink,
@@ -34,7 +35,7 @@ const ETAPA_ICONS: Record<string, string> = {
 
 export default function MemberEmbudoPage() {
   const { user } = useAuth()
-  const member = user?.memberId ? getTeamMemberById(user.memberId) : null
+  const member = getMemberData(user)
   const [selectedEmbudo, setSelectedEmbudo] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
 
@@ -44,20 +45,10 @@ export default function MemberEmbudoPage() {
     { refreshInterval: 15000 }
   )
 
-  // Fallback if member is not in static list
-  const memberCommunity = user?.memberId ? getMemberCommunity(user.memberId) : undefined
-  const defaultFunnelIds = memberCommunity?.embudos_default || ["nomada-vip"]
-
-  const finalMember = member || {
-    id: user?.memberId || "new-member",
-    nombre: user?.name || "Socio",
-    email: user?.email || "",
-    embudos_asignados: defaultFunnelIds
-  }
-
-  const ids = (finalMember.embudos_asignados && finalMember.embudos_asignados.length > 0)
+  const finalMember = member!
+  const ids = finalMember.embudos_asignados && finalMember.embudos_asignados.length > 0
     ? finalMember.embudos_asignados
-    : defaultFunnelIds
+    : ["nomada-vip"]
 
   const embudosAsignados = EMBUDOS.filter((e) => ids.includes(e.id))
   const activeEmbudo = selectedEmbudo
