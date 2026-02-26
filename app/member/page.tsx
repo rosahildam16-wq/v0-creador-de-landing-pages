@@ -8,6 +8,7 @@ import { DEFAULT_CHALLENGES, getRanking } from "@/lib/challenges-data"
 import { PersonalLinkCard } from "@/components/member/personal-link-card"
 import { getMemberCommunity } from "@/lib/communities-data"
 import { ChallengeLeaderboard } from "@/components/shared/challenge-leaderboard"
+import { MetaAdsSection } from "@/components/member/meta-ads-section"
 import Link from "next/link"
 import {
   Users, Target, GraduationCap, Award, TrendingUp,
@@ -392,6 +393,9 @@ export default function MemberDashboard() {
               </div>
             </div>
           </div>
+
+          {/* Meta Ads Stats */}
+          <MetaAdsSection memberId={member.id} />
 
           {/* Personal link */}
           <PersonalLinkCard memberId={user?.username || member?.id || "socio"} />
