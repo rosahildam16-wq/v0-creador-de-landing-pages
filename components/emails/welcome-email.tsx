@@ -9,7 +9,6 @@ import {
     Section,
     Text,
     Hr,
-    Img,
 } from "@react-email/components"
 import * as React from "react"
 
@@ -26,32 +25,52 @@ export const WelcomeEmail = ({
 }: WelcomeEmailProps) => (
     <Html>
         <Head />
-        <Preview>Bienvenido a la era de la duplicación con Magic Funnel</Preview>
+        <Preview>Bienvenido a la Élite de Skalia: Tu Revolución Digital Comienza Ahora</Preview>
         <Body style={main}>
             <Container style={container}>
                 <Section style={header}>
-                    <Heading style={heading}>¡Bienvenido a la Familia, {name}!</Heading>
+                    <div style={glow} />
+                    <Heading style={heading}>BIENVENIDO AL FUTURO,<br /><span style={highlight}>{name.toUpperCase()}</span></Heading>
+                    <Text style={badge}>SKALIA VIP CLUB • MIEMBRO ACTIVO</Text>
                 </Section>
+
                 <Section style={content}>
                     <Text style={paragraph}>
-                        Estamos emocionados de tenerte con nosotros. Has dado el primer paso
-                        para profesionalizar tu negocio con tecnología de punta.
+                        Has sido seleccionado para formar parte de una comunidad <strong>disruptiva e innovadora</strong>.
+                        En Skalia VIP Club, no solo hacemos marketing; estamos hackeando el sistema tradicional para
+                        llevar tu crecimiento a niveles nunca antes vistos.
                     </Text>
+
+                    <div style={featureBox}>
+                        <Text style={featureTitle}>TODO LO QUE NECESITAS YA ES TUYO:</Text>
+                        <ul style={featureList}>
+                            <li style={featureItem}>🚀 <strong>Embudos de Alta Conversión:</strong> Listos para duplicar tus resultados.</li>
+                            <li style={featureItem}>🤖 <strong>IA Predictiva:</strong> Tu asistente 24/7 para cerrar prospectos.</li>
+                            <li style={featureItem}>🤝 <strong>Red Global:</strong> Una estructura sólida diseñada para escalar.</li>
+                        </ul>
+                    </div>
+
                     <Section style={codeBox}>
-                        <Text style={codeLabel}>Tu Código de Comunidad:</Text>
+                        <Text style={codeLabel}>TU IDENTIDAD DIGITAL (CÓDIGO):</Text>
                         <Text style={codeText}>{communityCode}</Text>
+                        <Text style={codeSubText}>Úsalo para atraer nuevos socios y ver cómo tu red explota en tiempo real.</Text>
                     </Section>
-                    <Text style={paragraph}>
-                        Este código es tu llave maestra. Compártelo con tus prospectos para que
-                        queden vinculados automáticamente a tu equipo.
-                    </Text>
+
                     <Link href={dashboardUrl} style={button}>
-                        Ir a mi Panel de Control
+                        ACTIVAR MI PLATAFORMA AHORA
                     </Link>
-                    <Hr style={hr} />
-                    <Text style={footer}>
-                        Magic Funnel - La plataforma líder para Networkers de Élite.
+
+                    <Text style={paragraph}>
+                        Estamos aquí para romper moldes. Tu éxito ahora es parte de nuestra arquitectura.
                     </Text>
+
+                    <Hr style={hr} />
+                    <Section style={footer}>
+                        <Text style={footerText}>
+                            <strong>SKALIA VIP CLUB</strong><br />
+                            LA TECNOLOGÍA AL SERVICIO DE LA LIBERTAD.
+                        </Text>
+                    </Section>
                 </Section>
             </Container>
         </Body>
@@ -59,87 +78,159 @@ export const WelcomeEmail = ({
 )
 
 const main = {
-    backgroundColor: "#0a0a0a",
-    fontFamily:
-        '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
+    backgroundColor: "#050012",
+    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 }
 
 const container = {
     margin: "0 auto",
-    padding: "20px 0 48px",
-    width: "580px",
+    padding: "40px 0",
+    width: "600px",
 }
 
 const header = {
-    padding: "32px",
+    padding: "40px 32px",
     textAlign: "center" as const,
+    position: "relative" as const,
+}
+
+const glow = {
+    position: "absolute" as const,
+    top: "-50px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    width: "200px",
+    height: "100px",
+    backgroundColor: "#8b5cf6",
+    opacity: "0.2",
+    borderRadius: "100%",
+    filter: "blur(60px)",
 }
 
 const heading = {
-    fontSize: "32px",
-    lineHeight: "1.3",
-    fontWeight: "700",
+    fontSize: "36px",
+    lineHeight: "1.1",
+    fontWeight: "900",
     color: "#ffffff",
-    letterSpacing: "-0.5px",
+    letterSpacing: "-1px",
+    margin: "0 0 16px",
+}
+
+const highlight = {
+    color: "#8b5cf6",
+}
+
+const badge = {
+    fontSize: "10px",
+    fontWeight: "800",
+    color: "#8b5cf6",
+    letterSpacing: "4px",
+    backgroundColor: "rgba(139, 92, 246, 0.1)",
+    padding: "8px 16px",
+    borderRadius: "20px",
+    display: "inline-block",
 }
 
 const content = {
-    padding: "0 32px",
+    padding: "0 40px",
 }
 
 const paragraph = {
     fontSize: "16px",
     lineHeight: "26px",
     color: "#a1a1aa",
+    marginBottom: "24px",
+}
+
+const featureBox = {
+    backgroundColor: "rgba(255, 255, 255, 0.03)",
+    border: "1px solid rgba(255, 255, 255, 0.05)",
+    borderRadius: "16px",
+    padding: "24px",
+    marginBottom: "32px",
+}
+
+const featureTitle = {
+    fontSize: "12px",
+    fontWeight: "bold",
+    color: "#ffffff",
+    letterSpacing: "2px",
+    marginBottom: "16px",
+}
+
+const featureList = {
+    padding: "0",
+    margin: "0",
+    listStyleType: "none",
+}
+
+const featureItem = {
+    fontSize: "14px",
+    color: "#d1d1d6",
+    marginBottom: "12px",
+    display: "flex",
+    alignItems: "center",
 }
 
 const codeBox = {
-    backgroundColor: "#18181b",
-    borderRadius: "12px",
-    padding: "24px",
-    margin: "24px 0",
+    backgroundColor: "#ffffff",
+    borderRadius: "16px",
+    padding: "32px",
+    margin: "32px 0",
     textAlign: "center" as const,
-    border: "1px solid #27272a",
+    boxShadow: "0 20px 40px rgba(0,0,0,0.5)",
 }
 
 const codeLabel = {
-    fontSize: "12px",
+    fontSize: "11px",
     color: "#8b5cf6",
-    fontWeight: "700",
-    textTransform: "uppercase" as const,
+    fontWeight: "800",
+    letterSpacing: "2px",
     marginBottom: "8px",
 }
 
 const codeText = {
-    fontSize: "36px",
-    color: "#ffffff",
-    fontWeight: "800",
+    fontSize: "48px",
+    color: "#050012",
+    fontWeight: "900",
+    margin: "0 0 8px",
+    letterSpacing: "6px",
+}
+
+const codeSubText = {
+    fontSize: "12px",
+    color: "#71717a",
     margin: "0",
-    letterSpacing: "4px",
 }
 
 const button = {
     backgroundColor: "#8b5cf6",
-    borderRadius: "12px",
-    color: "#fff",
+    borderRadius: "16px",
+    color: "#ffffff",
     fontSize: "16px",
-    fontWeight: "bold",
+    fontWeight: "900",
     textDecoration: "none",
     textAlign: "center" as const,
     display: "block",
-    padding: "16px",
-    marginTop: "24px",
+    padding: "20px",
+    margin: "32px 0",
+    boxShadow: "0 10px 30px rgba(139, 92, 246, 0.3)",
 }
 
 const hr = {
-    borderColor: "#27272a",
+    borderColor: "rgba(255, 255, 255, 0.05)",
     margin: "40px 0",
 }
 
 const footer = {
-    color: "#52525b",
-    fontSize: "12px",
     textAlign: "center" as const,
+}
+
+const footerText = {
+    color: "#52525b",
+    fontSize: "11px",
+    lineHeight: "18px",
+    letterSpacing: "1px",
 }
 
 export default WelcomeEmail

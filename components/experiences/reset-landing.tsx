@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DiagnosticQuiz } from "./diagnostic-quiz"
+import { getMemberBySlug } from "@/lib/team-data"
 
 // ─── Particle canvas background (Enhanced) ───
 function ParticleField() {
@@ -251,9 +252,10 @@ function SocialProof() {
 interface Props {
   leadId?: string | null
   onTrack?: () => void
+  referrer?: string
 }
 
-export function ResetLanding({ leadId, onTrack }: Props) {
+export function ResetLanding({ leadId, onTrack, referrer }: Props) {
   const [isSticky, setIsSticky] = useState(false)
   const [tracked, setTracked] = useState(false)
   const [quizOpen, setQuizOpen] = useState(false)
@@ -298,9 +300,33 @@ export function ResetLanding({ leadId, onTrack }: Props) {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  const whatsappNumber = "15558865145"
-  const whatsappMessage = encodeURIComponent("Hola, acabo de completar el diagnóstico y quiero solicitar mi acceso prioritario a la Franquicia RESET.")
-  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`
+  const waConfig = useMemo(() => {
+    let num = "15558865145" // Default
+    let msg = "Hola, acabo de completar el diagnóstico y quiero solicitar mi acceso prioritario a la Franquicia RESET."
+
+    if (referrer) {
+      // Try to get from static member list first
+      const member = getMemberBySlug(referrer)
+      if (member) {
+        // In a real app, we'd fetch these from a database.
+        // For this prototype, we'll check localStorage as if it were a shared store
+        // or use hardcoded defaults for specific known members
+        const savedNum = typeof window !== "undefined" ? localStorage.getItem(`mf_wa_num_${member.id}`) : null
+        const savedMsg = typeof window !== "undefined" ? localStorage.getItem(`mf_wa_msg_${member.id}`) : null
+
+        if (savedNum) num = savedNum
+        if (savedMsg) msg = savedMsg
+      }
+    }
+
+    return {
+      url: `https://wa.me/${num}?text=${encodeURIComponent(msg)}`,
+      number: num,
+      message: msg
+    }
+  }, [referrer])
+
+  const whatsappUrl = waConfig.url
 
   if (booting) {
     return (

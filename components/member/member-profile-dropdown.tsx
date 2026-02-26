@@ -66,7 +66,7 @@ export function MemberProfileDropdown() {
               Mi perfil
             </Link>
             <Link
-              href="/member/perfil"
+              href="/member/perfil?tab=suscripcion"
               onClick={() => setOpen(false)}
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground/80 transition-colors hover:bg-primary/10 hover:text-foreground"
             >
@@ -74,7 +74,7 @@ export function MemberProfileDropdown() {
               Mi suscripcion
             </Link>
             <Link
-              href="/member/perfil"
+              href="/member/perfil?tab=config"
               onClick={() => setOpen(false)}
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground/80 transition-colors hover:bg-primary/10 hover:text-foreground"
             >

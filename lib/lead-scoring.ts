@@ -31,8 +31,15 @@ export function calcularTemperatura(lead: Lead): ScoreResult {
   const score = factores.reduce((sum, f) => sum + (f.cumplido ? f.puntos : 0), 0)
 
   let temperatura: Temperatura = "FRIO"
-  if (score >= 67) temperatura = "CALIENTE"
-  else if (score >= 34) temperatura = "TIBIO"
+
+  // Priority logic based on funnel stage
+  if (lead.etapa_maxima_alcanzada >= 7 || lead.sales_page_vista || lead.cta_clicked) {
+    temperatura = "CALIENTE"
+  } else if (lead.etapa_maxima_alcanzada >= 4 || score >= 34) {
+    temperatura = "TIBIO"
+  } else if (score >= 67) {
+    temperatura = "CALIENTE"
+  }
 
   const acciones_recomendadas = getAccionesRecomendadas(temperatura, lead)
 

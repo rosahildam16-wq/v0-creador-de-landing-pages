@@ -33,9 +33,10 @@ const STEP_NAMES: Record<Experience, string> = {
 interface FunnelControllerProps {
   embudoId?: string
   startAt?: Experience
+  referrer?: string
 }
 
-export function FunnelController({ embudoId = "nomada-vip", startAt }: FunnelControllerProps) {
+export function FunnelController({ embudoId = "nomada-vip", startAt, referrer }: FunnelControllerProps) {
   const [currentExp, setCurrentExp] = useState<Experience>(startAt || 1)
 
   // Allow parent to change which experience is shown
@@ -102,7 +103,7 @@ export function FunnelController({ embudoId = "nomada-vip", startAt }: FunnelCon
   if (currentExp === 9 && embudoId === "franquicia-reset") {
     return (
       <main className="relative min-h-dvh w-full overflow-x-hidden">
-        <ResetLanding leadId={leadIdRef.current} onTrack={() => trackStep(9)} />
+        <ResetLanding leadId={leadIdRef.current} onTrack={() => trackStep(9)} referrer={referrer} />
       </main>
     )
   }
@@ -176,10 +177,10 @@ export function FunnelController({ embudoId = "nomada-vip", startAt }: FunnelCon
                     shares: "55.2 mil",
                   },
                   {
-                    videoSrc: "/videos/tiktok-3-agenda.mp4",
+                    videoEmbed: "https://player.vimeo.com/video/1167999493?api=1&badge=0&autopause=0&player_id=0&app_id=58479&controls=0&title=0&byline=0&portrait=0&playsinline=1&keyboard=0&autoplay=1&muted=0",
                     overlayText: [],
                     username: "reset.system",
-                    caption: "Resultados",
+                    caption: "Agenda tu llamada",
                     music: "Sonido original - reset.system",
                     likes: "589.1 mil",
                     commentCount: "3,421",

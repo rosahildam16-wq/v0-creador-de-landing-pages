@@ -11,6 +11,7 @@ import { useState } from "react"
 const NAV_ITEMS = [
   { href: "/member", label: "Dashboard", icon: LayoutDashboard },
   { href: "/member/mis-leads", label: "Mis Leads", icon: Users },
+  { href: "/member/mi-equipo", label: "Mi Equipo", icon: Users },
   { href: "/member/pipeline", label: "Pipeline", icon: Kanban },
   { href: "/member/builder", label: "Magic Builder", icon: Sparkles },
   { href: "/member/retos", label: "Retos", icon: Trophy },
@@ -28,7 +29,7 @@ export function MemberSidebar() {
   return (
     <aside
       className={cn(
-        "glass-sidebar sticky top-0 z-20 flex h-screen flex-col transition-all duration-300",
+        "glass-sidebar sticky top-0 z-20 hidden h-screen flex-col transition-all duration-300 md:flex",
         collapsed ? "w-16" : "w-56"
       )}
     >
@@ -44,6 +45,11 @@ export function MemberSidebar() {
       {/* Navigation */}
       <nav className="flex flex-1 flex-col gap-1 p-3">
         {NAV_ITEMS.map((item) => {
+          // Restrict 'Mi Equipo' to Skalia VIP members
+          if (item.href === "/member/mi-equipo" && user?.communityId !== "skalia-vip" && user?.memberId !== "sensei") {
+            return null
+          }
+
           const isActive = item.href === "/member"
             ? pathname === "/member"
             : pathname.startsWith(item.href)

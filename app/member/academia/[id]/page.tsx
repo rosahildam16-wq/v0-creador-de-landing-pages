@@ -1,20 +1,15 @@
-"use client"
-
-import { use, useState } from "react"
-import { getCourseById } from "@/lib/courses-data"
-import { NIVEL_LABELS, NIVEL_COLORS } from "@/lib/courses-data"
-import { ArrowLeft, Play, Clock, BookOpen, CheckCircle2, ChevronDown, ChevronUp, Lock } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
-import { cn } from "@/lib/utils"
+import { isLessonCompleted, toggleLessonCompletion } from "@/lib/academy-progress"
+import { useAuth } from "@/lib/auth-context"
 
 export default function MemberCourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const { user } = useAuth()
   const course = getCourseById(id)
   const [expandedModules, setExpandedModules] = useState<string[]>(course?.modulos[0]?.id ? [course.modulos[0].id] : [])
-  const [selectedLesson, setSelectedLesson] = useState<string | null>(
+  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(
     course?.modulos[0]?.lecciones[0]?.id ?? null
   )
+  const [refresh, setRefresh] = useState(0)
 
   if (!course) {
     return (
@@ -33,10 +28,16 @@ export default function MemberCourseDetailPage({ params }: { params: Promise<{ i
     )
   }
 
+  const handleToggleComplete = (lessonId: string) => {
+    if (!user?.memberId) return
+    toggleLessonCompletion(lessonId, user.memberId)
+    setRefresh(prev => prev + 1)
+  }
+
   // Find current selected lesson details
   let currentLesson = null
   for (const mod of course.modulos) {
-    const found = mod.lecciones.find((l) => l.id === selectedLesson)
+    const found = mod.lecciones.find((l) => l.id === selectedLessonId)
     if (found) {
       currentLesson = found
       break
@@ -55,21 +56,53 @@ export default function MemberCourseDetailPage({ params }: { params: Promise<{ i
       </Link>
 
       {/* Video Player Area */}
-      <div className="relative aspect-video overflow-hidden rounded-xl border border-border/30 bg-black">
+      <div className="relative aspect-video overflow-hidden rounded-xl border border-border/30 bg-black shadow-2xl">
         <Image
           src={course.thumbnail}
           alt={currentLesson?.titulo ?? course.titulo}
           fill
-          className="object-cover opacity-40"
+          className="object-cover opacity-40 blur-[2px]"
         />
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-          <button className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/90 text-primary-foreground transition-transform hover:scale-110">
-            <Play className="h-7 w-7 ml-1" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+          <button className="group relative flex h-20 w-20 items-center justify-center rounded-full bg-primary/95 text-primary-foreground shadow-[0_0_40px_rgba(139,92,246,0.3)] transition-all hover:scale-110 hover:shadow-[0_0_60px_rgba(139,92,246,0.5)]">
+            <Play className="h-9 w-9 ml-1" />
+            <div className="absolute inset-0 -z-10 animate-ping rounded-full bg-primary/40 opacity-20" />
           </button>
-          <p className="text-sm font-medium text-white/80">
-            {currentLesson?.titulo ?? "Selecciona una leccion"}
-          </p>
+          <div className="text-center px-4">
+            <h3 className="text-lg font-bold text-white mb-1">
+              {currentLesson?.titulo ?? "Selecciona una leccion"}
+            </h3>
+            <p className="text-xs text-white/60">Modulo: {course.modulos.find(m => m.lecciones.some(l => l.id === selectedLessonId))?.titulo}</p>
+          </div>
         </div>
+
+        {/* Floating progress bar in player */}
+        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white/10">
+          <div className="h-full bg-primary transition-all duration-500" style={{ width: currentLesson && isLessonCompleted(currentLesson.id) ? '100%' : '0%' }} />
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+         <div className="flex items-center gap-4">
+            {currentLesson && (
+              <button 
+                onClick={() => handleToggleComplete(currentLesson.id)}
+                className={cn(
+                  "flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-all active:scale-95",
+                  isLessonCompleted(currentLesson.id)
+                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                    : "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                )}
+              >
+                {isLessonCompleted(currentLesson.id) ? (
+                  <CheckCircle2 className="h-4.5 w-4.5" />
+                ) : (
+                  <Play className="h-4 w-4" />
+                )}
+                {isLessonCompleted(currentLesson.id) ? "Leccion completada" : "Marcar como terminado"}
+              </button>
+            )}
+         </div>
       </div>
 
       {/* Course info + curriculum side by side on larger screens */}
@@ -127,11 +160,11 @@ export default function MemberCourseDetailPage({ params }: { params: Promise<{ i
             const lessonCount = modulo.lecciones.length
 
             return (
-              <div key={modulo.id} className="overflow-hidden rounded-xl border border-border/30">
+              <div key={modulo.id} className="overflow-hidden rounded-xl border border-border/30 bg-card/40">
                 {/* Module header */}
                 <button
                   onClick={() => toggleModule(modulo.id)}
-                  className="flex w-full items-center justify-between bg-secondary/30 px-4 py-3 text-left transition-colors hover:bg-secondary/50"
+                  className="flex w-full items-center justify-between bg-secondary/20 px-4 py-3 text-left transition-colors hover:bg-secondary/40"
                 >
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-bold text-foreground">
@@ -152,44 +185,52 @@ export default function MemberCourseDetailPage({ params }: { params: Promise<{ i
                 {isExpanded && (
                   <div className="flex flex-col">
                     {modulo.lecciones.map((leccion, idx) => {
-                      const isActive = selectedLesson === leccion.id
-                      const isCompleted = idx === 0 // Simulate first lesson completed
+                      const isActive = selectedLessonId === leccion.id
+                      const isCompleted = isLessonCompleted(leccion.id)
 
                       return (
                         <button
                           key={leccion.id}
-                          onClick={() => setSelectedLesson(leccion.id)}
+                          onClick={() => setSelectedLessonId(leccion.id)}
                           className={cn(
-                            "flex items-center gap-3 px-4 py-3 text-left transition-colors border-t border-border/20",
+                            "flex items-center gap-3 px-4 py-3 text-left transition-all border-t border-border/10",
                             isActive
-                              ? "bg-primary/[0.06] border-l-2 border-l-primary"
+                              ? "bg-primary/[0.08] shadow-[inset_4px_0_0_hsl(var(--primary))]"
                               : "hover:bg-secondary/20"
                           )}
                         >
                           {/* Lesson number / status */}
                           <div className="flex h-7 w-7 shrink-0 items-center justify-center">
                             {isCompleted ? (
-                              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                              </div>
                             ) : isActive ? (
-                              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary">
-                                <Play className="h-2.5 w-2.5 text-primary-foreground ml-0.5" />
+                              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 text-primary">
+                                <Play className="h-2.5 w-2.5 ml-0.5" />
                               </div>
                             ) : (
-                              <span className="text-xs text-muted-foreground">{idx + 1}</span>
+                              <span className="text-xs text-muted-foreground/60">{idx + 1}</span>
                             )}
                           </div>
 
                           {/* Lesson info */}
                           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                             <span className={cn(
-                              "truncate text-xs",
-                              isActive ? "font-semibold text-foreground" : "text-foreground/80"
+                              "truncate text-xs transition-colors",
+                              isActive ? "font-bold text-foreground" : "text-foreground/80",
+                              isCompleted && !isActive && "text-muted-foreground/70"
                             )}>
                               {leccion.titulo}
                             </span>
-                            <span className="text-[10px] text-muted-foreground">
-                              {leccion.duracion}
-                            </span>
+                            <div className="flex items-center gap-2">
+                               <span className="text-[9px] text-muted-foreground/50 font-mono">
+                                {leccion.duracion}
+                              </span>
+                              {isCompleted && (
+                                <span className="text-[8px] font-bold text-emerald-400 uppercase tracking-tighter">Completada</span>
+                              )}
+                            </div>
                           </div>
                         </button>
                       )

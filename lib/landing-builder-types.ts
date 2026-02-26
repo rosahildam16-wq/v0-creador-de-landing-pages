@@ -39,6 +39,8 @@ export interface LandingConfig {
   theme: LandingTheme
   blocks: LandingBlock[]
   status: "draft" | "published"
+  slug?: string
+  customDomain?: string
 }
 
 // Block-specific prop types

@@ -375,16 +375,16 @@ export function getConversionEmbudo(): { etapa: string; cantidad: number; pct: n
 // Temperature distribution
 export function getDistribucionTemperatura(): { temperatura: string; cantidad: number; fill: string }[] {
   const frio = LEADS.filter((l) => {
-    const score = calcularScoreBasico(l)
-    return score < 34
+    const { temperatura } = calcularTemperaturaDemo(l)
+    return temperatura === "Frio"
   }).length
   const tibio = LEADS.filter((l) => {
-    const score = calcularScoreBasico(l)
-    return score >= 34 && score < 67
+    const { temperatura } = calcularTemperaturaDemo(l)
+    return temperatura === "Tibio"
   }).length
   const caliente = LEADS.filter((l) => {
-    const score = calcularScoreBasico(l)
-    return score >= 67
+    const { temperatura } = calcularTemperaturaDemo(l)
+    return temperatura === "Caliente"
   }).length
 
   return [
@@ -395,7 +395,7 @@ export function getDistribucionTemperatura(): { temperatura: string; cantidad: n
 }
 
 // Basic score calculation (used internally, full version in lead-scoring.ts)
-function calcularScoreBasico(lead: Lead): number {
+function calcularTemperaturaDemo(lead: Lead): { score: number; temperatura: string } {
   let score = 0
   if (lead.video_visto_pct > 70) score += 10
   if (lead.llamada_contestada) score += 15
@@ -404,7 +404,17 @@ function calcularScoreBasico(lead: Lead): number {
   if (lead.whatsapp_leido) score += 10
   if (lead.login_completado) score += 15
   if (lead.feed_visto) score += 10
-  if (lead.sales_page_vista) score += 10
+  if (lead.sales_page_vista) score += 20
   if (lead.cta_clicked) score += 5
-  return score
+
+  let temperatura = "Frio"
+  if (lead.etapa_maxima_alcanzada >= 7 || lead.sales_page_vista || lead.cta_clicked) {
+    temperatura = "Caliente"
+  } else if (lead.etapa_maxima_alcanzada >= 4 || score >= 34) {
+    temperatura = "Tibio"
+  } else if (score >= 67) {
+    temperatura = "Caliente"
+  }
+
+  return { score, temperatura }
 }

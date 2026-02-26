@@ -1,19 +1,21 @@
 "use client"
 
 import { useState } from "react"
-import type { LandingBlock, LandingTheme, BlockType } from "@/lib/landing-builder-types"
+import type { LandingBlock, LandingTheme, BlockType, LandingConfig } from "@/lib/landing-builder-types"
 import { BLOCK_CATALOG } from "@/lib/landing-builder-types"
-import { Trash2, Plus, X, Palette } from "lucide-react"
+import { Trash2, Plus, X, Palette, Globe, Link as LinkIcon } from "lucide-react"
 
 interface BlockPropertiesProps {
   block: LandingBlock | null
+  config: LandingConfig
   theme: LandingTheme
   onUpdateBlock: (id: string, props: Record<string, unknown>) => void
   onUpdateTheme: (theme: LandingTheme) => void
+  onUpdateConfig: (config: LandingConfig) => void
   onDeleteBlock: (id: string) => void
 }
 
-export function BlockProperties({ block, theme, onUpdateBlock, onUpdateTheme, onDeleteBlock }: BlockPropertiesProps) {
+export function BlockProperties({ block, config, theme, onUpdateBlock, onUpdateTheme, onUpdateConfig, onDeleteBlock }: BlockPropertiesProps) {
   const [tab, setTab] = useState<"block" | "theme">(block ? "block" : "theme")
 
   // Switch to block tab when block is selected
@@ -39,10 +41,18 @@ export function BlockProperties({ block, theme, onUpdateBlock, onUpdateTheme, on
             <Palette className="h-3 w-3" /> Tema
           </span>
         </button>
+        <button
+          onClick={() => setTab("config" as any)}
+          className={`flex-1 px-3 py-2.5 text-xs font-medium transition-colors ${tab === ("config" as any) ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          Ajustes
+        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
-        {tab === "theme" ? (
+        {tab === ("config" as any) ? (
+          <ConfigEditor config={config} onUpdate={onUpdateConfig!} />
+        ) : tab === "theme" ? (
           <ThemeEditor theme={theme} onUpdate={onUpdateTheme} />
         ) : block ? (
           <BlockEditor block={block} theme={theme} onUpdate={onUpdateBlock} onDelete={onDeleteBlock} />
@@ -54,6 +64,56 @@ export function BlockProperties({ block, theme, onUpdateBlock, onUpdateTheme, on
             <p className="text-sm text-muted-foreground">Selecciona un bloque en el canvas para editarlo</p>
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+// --- Config Editor ---
+function ConfigEditor({ config, onUpdate }: { config: LandingConfig; onUpdate: (c: LandingConfig) => void }) {
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Identidad Viral</h4>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+              <LinkIcon className="h-3 w-3" /> Subdominio Magic
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="mi-oferta"
+                value={config.slug || ""}
+                onChange={(e) => onUpdate({ ...config, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })}
+                className="flex-1 rounded-md border border-border/40 bg-muted/30 px-3 py-2 text-sm text-foreground outline-none focus:border-primary/50"
+              />
+              <span className="text-[10px] font-medium opacity-40">.magicfunnel.io</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+              <Globe className="h-3 w-3" /> Dominio Personalizado
+            </label>
+            <input
+              type="text"
+              placeholder="www.mipagina.com"
+              value={config.customDomain || ""}
+              onChange={(e) => onUpdate({ ...config, customDomain: e.target.value.toLowerCase().trim() })}
+              className="w-full rounded-md border border-border/40 bg-muted/30 px-3 py-2 text-sm text-foreground outline-none focus:border-primary/50"
+            />
+            <p className="text-[9px] text-muted-foreground opacity-60">
+              Apunta tu CNAME a <span className="text-foreground font-mono">cname.magicfunnel.io</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl bg-primary/5 border border-primary/10 p-4">
+        <p className="text-[11px] leading-relaxed text-muted-foreground">
+          Conecta tu dominio para transmitir <strong>maxima autoridad</strong>. Tus leads confiaran mas si ven tu propia marca en la URL.
+        </p>
       </div>
     </div>
   )

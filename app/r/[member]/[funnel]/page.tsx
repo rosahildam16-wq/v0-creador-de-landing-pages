@@ -13,7 +13,7 @@ function ReferralFunnel({ memberSlug, funnelId }: { memberSlug: string; funnelId
     } catch { /* noop */ }
   }
 
-  return <FunnelController embudoId={funnelId} />
+  return <FunnelController embudoId={funnelId} referrer={memberSlug} />
 }
 
 export default function ReferralPage({ params }: { params: Promise<{ member: string; funnel: string }> }) {

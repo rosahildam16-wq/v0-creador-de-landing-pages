@@ -70,7 +70,7 @@ export default function MemberEmbudoPage() {
   })
 
   const handleCopy = (embudoId: string) => {
-    const url = `${window.location.origin}/funnel/${embudoId}?ref=${finalMember.id}`
+    const url = `${window.location.origin}/r/${user?.username || finalMember.id}/${embudoId}`
     navigator.clipboard.writeText(url)
     setCopied(embudoId)
     setTimeout(() => setCopied(null), 2000)
@@ -126,19 +126,19 @@ export default function MemberEmbudoPage() {
       {activeEmbudo && (
         <>
           {/* Active embudo header */}
-          <div className="flex items-start gap-4">
+          <div className="flex items-center gap-3 md:items-start md:gap-4">
             <div
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl shadow-lg"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-lg md:h-14 md:w-14"
               style={{
                 background: `linear-gradient(135deg, ${activeEmbudo.color}, hsl(var(--primary)))`,
                 boxShadow: `0 8px 24px ${activeEmbudo.color}33`,
               }}
             >
-              <Rocket className="h-7 w-7 text-white" />
+              <Rocket className="h-5 w-5 text-white md:h-7 md:w-7" />
             </div>
-            <div className="flex-1">
-              <h2 className="text-xl font-bold tracking-tight text-foreground">{activeEmbudo.nombre}</h2>
-              <p className="text-sm text-muted-foreground">{activeEmbudo.descripcion}</p>
+            <div className="flex-1 overflow-hidden">
+              <h2 className="text-lg font-bold tracking-tight text-foreground md:text-xl truncate">{activeEmbudo.nombre}</h2>
+              <p className="text-[11px] text-muted-foreground md:text-sm line-clamp-1">{activeEmbudo.descripcion}</p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-500">
                   {activeEmbudo.estado}
@@ -171,7 +171,7 @@ export default function MemberEmbudoPage() {
               </p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 overflow-x-auto rounded-lg bg-background/60 px-3 py-2.5 text-xs text-foreground font-mono">
-                  {typeof window !== "undefined" ? window.location.origin : ""}/funnel/{activeEmbudo.id}?ref={finalMember.id}
+                  {typeof window !== "undefined" ? window.location.origin : ""}/r/{user?.username || finalMember.id}/{activeEmbudo.id}
                 </code>
                 <button
                   onClick={() => handleCopy(activeEmbudo.id)}
@@ -310,8 +310,74 @@ export default function MemberEmbudoPage() {
             </Card>
           </div>
 
+          {/* WhatsApp Config (for Franquicia Reset) */}
+          {activeEmbudo.id === "franquicia-reset" && (
+            <div className="mt-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="flex items-center gap-2 mb-3 px-1">
+                <MessageSquare className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-bold text-foreground">Configuración de Contacto (WhatsApp)</h3>
+              </div>
+              <Card className="border-primary/20 bg-primary/5 overflow-hidden">
+                <CardContent className="p-5 flex flex-col gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">Tu número de WhatsApp (con código de país)</label>
+                    <input
+                      type="text"
+                      placeholder="Ej: 573123456789"
+                      className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-foreground outline-none focus:border-primary/50 transition-all font-mono"
+                      value={typeof window !== "undefined" ? localStorage.getItem(`mf_wa_num_${user?.memberId}`) || "" : ""}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, "");
+                        localStorage.setItem(`mf_wa_num_${user?.memberId}`, val);
+                        // Trigger re-render by setting a dummy state if needed, but for now we'll just use a local state for the input
+                      }}
+                    />
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">Mensaje de Bienvenida</label>
+                    <div className="grid gap-2">
+                      {[
+                        "Hola, acabo de completar el diagnóstico y quiero solicitar mi acceso prioritario a la Franquicia RESET.",
+                        "¡Hola! Vengo del sistema RESET, estoy listo para empezar mi transformación. ¿Me das el acceso?",
+                        "He terminado el proceso de RESET. Quiero hablar con un asesor para activar mi motor de ventas."
+                      ].map((msg, i) => {
+                        const isSelected = (typeof window !== "undefined" ? localStorage.getItem(`mf_wa_msg_${user?.memberId}`) : null) === msg || (i === 0 && !localStorage.getItem(`mf_wa_msg_${user?.memberId}`));
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => {
+                              localStorage.setItem(`mf_wa_msg_${user?.memberId}`, msg);
+                              // Force update
+                              setSelectedEmbudo(activeEmbudo.id);
+                            }}
+                            className={cn(
+                              "text-left p-3 rounded-xl border text-xs transition-all duration-200",
+                              isSelected
+                                ? "border-primary/40 bg-primary/20 text-foreground"
+                                : "border-white/5 bg-black/20 text-muted-foreground hover:bg-black/40"
+                            )}
+                          >
+                            "{msg}"
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3">
+                    <Check className="h-3.5 w-3.5 text-emerald-500" />
+                    <p className="text-[10px] text-emerald-500/80 font-medium">
+                      Configuración guardada automáticamente. Este número y mensaje se usarán en tu link personal.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* Recent Activity */}
-          <div className="mt-4">
+          <div className="mt-6">
             <div className="flex items-center justify-between mb-3 px-1">
               <h3 className="text-sm font-bold text-foreground">Actividad reciente</h3>
               <button className="text-[10px] font-bold text-primary hover:underline uppercase tracking-wider">Ver todos</button>

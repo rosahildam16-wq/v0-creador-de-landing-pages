@@ -8,6 +8,7 @@ interface MagicFunnelLogoProps {
 }
 
 const sizeMap = {
+  xs: { icon: 22, text: "text-base" },
   sm: { icon: 28, text: "text-lg" },
   md: { icon: 40, text: "text-2xl" },
   lg: { icon: 56, text: "text-4xl" },

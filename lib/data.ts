@@ -18,6 +18,7 @@ import {
 } from "./mock-data"
 import type { Lead, Nota, EventoActividad, EtapaPipeline, FuenteTrafico, TipoEmbudo } from "./types"
 import { FUNNEL_STEPS } from "./types"
+import { calcularTemperatura } from "./lead-scoring"
 
 // ─── In-memory store (seeded from mock-data) ───
 
@@ -215,18 +216,10 @@ export async function getDistribucionTemperatura(): Promise<{ temperatura: strin
     )
     let frio = 0, tibio = 0, caliente = 0
     for (const row of data || []) {
-      let score = 0
-      if ((row.video_visto_pct as number) > 70) score += 10
-      if (row.llamada_contestada) score += 15
-      if (row.quiz_completado) score += 10
-      if (row.terminal_completado) score += 5
-      if (row.whatsapp_leido) score += 10
-      if (row.login_completado) score += 15
-      if (row.feed_visto) score += 10
-      if (row.sales_page_vista) score += 15
-      if (row.cta_clicked) score += 5
-      if (score >= 67) caliente++
-      else if (score >= 34) tibio++
+      const lead = mapLeadRow(row)
+      const { temperatura } = calcularTemperatura(lead)
+      if (temperatura === "CALIENTE") caliente++
+      else if (temperatura === "TIBIO") tibio++
       else frio++
     }
     return [

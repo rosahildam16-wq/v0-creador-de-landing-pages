@@ -9,6 +9,7 @@ import { NotificationBell } from "@/components/shared/notification-bell"
 import { ThemeToggle } from "@/components/shared/theme-toggle"
 import { MemberProfileDropdown } from "@/components/member/member-profile-dropdown"
 import { SubscriptionGuard } from "@/components/subscription-guard"
+import { MobileBottomNav } from "@/components/member/mobile-bottom-nav"
 
 export default function MemberLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, user } = useAuth()
@@ -55,19 +56,30 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
         />
       </div>
       <MemberSidebar />
-      <main className="relative z-10 flex-1 overflow-auto">
-        {/* Top bar with notifications */}
-        <div className="sticky top-0 z-30 flex items-center justify-end gap-2 px-6 py-3 backdrop-blur-sm">
+      <main className="relative z-10 flex-1 overflow-auto pb-24 md:pb-0">
+        {/* Mobile top bar */}
+        <div className="flex items-center justify-between border-b border-border/10 bg-background/60 px-6 py-3 backdrop-blur-md md:hidden">
+          <MagicFunnelLogo size="xs" showText={false} animated />
+          <div className="flex items-center gap-3">
+             <ThemeToggle />
+             <NotificationBell />
+          </div>
+        </div>
+
+        {/* Desktop top bar */}
+        <div className="sticky top-0 z-30 hidden items-center justify-end gap-2 px-6 py-3 backdrop-blur-sm md:flex">
           <ThemeToggle />
           <NotificationBell />
           <MemberProfileDropdown />
         </div>
-        <div className="mx-auto max-w-4xl px-6 pb-6">
+
+        <div className="mx-auto max-w-4xl px-4 py-4 md:px-6 md:pb-6">
           <SubscriptionGuard>
             {children}
           </SubscriptionGuard>
         </div>
       </main>
+      <MobileBottomNav />
     </div>
   )
 }

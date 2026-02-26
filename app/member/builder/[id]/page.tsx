@@ -89,6 +89,10 @@ export default function MagicBuilderEditor() {
         setConfig({ ...config, theme })
     }
 
+    const handleUpdateConfig = (newConfig: LandingConfig) => {
+        setConfig(newConfig)
+    }
+
     const handleDropBlock = (type: string, index: number) => {
         if (!config) return
         const newBlock: LandingBlock = {
@@ -281,9 +285,11 @@ export default function MagicBuilderEditor() {
                 <aside className="w-80 border-l border-white/[0.08] bg-[#080808] flex flex-col">
                     <BlockProperties
                         block={selectedBlock}
+                        config={config}
                         theme={config.theme}
                         onUpdateBlock={handleUpdateBlock}
                         onUpdateTheme={handleUpdateTheme}
+                        onUpdateConfig={handleUpdateConfig}
                         onDeleteBlock={handleDeleteBlock}
                     />
                 </aside>

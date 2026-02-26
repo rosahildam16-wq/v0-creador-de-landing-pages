@@ -77,6 +77,8 @@ export function createLanding(name: string, description: string, blockTypes: Blo
     updatedAt: new Date().toISOString(),
     theme: { ...DEFAULT_THEME },
     status: "draft",
+    slug: name.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, ""),
+    customDomain: "",
     blocks: blockTypes.map((type, i) => ({
       id: generateBlockId(),
       type,

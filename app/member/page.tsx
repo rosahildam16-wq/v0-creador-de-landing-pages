@@ -117,16 +117,20 @@ function MetricCard({ icon, iconGradient, value, label, suffix, delay = 0, href 
     <>
       <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
         style={{ background: iconGradient }} />
-      <div className="relative flex items-center gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+      <div className="relative flex flex-row items-center gap-3 md:flex-col md:items-start md:gap-4">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl md:h-12 md:w-12"
           style={{ background: iconGradient }}>
-          {icon}
+          <div className="[&>svg]:h-5 [&>svg]:w-5 md:[&>svg]:h-6 md:[&>svg]:w-6">
+            {icon}
+          </div>
         </div>
         <div className="flex flex-col">
-          <span className="text-2xl font-bold tracking-tight text-foreground">
+          <span className="text-xl font-bold tracking-tight text-foreground md:text-2xl">
             {animated}{suffix}
           </span>
-          <span className="text-xs text-muted-foreground">{label}</span>
+          <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70 md:text-xs">
+            {label}
+          </span>
         </div>
       </div>
     </>
@@ -227,7 +231,9 @@ export default function MemberDashboard() {
   const leadsPorDia = generateLeadsPorDia(totalLeads, 42)
   const firstName = member.nombre.split(" ")[0]
   const memberCommunity = user?.memberId ? getMemberCommunity(user.memberId) : undefined
-  const trainingPercent = 37
+  const trainingPercent = member.progreso_academia || 0
+  const totalSteps = 8
+  const currentStep = Math.round((trainingPercent / 100) * totalSteps)
   const achievements = 3
   const streak = 12
 
@@ -248,11 +254,11 @@ export default function MemberDashboard() {
               {firstName[0]}
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground text-balance">
+              <h1 className="text-xl font-bold text-foreground md:text-2xl">
                 {getGreeting()}, {firstName}
               </h1>
-              <p className="text-sm text-muted-foreground">
-                Tu centro de comando personal
+              <p className="text-xs text-muted-foreground md:text-sm">
+                Tu centro de comando
               </p>
             </div>
           </div>
@@ -345,7 +351,7 @@ export default function MemberDashboard() {
               </div>
               <div className="text-center">
                 <p className="text-sm font-semibold text-foreground">Entrenamiento</p>
-                <p className="text-[11px] text-muted-foreground">3 de 8 modulos</p>
+                <p className="text-[11px] text-muted-foreground">{currentStep} de {totalSteps} modulos</p>
               </div>
               <Link href="/member/academia"
                 className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20">

@@ -7,6 +7,7 @@ import {
   Rocket, Target, BarChart3, Shield, Gift, Star,
   MessageSquare, HelpCircle, Play, ChevronDown, ChevronUp, Check,
   Heart, MessageCircle, Share2, Search, Crown, Trophy, Award, TrendingUp, Users,
+  ChevronRight
 } from "lucide-react"
 import { WhatsAppFinal } from "@/components/experiences/exp8-whatsapp-final"
 
@@ -319,7 +320,57 @@ function CountdownBlock({ props, theme }: { props: Record<string, unknown>; them
 
 // --- FORM ---
 function FormBlock({ props, theme }: { props: Record<string, unknown>; theme: LandingTheme }) {
-  const p = props as { title: string; subtitle: string; fields: Array<{ name: string; type: string; label: string; required: boolean }>; buttonText: string }
+  const p = props as { title: string; subtitle: string; fields: Array<{ name: string; type: string; label: string; required: boolean }>; buttonText: string; successMessage: string }
+  const [formData, setFormData] = useState<Record<string, string>>({})
+  const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle")
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setStatus("submitting")
+
+    try {
+      // Send to CRM API
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: formData.nombre || formData.name || "Lead del Builder",
+          correo: formData.email || "desconocido@magic.com",
+          whatsapp: formData.whatsapp || formData.telefono || formData.tel || formData.phone || "",
+          fuente: "Magic Builder",
+          embudo_id: "magic-builder",
+          ref: typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('ref') || '' : ''
+        }),
+      })
+
+      if (res.ok) {
+        setStatus("success")
+        setFormData({})
+      } else {
+        setStatus("error")
+      }
+    } catch (err) {
+      console.error("Error submitting form:", err)
+      setStatus("error")
+    }
+  }
+
+  if (status === "success") {
+    return (
+      <section className="px-6 py-16" style={{ background: theme.backgroundColor, color: theme.textColor }}>
+        <div className="mx-auto max-w-lg rounded-2xl border p-12 text-center"
+          style={{ borderColor: `${theme.primaryColor}44`, background: `${theme.primaryColor}11`, borderRadius: themeRadius(theme.borderRadius) }}
+        >
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-500">
+            <Check className="h-8 w-8 text-emerald-500" strokeWidth={3} />
+          </div>
+          <h2 className="mb-2 text-2xl font-bold">{p.successMessage || "¡Gracias por registrarte!"}</h2>
+          <p className="text-sm opacity-70">En breve nos pondremos en contacto contigo.</p>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="px-6 py-16" style={{ background: theme.backgroundColor, color: theme.textColor }}>
       <div className="mx-auto max-w-lg rounded-2xl border p-8"
@@ -327,26 +378,48 @@ function FormBlock({ props, theme }: { props: Record<string, unknown>; theme: La
       >
         <h2 className="mb-2 text-center text-2xl font-bold">{p.title}</h2>
         <p className="mb-6 text-center text-sm opacity-70">{p.subtitle}</p>
-        <div className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {p.fields.map((f, i) => (
             <div key={i} className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium">{f.label}{f.required && <span style={{ color: theme.accentColor }}> *</span>}</label>
+              <label className="text-sm font-medium">
+                {f.label}{f.required && <span style={{ color: theme.accentColor }}> *</span>}
+              </label>
               <input
                 type={f.type}
+                name={f.name}
+                required={f.required}
                 placeholder={f.label}
-                className="rounded-lg border bg-transparent px-4 py-2.5 text-sm outline-none transition-colors focus:border-current"
+                value={formData[f.name] || ""}
+                onChange={(e) => setFormData(prev => ({ ...prev, [f.name]: e.target.value }))}
+                className="rounded-lg border bg-black/20 backdrop-blur-md px-4 py-3 text-sm outline-none transition-all focus:border-current focus:ring-2 focus:ring-primary/20"
                 style={{ borderColor: `${theme.primaryColor}33`, color: theme.textColor, borderRadius: themeRadius(theme.borderRadius) }}
-                readOnly
               />
             </div>
           ))}
+
+          {status === "error" && (
+            <p className="text-xs text-red-400 font-medium text-center">Hubo un error. Intentalo de nuevo.</p>
+          )}
+
           <button
-            className="mt-2 rounded-lg px-6 py-3 font-semibold shadow-lg transition-transform hover:scale-105"
+            type="submit"
+            disabled={status === "submitting"}
+            className="mt-2 group relative flex items-center justify-center gap-2 overflow-hidden rounded-lg px-6 py-4 font-bold shadow-lg transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
             style={{ background: theme.primaryColor, color: "#fff", borderRadius: themeRadius(theme.borderRadius) }}
           >
-            {p.buttonText}
+            {status === "submitting" ? (
+              <>
+                <Clock className="h-4 w-4 animate-spin" />
+                <span>Enviando...</span>
+              </>
+            ) : (
+              <>
+                <span>{p.buttonText}</span>
+                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </>
+            )}
           </button>
-        </div>
+        </form>
       </div>
     </section>
   )

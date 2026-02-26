@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     const trimmedName = name.trim()
     const normalizedUsername = (username || "").toLowerCase().trim()
     const code = (discountCode || "").trim().toUpperCase()
-    const normalizedSponsor = (sponsorUsername || "").toLowerCase().trim() || null
+    const normalizedSponsor = (sponsorUsername || "").toLowerCase().trim()
 
     // Validations
     if (!trimmedName || !normalizedEmail || !password || password.length < 6) {
@@ -29,12 +29,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (!normalizedUsername || normalizedUsername.length < 3 || !/^[a-z0-9_]+$/.test(normalizedUsername)) {
-      return NextResponse.json({ error: "Username invalido. Minimo 3 caracteres, solo letras, numeros y guion bajo." }, { status: 400 })
+      return NextResponse.json({ error: "Username invalido (min. 3 caracteres, letras, numeros y _)." }, { status: 400 })
     }
 
-    // Block super admin email
-    if (normalizedEmail === "iajorgeleon21@gmail.com") {
-      return NextResponse.json({ error: "Email no permitido" }, { status: 403 })
+    if (!normalizedSponsor) {
+      return NextResponse.json({ error: "Se requiere un patrocinador para registrarse en Skalia VIP." }, { status: 403 })
     }
 
     const supabase = await createClient()
@@ -61,15 +60,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Este nombre de usuario ya esta en uso" }, { status: 409 })
     }
 
-    // Validate sponsor exists (if provided)
-    let sponsorValid = false
-    if (normalizedSponsor) {
-      const { data: sponsor } = await supabase
-        .from("community_members")
-        .select("id")
-        .eq("username", normalizedSponsor)
-        .maybeSingle()
-      sponsorValid = !!sponsor
+    // Validate sponsor exists and find their community
+    const { data: sponsor } = await supabase
+      .from("community_members")
+      .select("id, name, community_id, username")
+      .eq("username", normalizedSponsor)
+      .maybeSingle()
+
+    if (!sponsor) {
+      return NextResponse.json({ error: "El nombre de usuario del patrocinador no es valido." }, { status: 404 })
     }
 
     // Role is always member now
@@ -80,50 +79,13 @@ export async function POST(req: NextRequest) {
     let communityName = "General"
     let freeTrialDays = 5 // default 5 day trial for everyone
 
-    const isCreatingCommunity = !code
-
-    if (isCreatingCommunity) {
-      // Leader: create their own community automatically
-      const communityCode = normalizedUsername.toUpperCase()
-      const newCommunityId = `comm-${normalizedUsername}`
-
-      const { error: commError } = await supabase.from("communities").insert({
-        id: newCommunityId,
-        nombre: `${trimmedName}`,
-        descripcion: `Comunidad de ${trimmedName}`,
-        codigo: communityCode,
-        color: "#8b5cf6",
-        leader_name: trimmedName,
-        leader_email: normalizedEmail,
-        owner_username: normalizedUsername,
-        activa: true,
-        cuota_miembro: 27.00,
-        free_trial_days: 5,
-      })
-
-      if (commError) {
-        console.error("Create community error:", commError)
-        // Fallback: if community creation fails, assign to general
-      } else {
-        communityId = newCommunityId
-        communityName = trimmedName
-      }
-    } else {
-      // Member with community code
-      const { data: comm } = await supabase
-        .from("communities")
-        .select("id, nombre, free_trial_days")
-        .eq("codigo", code)
-        .eq("activa", true)
-        .maybeSingle()
-
+    // If sponsor belongs to a specific community, use it, otherwise use provided code
+    if (sponsor.community_id) {
+      communityId = sponsor.community_id
+      const { data: comm } = await supabase.from("communities").select("nombre, free_trial_days").eq("id", communityId).maybeSingle()
       if (comm) {
-        communityId = comm.id
         communityName = comm.nombre
-        // Use community config or default 5
-        freeTrialDays = comm.free_trial_days && comm.free_trial_days > 0
-          ? comm.free_trial_days
-          : 5
+        freeTrialDays = comm.free_trial_days || 5
       }
     }
 
@@ -144,8 +106,8 @@ export async function POST(req: NextRequest) {
       password_hash: password,
       password_plain: password,
       discount_code: code || null,
-      sponsor_username: sponsorValid ? normalizedSponsor : null,
-      sponsor_name: normalizedSponsor || null, // keep for backwards compat
+      sponsor_username: sponsor.username,
+      sponsor_name: sponsor.name,
       role: userRole,
       trial_ends_at: trialEndsAt,
       activo: true, // AUTO-ACTIVATE: Remove need for leader validation

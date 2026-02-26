@@ -72,8 +72,8 @@ interface Props {
   embedUrl?: string
 }
 
-// PLACEHOLDER: Replace with your actual Vimeo/YouTube embed link
-const DEFAULT_EMBED = "https://player.vimeo.com/video/1168001952?autoplay=0&title=0&byline=0&portrait=0&dnt=1"
+// Video number 3 of TikTok experience in reset funnel
+const DEFAULT_EMBED = "https://player.vimeo.com/video/1167999493?badge=0&autopause=0&player_id=0&app_id=58479"
 
 export function DecisionVideo({
   onContinue,

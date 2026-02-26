@@ -80,6 +80,15 @@ export default function LoginPage() {
     }, 500)
     return () => clearTimeout(timer)
   }, [sponsorUsername])
+  // Handle referral from URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const ref = params.get("ref") || params.get("sponsor")
+    if (ref && mode === "register") {
+      setSponsorUsername(ref.toLowerCase())
+      setShowDiscountField(false) // prioritise sponsor
+    }
+  }, [mode])
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -129,8 +138,13 @@ export default function LoginPage() {
         setIsSubmitting(false)
         return
       }
+      if (sponsorStatus !== "found") {
+        setError("Se requiere un patrocinador valido para registrarse en Skalia VIP.")
+        setIsSubmitting(false)
+        return
+      }
       // Todos se registran como miembros
-      const ok = await register(name, email, password, username, discountCode || undefined, sponsorUsername.trim() || undefined)
+      const ok = await register(name, email, password, username, discountCode || undefined, sponsorUsername.trim())
       if (!ok) {
         setError("Este email o usuario ya esta registrado. Intenta iniciar sesion.")
         setIsSubmitting(false)
