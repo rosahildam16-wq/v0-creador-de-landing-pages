@@ -51,7 +51,7 @@ export default function PipelinePage() {
   const [embudoFilter, setEmbudoFilter] = useState<string>("todos")
 
   // Filter leads by embudo
-  const filteredLeads = (leads || []).filter((l) => {
+  const filteredLeads = (Array.isArray(leads) ? leads : []).filter((l) => {
     if (embudoFilter === "todos") return true
     return l.embudo_id === embudoFilter
   })
@@ -97,7 +97,7 @@ export default function PipelinePage() {
       }
 
       // Optimistic update
-      const updatedLeads = (leads || []).map((l) =>
+      const updatedLeads = (Array.isArray(leads) ? leads : []).map((l) =>
         l.id === draggedLead.lead.id ? { ...l, etapa: toColumn } : l
       )
       mutate(updatedLeads, false)

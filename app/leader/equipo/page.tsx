@@ -79,9 +79,6 @@ export default function LeaderEquipoPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold text-foreground truncate">{m.name}</p>
-                        {m.role === "leader" && (
-                          <span className="rounded-full bg-violet-500/10 px-1.5 py-0.5 text-[9px] font-bold text-violet-400">Lider</span>
-                        )}
                       </div>
                       <p className="text-xs text-muted-foreground truncate">{m.email}</p>
                       {m.username && (
@@ -92,9 +89,8 @@ export default function LeaderEquipoPage() {
                       )}
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                        m.activo ? "bg-emerald-500/10 text-emerald-400" : "bg-zinc-500/10 text-zinc-400"
-                      }`}>
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${m.activo ? "bg-emerald-500/10 text-emerald-400" : "bg-zinc-500/10 text-zinc-400"
+                        }`}>
                         {m.activo ? "Activo" : "Pendiente"}
                       </span>
                       {isInTrial && (

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { getMemberCommunity, getCommunityPosts, addCommunityPost, getCommunityMembers, type Community, type CommunityPost, type CommunityMember } from "@/lib/communities-data"
+import { getCoursesByCategory } from "@/lib/courses-data"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -214,10 +215,21 @@ export default function MemberComunidadPage() {
                   <Badge variant="outline" className="border-primary/20 text-primary">{community.id === 'comm-reset' ? 'RESETERS' : 'ACADEMIA'}</Badge>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <CourseCard title="Mentalidad Eskalia" lessons={12} students={450} color="#8b5cf6" progress={100} />
-                  <CourseCard title="El Sistema RESET" lessons={8} students={320} color="#06b6d4" progress={45} />
-                  <CourseCard title="Marketing Viral con IA" lessons={15} students={280} color="#f59e0b" progress={0} />
-                  <CourseCard title="Cierre Maestro WhatsApp" lessons={10} students={190} color="#10b981" progress={0} />
+                  {getCoursesByCategory("Todos", community.id).map((course) => (
+                    <CourseCard
+                      key={course.id}
+                      title={course.titulo}
+                      lessons={course.totalLecciones}
+                      students={120 + Math.floor(Math.random() * 200)}
+                      color={course.id === 'reset-system' ? '#06b6d4' : '#8b5cf6'}
+                      progress={course.id === 'reset-system' ? 45 : 0}
+                    />
+                  ))}
+                  {getCoursesByCategory("Todos", community.id).length === 0 && (
+                    <div className="col-span-full py-20 text-center opacity-40 italic">
+                      No hay cursos disponibles para esta comunidad aún.
+                    </div>
+                  )}
                 </div>
               </div>
             )}

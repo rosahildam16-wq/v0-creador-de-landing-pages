@@ -18,8 +18,19 @@ import { calcularTemperatura, type Temperatura } from "@/lib/lead-scoring"
 import { useAuth } from "@/lib/auth-context"
 import { getMemberData } from "@/lib/team-data"
 import {
-  Search, Download, ChevronLeft, ChevronRight, Loader2, Users, ArrowUpDown,
+  Search, Download, ChevronLeft, ChevronRight, Loader2, Users, ArrowUpDown, Plus, X,
 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import useSWR from "swr"
@@ -67,6 +78,14 @@ export default function MemberLeadsPage() {
   const [sortDir, setSortDir] = useState<SortDir>("asc")
   const [page, setPage] = useState(0)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [newLead, setNewLead] = useState({
+    nombre: "",
+    email: "",
+    whatsapp: "",
+    campana: "Franquicia Reset"
+  })
 
   const leadsConScore = useMemo(
     () => (leads || []).map((lead) => ({ ...lead, ...calcularTemperatura(lead) })),
@@ -127,6 +146,35 @@ export default function MemberLeadsPage() {
     }
   }
 
+  const handleAddLead = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user?.email) return
+    setIsSubmitting(true)
+    try {
+      const res = await fetch("/api/member/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          memberEmail: user.email,
+          leadData: newLead
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success("Lead registrado correctamente")
+        setIsAddModalOpen(false)
+        setNewLead({ nombre: "", email: "", whatsapp: "", campana: "Franquicia Reset" })
+        mutate()
+      } else {
+        toast.error(data.error || "Error al registrar")
+      }
+    } catch (err) {
+      toast.error("Error de conexion")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   const handleExport = () => {
     const csv = [
       "Nombre,Email,WhatsApp,Temperatura,Score,Etapa,Fecha Ingreso",
@@ -157,9 +205,81 @@ export default function MemberLeadsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Mis Leads</h1>
           <p className="text-sm text-muted-foreground">{filtered.length} leads asignados a ti</p>
         </div>
-        <Button variant="outline" size="sm" onClick={handleExport} className="gap-2" disabled={sorted.length === 0}>
-          <Download className="h-4 w-4" /> Exportar CSV
-        </Button>
+        <div className="flex items-center gap-2">
+          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2 bg-primary">
+                <Plus className="h-4 w-4" /> Nuevo Lead
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Registrar Nuevo Lead</DialogTitle>
+                <DialogDescription>
+                  Agrega un prospecto manualmente a tu CRM. Ideal para cierres de la Franquicia Reset.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleAddLead} className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="lead-name">Nombre Completo</Label>
+                  <Input
+                    id="lead-name"
+                    placeholder="Ej: Juan Perez"
+                    value={newLead.nombre}
+                    onChange={(e) => setNewLead({ ...newLead, nombre: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lead-email">Email</Label>
+                  <Input
+                    id="lead-email"
+                    type="email"
+                    placeholder="juan@ejemplo.com"
+                    value={newLead.email}
+                    onChange={(e) => setNewLead({ ...newLead, email: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lead-wa">WhatsApp (con codigo de pais)</Label>
+                  <Input
+                    id="lead-wa"
+                    placeholder="+573001234567"
+                    value={newLead.whatsapp}
+                    onChange={(e) => setNewLead({ ...newLead, whatsapp: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lead-camp">Campaña / Origen</Label>
+                  <Select
+                    value={newLead.campana}
+                    onValueChange={(v) => setNewLead({ ...newLead, campana: v })}
+                  >
+                    <SelectTrigger id="lead-camp">
+                      <SelectValue placeholder="Selecciona origen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Franquicia Reset">Franquicia Reset</SelectItem>
+                      <SelectItem value="Manual">Registro Manual</SelectItem>
+                      <SelectItem value="Referido">Referido Directo</SelectItem>
+                      <SelectItem value="Facebook">Facebook Ads</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <DialogFooter className="pt-4">
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? "Registrando..." : "Confirmar Registro"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+          <Button variant="outline" size="sm" onClick={handleExport} className="gap-2" disabled={sorted.length === 0}>
+            <Download className="h-4 w-4" /> Exportar CSV
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}

@@ -15,6 +15,7 @@ export interface Challenge {
   fecha_fin: string
   activo: boolean
   premios: Premio[]
+  communityId?: string // If undefined, visible to all
 }
 
 export const TIPO_LABELS: Record<Challenge["tipo"], string> = {

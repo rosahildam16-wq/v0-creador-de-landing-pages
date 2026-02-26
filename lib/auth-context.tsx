@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { TEAM_MEMBERS } from "./team-data"
 import { getLeaderCommunity } from "./communities-data"
 
-export type UserRole = "super_admin" | "leader" | "member"
+export type UserRole = "super_admin" | "member"
 
 export interface AuthUser {
   email: string
@@ -96,16 +96,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return true
     }
 
-    // TEST SHORTCUT: Leader
-    if (normalizedEmail === "test_leader@magic.com" && password === "test1234") {
-      const userData: AuthUser = { email: normalizedEmail, name: "Lider de Prueba", role: "leader", communityId: "general" }
-      setUser(userData)
-      setIsAuthenticated(true)
-      safeSet("mf_auth", JSON.stringify(userData))
-      setIsLoading(false)
-      return true
-    }
-
     // TEST SHORTCUT: Member
     if (normalizedEmail === "test_member@magic.com" && password === "test1234") {
       const userData: AuthUser = { email: normalizedEmail, name: "Miembro de Prueba", role: "member", communityId: "general" }
@@ -122,28 +112,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const nameFromEmail = normalizedEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
       const memberId = existingMember?.id || `test-${normalizedEmail.replace(/[^a-z0-9]/g, "")}`
 
-      // Check if this email is a community leader
+      // Check if this email is a community leader (now treated as member)
       const leaderComm = getLeaderCommunity(normalizedEmail)
-      if (leaderComm) {
-        const userData: AuthUser = {
-          email: normalizedEmail,
-          name: existingMember?.nombre || nameFromEmail,
-          role: "leader",
-          memberId,
-          communityId: leaderComm.id,
-        }
-        setUser(userData)
-        setIsAuthenticated(true)
-        safeSet("mf_auth", JSON.stringify(userData))
-        setIsLoading(false)
-        return true
-      }
 
       const userData: AuthUser = {
         email: normalizedEmail,
         name: existingMember?.nombre || nameFromEmail,
         role: "member",
         memberId,
+        communityId: leaderComm?.id,
       }
       setUser(userData)
       setIsAuthenticated(true)
@@ -153,16 +130,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     // Check team member credentials
-    const member = TEAM_MEMBERS.find((m) => m.email.toLowerCase() === normalizedEmail)
-    if (member && password === MEMBER_DEFAULT_PASSWORD) {
-      // Check if this member is a leader
-      const leaderComm = getLeaderCommunity(normalizedEmail)
+    const teamMember = TEAM_MEMBERS.find((m) => m.email.toLowerCase() === normalizedEmail)
+    if (teamMember && password === MEMBER_DEFAULT_PASSWORD) {
       const userData: AuthUser = {
-        email: member.email,
-        name: member.nombre,
-        role: leaderComm ? "leader" : "member",
-        memberId: member.id,
-        communityId: leaderComm?.id,
+        email: teamMember.email,
+        name: teamMember.nombre,
+        role: "member",
+        memberId: teamMember.id,
       }
       setUser(userData)
       setIsAuthenticated(true)
@@ -183,7 +157,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.success) {
           let dbRole: UserRole = "member"
           if (data.role === "super_admin") dbRole = "super_admin"
-          else if (data.role === "leader") dbRole = "leader"
 
           const userData: AuthUser = {
             email: normalizedEmail,
@@ -224,7 +197,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const normalizedEmail = email.toLowerCase().trim()
-      const role: UserRole = data.role === "leader" ? "leader" : "member"
+      const role: UserRole = "member"
       const userData: AuthUser = {
         email: normalizedEmail,
         name: name.trim(),
@@ -258,3 +231,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     </AuthContext.Provider>
   )
 }
+

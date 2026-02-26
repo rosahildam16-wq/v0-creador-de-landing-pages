@@ -10,12 +10,14 @@ export function createAdminClient() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!url || !key) {
-    throw new Error(
-      "Supabase no esta configurado. Agrega la integracion de Supabase desde el panel lateral de v0 (seccion Connect)."
+    console.warn(
+      "Supabase no esta configurado. Algunas funciones de base de datos estaran deshabilitadas."
     )
+    return null
   }
 
   return createSupabaseClient(url, key, {
     auth: { persistSession: false },
   })
 }
+

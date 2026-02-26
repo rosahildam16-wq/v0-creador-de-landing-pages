@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import type { Challenge } from "@/lib/challenges-data"
 import { DEFAULT_CHALLENGES, getRanking, getDiasRestantes, formatFechaCorta, TIPO_LABELS, METRICA_LABELS } from "@/lib/challenges-data"
 import { useAuth } from "@/lib/auth-context"
+import { getMemberCommunity } from "@/lib/communities-data"
 
 function safeGet(key: string): string | null {
   try { return localStorage.getItem(key) ?? sessionStorage.getItem(key) } catch { return null }
@@ -22,7 +23,11 @@ export default function MemberRetosPage() {
     }
   }, [])
 
-  const activos = challenges.filter((c) => c.activo)
+  const communityId = user?.memberId ? getMemberCommunity(user.memberId)?.id : undefined
+
+  const activos = challenges.filter((c) =>
+    c.activo && (!c.communityId || c.communityId === communityId)
+  )
 
   return (
     <div className="flex flex-col gap-6">

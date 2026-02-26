@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     const filtered = (data || []).filter((n) => {
       if (n.destinatario === "all") return true
       if (n.destinatario === role) return true
-      if (n.destinatario === "admin" && (role === "super_admin" || role === "leader")) return true
+      if (n.destinatario === "admin" && role === "super_admin") return true
       return false
     })
 

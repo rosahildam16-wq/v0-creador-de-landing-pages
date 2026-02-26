@@ -6,13 +6,18 @@ import type { Subscription, SubscriptionPlan } from "@/lib/subscription-types"
  */
 export async function getPlans(): Promise<SubscriptionPlan[]> {
   const supabase = createAdminClient()
+  if (!supabase) return []
+
   const { data, error } = await supabase
     .from("subscription_plans")
     .select("*")
     .eq("activo", true)
     .order("precio_usdt", { ascending: true })
 
-  if (error) throw new Error(`Error fetching plans: ${error.message}`)
+  if (error) {
+    console.error(`Error fetching plans: ${error.message}`)
+    return []
+  }
   return (data ?? []) as SubscriptionPlan[]
 }
 
@@ -21,6 +26,8 @@ export async function getPlans(): Promise<SubscriptionPlan[]> {
  */
 export async function getPlan(planId: string): Promise<SubscriptionPlan | null> {
   const supabase = createAdminClient()
+  if (!supabase) return null
+
   const { data, error } = await supabase
     .from("subscription_plans")
     .select("*")
@@ -36,6 +43,8 @@ export async function getPlan(planId: string): Promise<SubscriptionPlan | null> 
  */
 export async function getSubscription(userEmail: string): Promise<Subscription | null> {
   const supabase = createAdminClient()
+  if (!supabase) return null
+
   const { data, error } = await supabase
     .from("subscriptions")
     .select("*, plan:subscription_plans(*)")
@@ -54,6 +63,8 @@ export async function getSubscription(userEmail: string): Promise<Subscription |
  */
 export async function getSubscriptionById(id: string): Promise<Subscription | null> {
   const supabase = createAdminClient()
+  if (!supabase) return null
+
   const { data, error } = await supabase
     .from("subscriptions")
     .select("*, plan:subscription_plans(*)")
@@ -111,6 +122,8 @@ export async function createTrialSubscription(params: {
   paidBy?: string
 }): Promise<Subscription> {
   const supabase = createAdminClient()
+  if (!supabase) throw new Error("Supabase client not available")
+
   const now = new Date()
   const trialEnd = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000) // 3 days
 
@@ -140,6 +153,8 @@ export async function activateSubscription(params: {
   nowpaymentsPaymentId: string
 }): Promise<Subscription> {
   const supabase = createAdminClient()
+  if (!supabase) throw new Error("Supabase client not available")
+
   const now = new Date()
   const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000) // 30 days
 
@@ -174,6 +189,7 @@ export async function recordPayment(params: {
   network?: string
 }) {
   const supabase = createAdminClient()
+  if (!supabase) return
 
   const { error } = await supabase.from("payments").upsert(
     {
@@ -198,6 +214,8 @@ export async function recordPayment(params: {
  */
 export async function expireSubscription(subscriptionId: string) {
   const supabase = createAdminClient()
+  if (!supabase) return
+
   const { error } = await supabase
     .from("subscriptions")
     .update({ status: "expired", updated_at: new Date().toISOString() })
@@ -211,6 +229,8 @@ export async function expireSubscription(subscriptionId: string) {
  */
 export async function getTeamSubscriptions(adminEmail: string): Promise<Subscription[]> {
   const supabase = createAdminClient()
+  if (!supabase) return []
+
   const { data, error } = await supabase
     .from("subscriptions")
     .select("*, plan:subscription_plans(*)")
@@ -227,6 +247,8 @@ export async function getTeamSubscriptions(adminEmail: string): Promise<Subscrip
  */
 export async function getPaymentHistory(subscriptionId: string) {
   const supabase = createAdminClient()
+  if (!supabase) return []
+
   const { data, error } = await supabase
     .from("payments")
     .select("*")

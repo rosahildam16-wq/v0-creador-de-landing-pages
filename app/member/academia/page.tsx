@@ -6,17 +6,23 @@ import { FeaturedCourseBanner } from "@/components/shared/featured-course-banner
 import { CourseCard } from "@/components/shared/course-card"
 import { Search } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/lib/auth-context"
+import { getMemberCommunity } from "@/lib/communities-data"
 
 export default function MemberAcademiaPage() {
   const [selectedCategory, setSelectedCategory] = useState("Todos")
   const [searchQuery, setSearchQuery] = useState("")
+  const { user } = useAuth()
 
-  const featured = getFeaturedCourses()
-  const filtered = getCoursesByCategory(selectedCategory).filter((c) =>
+  const community = user?.memberId ? getMemberCommunity(user.memberId) : undefined
+  const communityId = community?.id
+
+  const featured = getFeaturedCourses(communityId)
+  const filtered = getCoursesByCategory(selectedCategory, communityId).filter((c) =>
     searchQuery
       ? c.titulo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.descripcion.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
+      c.descripcion.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
       : true
   )
 
@@ -77,7 +83,7 @@ export default function MemberAcademiaPage() {
         <div className="flex flex-col gap-3">
           <h2 className="text-sm font-bold text-foreground">Continuar viendo</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {COURSES.slice(0, 3).map((course) => (
+            {filtered.slice(0, 3).map((course) => (
               <CourseCard
                 key={course.id}
                 course={course}
@@ -95,8 +101,8 @@ export default function MemberAcademiaPage() {
           {searchQuery
             ? `Resultados (${filtered.length})`
             : selectedCategory === "Todos"
-            ? "Todos los cursos"
-            : selectedCategory}
+              ? "Todos los cursos"
+              : selectedCategory}
         </h2>
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-12">

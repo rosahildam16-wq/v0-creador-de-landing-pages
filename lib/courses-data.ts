@@ -29,6 +29,7 @@ export interface Course {
   destacado?: boolean
   nivel: "basico" | "intermedio" | "avanzado"
   tags: string[]
+  communityId?: string[] // If undefined, visible to all
 }
 
 export const CATEGORIES = [
@@ -259,19 +260,52 @@ export const COURSES: Course[] = [
       },
     ],
   },
+  {
+    id: "reset-system",
+    titulo: "El Sistema RESET",
+    descripcion: "La metodologia definitiva para relanzar tu vida y tu negocio. Los 5 pilares del sistema Reset explicados paso a paso.",
+    instructor: "Jorge Leon",
+    categoria: "Mindset",
+    thumbnail: "/images/courses/reset.jpg",
+    duracionTotal: "5h 15m",
+    totalLecciones: 12,
+    destacado: true,
+    nivel: "intermedio",
+    tags: ["reset", "franquicia", "negocio"],
+    communityId: ["comm-reset"],
+    modulos: [
+      {
+        id: "reset-mod-1",
+        titulo: "Introduccion al Sistema",
+        orden: 1,
+        lecciones: [
+          { id: "reset-1-1", titulo: "Que es Reset", descripcion: "Filosofia y vision", duracion: "15:00", orden: 1 },
+          { id: "reset-1-2", titulo: "Tu primer relanzamiento", descripcion: "Plan de accion", duracion: "25:00", orden: 2 },
+        ],
+      },
+    ],
+  },
 ]
 
 export function getCourseById(id: string): Course | undefined {
   return COURSES.find((c) => c.id === id)
 }
 
-export function getCoursesByCategory(category: string): Course[] {
-  if (category === "Todos") return COURSES
-  return COURSES.filter((c) => c.categoria === category)
+export function getCoursesByCategory(category: string, communityId?: string): Course[] {
+  const all = communityId
+    ? COURSES.filter(c => !c.communityId || c.communityId.includes(communityId))
+    : COURSES.filter(c => !c.communityId)
+
+  if (category === "Todos") return all
+  return all.filter((c) => c.categoria === category)
 }
 
-export function getFeaturedCourses(): Course[] {
-  return COURSES.filter((c) => c.destacado)
+export function getFeaturedCourses(communityId?: string): Course[] {
+  const all = communityId
+    ? COURSES.filter(c => !c.communityId || c.communityId.includes(communityId))
+    : COURSES.filter(c => !c.communityId)
+
+  return all.filter((c) => c.destacado)
 }
 
 export const NIVEL_LABELS: Record<Course["nivel"], string> = {

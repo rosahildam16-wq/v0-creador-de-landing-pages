@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
     }
 
     const supabase = createAdminClient()
+    if (!supabase) return NextResponse.json({ error: "Base de datos no disponible" }, { status: 500 })
 
     const { data: users, error } = await supabase
       .from("community_members")
@@ -55,6 +56,7 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = createAdminClient()
+    if (!supabase) return NextResponse.json({ error: "Base de datos no disponible" }, { status: 500 })
 
     // Simplified creation (similar to register route)
     const { error } = await supabase.from("community_members").insert({
@@ -67,6 +69,7 @@ export async function POST(req: NextRequest) {
       password_plain: userData.password,
       role: userData.role || "member",
       trial_ends_at: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+      activo: true, // AUTO-ACTIVATE
     })
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -90,6 +93,7 @@ export async function DELETE(req: NextRequest) {
     if (!userId) return NextResponse.json({ error: "ID requerido" }, { status: 400 })
 
     const supabase = createAdminClient()
+    if (!supabase) return NextResponse.json({ error: "Base de datos no disponible" }, { status: 500 })
 
     // Find user first to get username/email for cleanup
     const { data: user } = await supabase.from("community_members").select("username, email").eq("id", userId).single()
@@ -109,3 +113,4 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Error interno" }, { status: 500 })
   }
 }
+

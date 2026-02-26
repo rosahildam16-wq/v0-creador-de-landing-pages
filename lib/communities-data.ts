@@ -125,22 +125,37 @@ export function updateCommunity(id: string, updates: Partial<Community>): void {
 // ----- Community membership -----
 
 export function getCommunityMembers(communityId: string): CommunityMember[] {
-  const raw = safeGet("mf_community_members") || "[]"
-  const members: CommunityMember[] = JSON.parse(raw)
-  return members.filter((m) => m.communityId === communityId)
+  try {
+    const raw = safeGet("mf_community_members") || "[]"
+    const members: CommunityMember[] = JSON.parse(raw)
+    return members.filter((m) => m.communityId === communityId)
+  } catch (e) {
+    console.error("Error parsing community members:", e)
+    return []
+  }
 }
 
 export function getAllCommunityMembers(): CommunityMember[] {
-  const raw = safeGet("mf_community_members") || "[]"
-  return JSON.parse(raw) as CommunityMember[]
+  try {
+    const raw = safeGet("mf_community_members") || "[]"
+    return JSON.parse(raw) as CommunityMember[]
+  } catch (e) {
+    console.error("Error parsing all community members:", e)
+    return []
+  }
 }
 
 export function getMemberCommunity(memberId: string): Community | undefined {
-  const raw = safeGet("mf_community_members") || "[]"
-  const members: CommunityMember[] = JSON.parse(raw)
-  const entry = members.find((m) => m.memberId === memberId)
-  if (!entry) return undefined
-  return getCommunityById(entry.communityId)
+  try {
+    const raw = safeGet("mf_community_members") || "[]"
+    const members: CommunityMember[] = JSON.parse(raw)
+    const entry = members.find((m) => m.memberId === memberId)
+    if (!entry) return undefined
+    return getCommunityById(entry.communityId)
+  } catch (e) {
+    console.error("Error getting member community:", e)
+    return undefined
+  }
 }
 
 export function getMemberCommunityId(memberId: string): string | null {
@@ -191,11 +206,16 @@ export interface CommunityPost {
 }
 
 export function getCommunityPosts(communityId: string): CommunityPost[] {
-  const raw = safeGet("mf_community_posts") || "[]"
-  const posts: CommunityPost[] = JSON.parse(raw)
-  return posts
-    .filter((p) => p.communityId === communityId)
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+  try {
+    const raw = safeGet("mf_community_posts") || "[]"
+    const posts: CommunityPost[] = JSON.parse(raw)
+    return posts
+      .filter((p) => p.communityId === communityId)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+  } catch (e) {
+    console.error("Error parsing community posts:", e)
+    return []
+  }
 }
 
 export function addCommunityPost(post: Omit<CommunityPost, "id" | "likes">): void {

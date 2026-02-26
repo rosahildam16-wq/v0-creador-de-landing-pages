@@ -9,3 +9,4 @@ node_modules/
 .env*.local
 .DS_Store
 .vercel
+public/videos/tiktok-3-agenda.mp4

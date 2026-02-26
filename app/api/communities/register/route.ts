@@ -72,16 +72,17 @@ export async function POST(req: NextRequest) {
       sponsorValid = !!sponsor
     }
 
-    // Determine role: with community code = member, without = leader
-    const isLeader = !code
-    const userRole = isLeader ? "leader" : "member"
+    // Role is always member now
+    const userRole = "member"
 
     // Find community (for members) or create one (for leaders)
     let communityId = "general"
     let communityName = "General"
     let freeTrialDays = 5 // default 5 day trial for everyone
 
-    if (isLeader) {
+    const isCreatingCommunity = !code
+
+    if (isCreatingCommunity) {
       // Leader: create their own community automatically
       const communityCode = normalizedUsername.toUpperCase()
       const newCommunityId = `comm-${normalizedUsername}`
@@ -147,6 +148,7 @@ export async function POST(req: NextRequest) {
       sponsor_name: normalizedSponsor || null, // keep for backwards compat
       role: userRole,
       trial_ends_at: trialEndsAt,
+      activo: true, // AUTO-ACTIVATE: Remove need for leader validation
     })
 
     if (insertError) {
@@ -157,25 +159,26 @@ export async function POST(req: NextRequest) {
     // Create trial subscription in subscriptions table so SubscriptionGuard works
     try {
       const adminSupabase = createAdminClient()
+      if (adminSupabase) {
+        // Get the cheapest active plan (Basico)
+        const { data: plans } = await adminSupabase
+          .from("subscription_plans")
+          .select("id")
+          .eq("activo", true)
+          .order("precio_usdt", { ascending: true })
+          .limit(1)
 
-      // Get the cheapest active plan (Basico)
-      const { data: plans } = await adminSupabase
-        .from("subscription_plans")
-        .select("id")
-        .eq("activo", true)
-        .order("precio_usdt", { ascending: true })
-        .limit(1)
-
-      if (plans && plans.length > 0) {
-        const now = new Date()
-        await adminSupabase.from("subscriptions").insert({
-          user_email: normalizedEmail,
-          user_role: isLeader ? "admin" : "member",
-          plan_id: plans[0].id,
-          status: "trial",
-          trial_starts_at: now.toISOString(),
-          trial_ends_at: trialEndsAt,
-        })
+        if (plans && plans.length > 0) {
+          const now = new Date()
+          await adminSupabase.from("subscriptions").insert({
+            user_email: normalizedEmail,
+            user_role: "member",
+            plan_id: plans[0].id,
+            status: "trial",
+            trial_starts_at: now.toISOString(),
+            trial_ends_at: trialEndsAt,
+          })
+        }
       }
     } catch (subErr) {
       console.error("Trial subscription creation error:", subErr)
@@ -185,16 +188,15 @@ export async function POST(req: NextRequest) {
     // Create notification for admin
     const codeLabel = code ? ` | Codigo: ${code}` : ""
     const sponsorLabel = normalizedSponsor ? ` | Patrocinador: @${normalizedSponsor}` : ""
-    const roleLabel = isLeader ? " [LIDER]" : ""
     await supabase.from("admin_notifications").insert({
       tipo: "team",
-      titulo: `Nuevo registro${roleLabel}`,
-      mensaje: `${trimmedName} (@${normalizedUsername}) se registro como ${isLeader ? "lider" : "miembro"} en ${communityName}${codeLabel}${sponsorLabel}.`,
+      titulo: `Nuevo registro`,
+      mensaje: `${trimmedName} (@${normalizedUsername}) se registro como miembro en ${communityName}${codeLabel}${sponsorLabel}.`,
       destinatario: "admin",
     })
 
     // Send Welcome Email (non-blocking)
-    const welcomeCode = isLeader ? normalizedUsername.toUpperCase() : code
+    const welcomeCode = code || normalizedUsername.toUpperCase()
     sendWelcomeEmail({
       email: normalizedEmail,
       name: trimmedName,

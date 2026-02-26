@@ -108,7 +108,7 @@ export default function LeadsPage() {
   // Enrich leads with scoring
   const leadsConScore = useMemo(
     () =>
-      (leads || []).map((lead) => ({
+      (Array.isArray(leads) ? leads : []).map((lead) => ({
         ...lead,
         ...calcularTemperatura(lead),
       })),
@@ -337,7 +337,7 @@ export default function LeadsPage() {
       </Card>
 
       {/* Empty state */}
-      {(leads || []).length === 0 && (
+      {Array.isArray(leads) && leads.length === 0 && (
         <Card className="border-dashed border-border">
           <CardContent className="flex flex-col items-center justify-center p-10">
             <Users className="mb-3 h-10 w-10 text-muted-foreground/50" />
@@ -351,7 +351,7 @@ export default function LeadsPage() {
       )}
 
       {/* Table */}
-      {(leads || []).length > 0 && (
+      {Array.isArray(leads) && leads.length > 0 && (
         <Card className="border-border/50">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -489,7 +489,7 @@ export default function LeadsPage() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {paginated.length === 0 && (leads || []).length > 0 && (
+                  {paginated.length === 0 && Array.isArray(leads) && leads.length > 0 && (
                     <TableRow>
                       <TableCell
                         colSpan={6}

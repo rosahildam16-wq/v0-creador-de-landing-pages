@@ -86,11 +86,9 @@ export default function LoginPage() {
   useEffect(() => {
     if (!authLoading && isAuthenticated && user) {
       if (user.role === "super_admin") router.replace("/admin")
-      else if (user.role === "leader" && justRegisteredAsLeader) router.replace("/leader/elegir-plan")
-      else if (user.role === "leader") router.replace("/leader")
       else router.replace("/member")
     }
-  }, [isAuthenticated, authLoading, user, router, justRegisteredAsLeader])
+  }, [isAuthenticated, authLoading, user, router])
 
   if (authLoading || isAuthenticated) {
     return (
@@ -131,10 +129,7 @@ export default function LoginPage() {
         setIsSubmitting(false)
         return
       }
-      // Si no tiene codigo de comunidad, es lider nuevo -> mostrar pantalla de planes
-      if (!discountCode) {
-        setJustRegisteredAsLeader(true)
-      }
+      // Todos se registran como miembros
       const ok = await register(name, email, password, username, discountCode || undefined, sponsorUsername.trim() || undefined)
       if (!ok) {
         setError("Este email o usuario ya esta registrado. Intenta iniciar sesion.")
@@ -520,9 +515,9 @@ export default function LoginPage() {
                       <div className="mt-3 rounded-lg border border-violet-500/10 bg-violet-500/[0.03] px-3 py-2.5">
                         <p className="text-[10px] text-violet-300/50 leading-relaxed">
                           {discountCode ? (
-                            <>Te registraras como <span className="font-semibold text-violet-300">miembro</span> de la comunidad asociada a este codigo.</>
+                            <>Te registraras como miembro de la comunidad asociada a este codigo.</>
                           ) : (
-                            <>Sin codigo, te registras como <span className="font-semibold text-violet-300">lider</span> y se creara tu propia comunidad con 7 dias gratis.</>
+                            <>Al registrarte, podras crear y gestionar tu propia comunidad con todas las herramientas activas.</>
                           )}
                         </p>
                       </div>
@@ -586,21 +581,6 @@ export default function LoginPage() {
                   <button
                     onClick={async () => {
                       setIsSubmitting(true)
-                      await login("test_leader@magic.com", "test1234")
-                      setIsSubmitting(false)
-                    }}
-                    className="flex items-center justify-between px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02] text-violet-200 text-xs hover:border-violet-500/20 hover:bg-violet-500/[0.03] transition-all group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Bot className="w-4 h-4 text-violet-400/60" />
-                      <span>Entrar como Líder de Equipo</span>
-                    </div>
-                    <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all translate-x-[-4px] group-hover:translate-x-0" />
-                  </button>
-
-                  <button
-                    onClick={async () => {
-                      setIsSubmitting(true)
                       await login("test_member@magic.com", "test1234")
                       setIsSubmitting(false)
                     }}
@@ -608,7 +588,7 @@ export default function LoginPage() {
                   >
                     <div className="flex items-center gap-3">
                       <Users className="w-4 h-4 text-violet-400/60" />
-                      <span>Entrar como Miembro (Socio)</span>
+                      <span>Entrar como Miembro</span>
                     </div>
                     <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all translate-x-[-4px] group-hover:translate-x-0" />
                   </button>

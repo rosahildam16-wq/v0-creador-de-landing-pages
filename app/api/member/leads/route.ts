@@ -78,3 +78,54 @@ export async function PATCH(req: NextRequest) {
         return NextResponse.json({ error: "Error interno" }, { status: 500 })
     }
 }
+export async function POST(req: NextRequest) {
+    try {
+        const body = await req.json()
+        const { memberEmail, leadData } = body
+
+        if (!memberEmail || !leadData) {
+            return NextResponse.json({ error: "Datos faltantes" }, { status: 400 })
+        }
+
+        const supabase = await createClient()
+
+        // 1. Get member's community
+        const { data: member } = await supabase
+            .from("community_members")
+            .select("community_id, username")
+            .eq("email", memberEmail)
+            .maybeSingle()
+
+        if (!member) {
+            return NextResponse.json({ error: "Usuario no autorizado" }, { status: 403 })
+        }
+
+        // 2. Insert lead
+        const leadId = `lead-${Math.random().toString(36).substring(2, 9)}`
+        const { error } = await supabase
+            .from("leads")
+            .insert({
+                id: leadId,
+                nombre: leadData.nombre,
+                email: leadData.email,
+                whatsapp: leadData.whatsapp,
+                telefono: leadData.whatsapp,
+                fuente: "Organico",
+                etapa: "lead_nuevo",
+                campana: leadData.campana || "Manual",
+                community_id: member.community_id,
+                asignado_a: member.username || memberEmail,
+                tipo_embudo: "compra",
+                fecha_ingreso: new Date().toISOString()
+            })
+
+        if (error) {
+            console.error("Lead insert error:", error)
+            return NextResponse.json({ error: error.message }, { status: 500 })
+        }
+
+        return NextResponse.json({ success: true, id: leadId })
+    } catch (err) {
+        return NextResponse.json({ error: "Error interno" }, { status: 500 })
+    }
+}

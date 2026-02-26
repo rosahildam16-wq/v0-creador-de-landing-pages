@@ -96,7 +96,6 @@ export async function PATCH(req: NextRequest) {
       .from("community_members")
       .select("community_id, role")
       .eq("email", email.toLowerCase().trim())
-      .eq("role", "leader")
       .maybeSingle()
 
     if (!member) {
@@ -145,8 +144,8 @@ export async function POST(req: NextRequest) {
       .eq("email", normalizedEmail)
       .maybeSingle()
 
-    if (!member || member.role !== "leader") {
-      return NextResponse.json({ error: "No tienes permisos de lider" }, { status: 403 })
+    if (!member) {
+      return NextResponse.json({ error: "Usuario no encontrado" }, { status: 403 })
     }
 
     // Check if code is taken

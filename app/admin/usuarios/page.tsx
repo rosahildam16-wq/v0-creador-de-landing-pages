@@ -25,7 +25,7 @@ export default function AdminUsuariosPage() {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
-  const [roleFilter, setRoleFilter] = useState<"all" | "leader" | "member">("all")
+  const [roleFilter, setRoleFilter] = useState<"all" | "member">("all")
   const [visiblePasswords, setVisiblePasswords] = useState<Set<number>>(new Set())
   const [copiedId, setCopiedId] = useState<number | null>(null)
 
@@ -137,8 +137,7 @@ export default function AdminUsuariosPage() {
     return matchSearch && matchRole
   })
 
-  const leaders = users.filter(u => u.role === "leader")
-  const members = users.filter(u => u.role === "member")
+  const members = users.filter(u => u.role !== "super_admin")
 
   const trialActive = (dateStr: string | null) => {
     if (!dateStr) return false
@@ -175,17 +174,7 @@ export default function AdminUsuariosPage() {
             </div>
           </div>
         </div>
-        <div className="rounded-2xl border border-border/30 bg-card/60 p-4 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10">
-              <Shield className="h-5 w-5 text-amber-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{leaders.length}</p>
-              <p className="text-xs text-muted-foreground">Lideres</p>
-            </div>
-          </div>
-        </div>
+
         <div className="rounded-2xl border border-border/30 bg-card/60 p-4 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
@@ -215,11 +204,10 @@ export default function AdminUsuariosPage() {
           <div className="relative">
             <select
               value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value as "all" | "leader" | "member")}
+              onChange={(e) => setRoleFilter(e.target.value as "all" | "member")}
               className="appearance-none rounded-xl border border-border/40 bg-background/60 py-2.5 pl-4 pr-10 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
             >
               <option value="all">Todos los roles</option>
-              <option value="leader">Lideres</option>
               <option value="member">Miembros</option>
             </select>
             <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -410,7 +398,6 @@ export default function AdminUsuariosPage() {
                     className="w-full rounded-xl border border-border bg-background px-4 py-2.5 outline-none focus:border-primary/50"
                   >
                     <option value="member">Miembro</option>
-                    <option value="leader">Lider</option>
                   </select>
                 </div>
                 <div className="space-y-2">
@@ -448,8 +435,6 @@ export default function AdminUsuariosPage() {
 }
 
 function roleLabel(role: string) {
-  switch (role) {
-    case 'leader': return { text: 'Lider', class: 'bg-amber-500/10 text-amber-500' };
-    default: return { text: 'Miembro', class: 'bg-primary/10 text-primary' };
-  }
+  if (role === "super_admin") return { text: "Admin", class: "bg-amber-500/10 text-amber-500" }
+  return { text: "Miembro", class: "bg-primary/10 text-primary" }
 }

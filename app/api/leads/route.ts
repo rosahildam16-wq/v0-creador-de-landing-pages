@@ -50,17 +50,36 @@ export async function POST(request: Request) {
     let asignadoA = "Sin asignar"
 
     if (body.ref) {
-      const { createAdminClient } = await import("@/lib/supabase/admin")
-      const supabase = createAdminClient()
-      const { data: member } = await supabase
-        .from("community_members")
-        .select("community_id, name")
-        .or(`member_id.eq."${body.ref}",username.eq."${body.ref}"`)
-        .maybeSingle()
+      try {
+        const { createAdminClient } = await import("@/lib/supabase/admin")
+        const supabase = createAdminClient()
+        if (supabase) {
+          const refsToTry = [
+            body.ref,                         // exact match (jorge_leon)
+            body.ref.replace(/-/g, "_"),      // slug to username (jorge-leon -> jorge_leon)
+            body.ref.replace(/-/g, ""),       // slug to username (jorge-leon -> jorgeleon)
+          ]
 
-      if (member) {
-        communityId = member.community_id
-        asignadoA = member.name
+          let foundMember = null
+          for (const r of [...new Set(refsToTry)]) {
+            const { data } = await supabase
+              .from("community_members")
+              .select("community_id, name")
+              .or(`member_id.eq."${r}",username.eq."${r}"`)
+              .maybeSingle()
+            if (data) {
+              foundMember = data
+              break
+            }
+          }
+
+          if (foundMember) {
+            communityId = foundMember.community_id
+            asignadoA = foundMember.name
+          }
+        }
+      } catch (err) {
+        console.error("Attribution error:", err)
       }
     }
 

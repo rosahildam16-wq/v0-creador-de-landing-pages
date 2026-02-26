@@ -35,10 +35,8 @@ export function PersonalLinkCard({ memberId }: PersonalLinkCardProps) {
 
   const currentFunnel = EMBUDOS.find((e) => e.id === selectedFunnel)
 
-  // Build slug from member name: "Ana Torres" -> "ana-torres"
-  const memberSlug = member
-    ? member.nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
-    : memberId
+  // Use the memberId as the slug for the referral link
+  const memberSlug = memberId
 
   // Build the personalized link
   const baseUrl = typeof window !== "undefined" ? window.location.origin : ""

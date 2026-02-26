@@ -12,7 +12,7 @@ import Link from "next/link"
 import {
   Users, Target, GraduationCap, Award, TrendingUp,
   Route, Trophy, Kanban, Bot, Calendar, Flame, Zap,
-  ArrowUpRight, ChevronRight, Shield,
+  ArrowUpRight, ChevronRight, Shield, Plus,
 } from "lucide-react"
 import {
   AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip,
@@ -180,9 +180,14 @@ export default function MemberDashboard() {
   useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
+    const commId = user?.memberId ? getMemberCommunity(user.memberId)?.id : undefined
     const stored = safeGet("mf_challenges")
-    if (stored) { try { setChallenges(JSON.parse(stored)) } catch { /* defaults */ } }
-  }, [])
+    let baseChallenges = DEFAULT_CHALLENGES
+    if (stored) {
+      try { baseChallenges = JSON.parse(stored) } catch { /* defaults */ }
+    }
+    setChallenges(baseChallenges.filter(c => !c.communityId || c.communityId === commId))
+  }, [user])
 
   const { data: leads, isLoading: leadsLoading } = useSWR<Lead[]>(
     user?.email ? `/api/member/leads?email=${encodeURIComponent(user.email)}` : null,
@@ -389,7 +394,7 @@ export default function MemberDashboard() {
           </div>
 
           {/* Personal link */}
-          <PersonalLinkCard memberId={member.id} />
+          <PersonalLinkCard memberId={user?.username || member?.id || "socio"} />
 
           {/* Quick Access */}
           <div className="flex flex-col gap-3">
