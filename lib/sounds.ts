@@ -31,6 +31,9 @@ export function resumeAudio() {
 function playTone(freq: number, duration: number, type: OscillatorType = "sine", volume = 0.15) {
   try {
     const ctx = getCtx()
+    if (ctx.state === "suspended") {
+      ctx.resume()
+    }
     const osc = ctx.createOscillator()
     const gain = ctx.createGain()
     osc.type = type

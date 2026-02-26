@@ -9,6 +9,7 @@ import {
   playCallEnd,
   startDrone,
   stopDrone,
+  resumeAudio,
 } from "@/lib/sounds"
 import { Button } from "@/components/ui/button"
 
@@ -57,24 +58,36 @@ export function CallInterface({ onContinue, audioSrc = "/audio/call-voice.mp3", 
 
   const handleAnswer = () => {
     stopRingtone()
+    resumeAudio() // Unlocks Web Audio API context
+
+    // Create and 'touch' audio immediately in the same click event loop for mobile bypass
+    const audio = new Audio(audioSrc)
+    audio.play().then(() => {
+      // immediately pause if we want the 1.5s delay of "connecting"
+      audio.pause()
+      audio.currentTime = 0
+    }).catch(e => console.log("Silent touch failed", e))
+    voiceAudioRef.current = audio
+
     setPhase("connecting")
     setTimeout(() => {
       playCallConnected()
       startDrone()
       setPhase("active")
 
-      // Play voice audio once active
-      const audio = new Audio(audioSrc)
-      voiceAudioRef.current = audio
-      audio.play().catch(() => { })
-      audio.onended = () => {
-        stopDrone()
-        playCallEnd()
-        setPhase("ended")
-        // Auto-advance to next experience immediately after call ends
-        setTimeout(() => {
-          onContinue()
-        }, 500)
+      // Now play it for real after the connecting phase
+      if (voiceAudioRef.current) {
+        voiceAudioRef.current.play().catch((err) => {
+          console.error("Delayed play failed", err)
+        })
+        voiceAudioRef.current.onended = () => {
+          stopDrone()
+          playCallEnd()
+          setPhase("ended")
+          setTimeout(() => {
+            onContinue()
+          }, 500)
+        }
       }
     }, 1500)
   }

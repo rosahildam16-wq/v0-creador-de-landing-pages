@@ -22,6 +22,7 @@ interface LeadPayload {
   utm_campaign?: string
   tags?: string[]
   funnel_step?: string
+  ref?: string
 }
 
 export async function POST(request: Request) {
@@ -44,13 +45,35 @@ export async function POST(request: Request) {
     const whatsappClean = normalizePhone(body.whatsapp, phoneCountryCode)
     const emailNormalized = body.correo.trim().toLowerCase()
 
+    // ─── Resolve Community and Sponsor from Ref ───
+    let communityId = "general"
+    let asignadoA = "Sin asignar"
+
+    if (body.ref) {
+      const { createAdminClient } = await import("@/lib/supabase/admin")
+      const supabase = createAdminClient()
+      const { data: member } = await supabase
+        .from("community_members")
+        .select("community_id, name")
+        .or(`member_id.eq."${body.ref}",username.eq."${body.ref}"`)
+        .maybeSingle()
+
+      if (member) {
+        communityId = member.community_id
+        asignadoA = member.name
+      }
+    }
+
     // Create lead via data layer
     const lead = await createLead({
       nombre: body.nombre,
       email: emailNormalized,
       telefono: whatsappClean,
       whatsapp: whatsappClean,
-      fuente: (body.fuente as "Meta Ads" | "Instagram" | "TikTok" | "Google" | "Organico") || "Organico",
+      fuente: (body.fuente as import("@/lib/types").FuenteTrafico) || "Organico",
+      embudo_id: body.embudo_id || "nomada-vip",
+      asignado_a: asignadoA,
+      community_id: communityId,
     })
 
     if (!lead) {

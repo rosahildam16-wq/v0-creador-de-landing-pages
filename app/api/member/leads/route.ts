@@ -25,8 +25,6 @@ export async function GET(req: NextRequest) {
         }
 
         // 2. Fetch leads for this community
-        // If leader, see all. If member, maybe only yours? 
-        // For now, let's show all leads of the community to both leaders and members (as per standard MLM CRM)
         const { data: leads, error: leadsError } = await supabase
             .from("leads")
             .select("*")
@@ -38,7 +36,16 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "Error al cargar leads" }, { status: 500 })
         }
 
-        return NextResponse.json(leads)
+        // 3. Filter out leads that are already members
+        const { data: existingMembers } = await supabase
+            .from("community_members")
+            .select("email")
+            .eq("community_id", member.community_id)
+
+        const memberEmails = new Set((existingMembers || []).map(m => m.email.toLowerCase()))
+        const filteredLeads = (leads || []).filter(l => !memberEmails.has(l.email.toLowerCase()))
+
+        return NextResponse.json(filteredLeads)
     } catch (err) {
         console.error("Member leads API error:", err)
         return NextResponse.json({ error: "Error interno" }, { status: 500 })

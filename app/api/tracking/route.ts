@@ -14,8 +14,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "step and step_name required" }, { status: 400 })
     }
 
-    // If we have a lead_id, register the tracking event
+    // If we have a lead_id, register tracking events
     if (lead_id) {
+      const { updateLeadFunnelProgress, registrarEvento } = await import("@/lib/data")
+      await updateLeadFunnelProgress(lead_id, step, step_name)
       await registrarEvento(lead_id, "funnel_step", `Completo paso ${step}: ${step_name}`)
     }
 

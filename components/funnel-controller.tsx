@@ -154,7 +154,7 @@ export function FunnelController({ embudoId = "nomada-vip", startAt }: FunnelCon
               embudoId === "franquicia-reset"
                 ? [
                   {
-                    videoEmbed: "https://player.vimeo.com/video/1167997342?api=1&badge=0&autopause=0&player_id=0&app_id=58479&controls=0&title=0&byline=0&portrait=0&playsinline=1&keyboard=0&autoplay=1&muted=1",
+                    videoEmbed: "https://player.vimeo.com/video/1167997342?api=1&badge=0&autopause=0&player_id=0&app_id=58479&controls=0&title=0&byline=0&portrait=0&playsinline=1&keyboard=0&autoplay=1&muted=0",
                     overlayText: [],
                     username: "reset.system",
                     caption: "El Arma",
@@ -176,7 +176,7 @@ export function FunnelController({ embudoId = "nomada-vip", startAt }: FunnelCon
                     shares: "55.2 mil",
                   },
                   {
-                    videoEmbed: "https://player.vimeo.com/video/1167999493?api=1&badge=0&autopause=0&player_id=0&app_id=58479&controls=0&title=0&byline=0&portrait=0&playsinline=1&keyboard=0&autoplay=1&muted=1",
+                    videoSrc: "/videos/tiktok-3-agenda.mp4",
                     overlayText: [],
                     username: "reset.system",
                     caption: "Resultados",

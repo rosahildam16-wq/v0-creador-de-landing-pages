@@ -84,6 +84,7 @@ export interface Lead {
   // CRM
   notas: Nota[]
   asignado_a: string
+  community_id: string
 }
 
 export interface EventoActividad {

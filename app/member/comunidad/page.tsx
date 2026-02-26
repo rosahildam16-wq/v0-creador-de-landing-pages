@@ -3,13 +3,24 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { getMemberCommunity, getCommunityPosts, addCommunityPost, getCommunityMembers, type Community, type CommunityPost, type CommunityMember } from "@/lib/communities-data"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Send, MessageSquare, Users, Shield } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import {
+  Send, MessageSquare, Users, Shield,
+  BookOpen, Trophy, Search, Layout,
+  MoreHorizontal, Share2, Heart, Award,
+  Sparkles, Zap, Star, ExternalLink
+} from "lucide-react"
 import { cn } from "@/lib/utils"
+import { formatDistanceToNow } from "date-fns"
+import { es } from "date-fns/locale"
+
+type Tab = "feed" | "classroom" | "members" | "about"
 
 export default function MemberComunidadPage() {
   const { user } = useAuth()
+  const [activeTab, setActiveTab] = useState<Tab>("feed")
   const [community, setCommunity] = useState<Community | undefined>()
   const [posts, setPosts] = useState<CommunityPost[]>([])
   const [members, setMembers] = useState<CommunityMember[]>([])
@@ -27,12 +38,6 @@ export default function MemberComunidadPage() {
     }
   }, [user])
 
-  const refreshPosts = () => {
-    if (!community) return
-    setPosts(getCommunityPosts(community.id))
-    setMembers(getCommunityMembers(community.id))
-  }
-
   const handlePost = () => {
     if (!newPost.trim() || !community || !user) return
     addCommunityPost({
@@ -43,116 +48,332 @@ export default function MemberComunidadPage() {
       timestamp: new Date().toISOString(),
     })
     setNewPost("")
-    refreshPosts()
+    if (community) {
+      setPosts(getCommunityPosts(community.id))
+    }
   }
 
-  if (!mounted) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    )
-  }
+  if (!mounted) return null
 
-  // No community assigned
   if (!community) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
-        <div className="rounded-2xl border border-border/30 bg-card/40 p-8 max-w-md">
-          <Shield className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-          <h2 className="text-lg font-bold text-foreground mb-2">Sin comunidad asignada</h2>
-          <p className="text-sm text-muted-foreground">
-            Aun no perteneces a ninguna comunidad. Si tienes un codigo de acceso, puedes usarlo al registrarte para unirte automaticamente.
+        <div className="rounded-2xl border border-border/30 bg-card/40 p-8 max-w-md backdrop-blur-md">
+          <Shield className="h-12 w-12 text-primary/30 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-foreground mb-2">Comunidad Protegida</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Para acceder a esta comunidad restringida de Eskalia, debes estar validado por un administrador o usar un código de acceso VIP.
           </p>
+          <Button variant="outline" className="w-full">Volver al Inicio</Button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="h-4 w-4 rounded-full" style={{ backgroundColor: community.color }} />
-        <div>
-          <h1 className="text-xl font-bold text-foreground">{community.nombre}</h1>
-          <p className="text-sm text-muted-foreground">{community.descripcion}</p>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="flex gap-4">
-        <div className="flex items-center gap-1.5 rounded-lg border border-border/30 bg-card/40 px-3 py-2">
-          <Users className="h-3.5 w-3.5 text-primary" />
-          <span className="text-xs font-medium text-foreground">{members.length} miembros</span>
-        </div>
-        <div className="flex items-center gap-1.5 rounded-lg border border-border/30 bg-card/40 px-3 py-2">
-          <MessageSquare className="h-3.5 w-3.5 text-primary" />
-          <span className="text-xs font-medium text-foreground">{posts.length} publicaciones</span>
-        </div>
-      </div>
-
-      {/* Compose */}
-      <Card className="border-border/50">
-        <CardContent className="pt-4">
-          <div className="flex gap-2">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-              {user?.name?.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+    <div className="min-h-screen bg-transparent">
+      {/* Skool-style Subheader with Tabs */}
+      <div className="sticky top-0 z-20 border-b border-border/10 bg-background/60 backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-4">
+            <div className="flex items-center gap-4">
+              <div
+                className="h-12 w-12 rounded-xl flex items-center justify-center text-white shadow-lg overflow-hidden"
+                style={{ backgroundColor: community.color }}
+              >
+                {community.nombre[0]}
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-foreground leading-none">{community.nombre}</h1>
+                <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
+                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  {members.length} miembros activos
+                </p>
+              </div>
             </div>
-            <input
-              type="text"
-              value={newPost}
-              onChange={(e) => setNewPost(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handlePost()}
-              placeholder="Comparte algo con tu comunidad..."
-              className="flex-1 rounded-lg border border-border/30 bg-muted/20 px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-primary/40 focus:outline-none"
-            />
-            <Button size="sm" onClick={handlePost} disabled={!newPost.trim()} className="gap-1.5">
-              <Send className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Feed */}
-      {posts.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <MessageSquare className="h-12 w-12 text-muted-foreground/20 mb-3" />
-          <p className="text-sm text-muted-foreground">Aun no hay publicaciones.</p>
-          <p className="text-xs text-muted-foreground/60 mt-1">Se el primero en compartir algo con tu comunidad.</p>
+            <div className="flex items-center bg-secondary/50 p-1 rounded-xl">
+              <TabButton active={activeTab === "feed"} onClick={() => setActiveTab("feed")} icon={<Layout className="h-4 w-4" />} label="Comunidad" />
+              <TabButton active={activeTab === "classroom"} onClick={() => setActiveTab("classroom")} icon={<BookOpen className="h-4 w-4" />} label="Formación" />
+              <TabButton active={activeTab === "members"} onClick={() => setActiveTab("members")} icon={<Users className="h-4 w-4" />} label="Miembros" />
+              <TabButton active={activeTab === "about"} onClick={() => setActiveTab("about")} icon={<Shield className="h-4 w-4" />} label="Acerca" />
+            </div>
+
+            <div className="hidden lg:flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Buscar en la comunidad..."
+                  className="rounded-full bg-secondary/60 border-none pl-9 pr-4 py-2 text-sm text-foreground focus:ring-1 focus:ring-primary/30 outline-none w-48"
+                />
+              </div>
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className="space-y-3">
-          {posts.map((post) => {
-            const isOwn = post.authorEmail === user?.email
-            return (
-              <Card key={post.id} className={cn("border-border/30", isOwn && "border-primary/15 bg-primary/[0.02]")}>
-                <CardContent className="pt-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                      {post.authorName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-foreground">{post.authorName}</span>
-                        <span className="text-[10px] text-muted-foreground">
-                          {new Date(post.timestamp).toLocaleDateString("es", {
-                            day: "numeric",
-                            month: "short",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+          {/* Main Content Area */}
+          <div className="lg:col-span-8 space-y-6">
+
+            {activeTab === "feed" && (
+              <>
+                {/* Compose Post */}
+                <Card className="border-border/10 bg-card/40 overflow-hidden shadow-sm">
+                  <CardContent className="p-4">
+                    <div className="flex gap-4">
+                      <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                        {user?.name?.[0]}
                       </div>
-                      <p className="mt-1.5 text-sm text-foreground/80">{post.content}</p>
+                      <div className="flex-1 space-y-3">
+                        <textarea
+                          value={newPost}
+                          onChange={(e) => setNewPost(e.target.value)}
+                          placeholder="Escribe algo para tu comunidad de Eskalia..."
+                          className="w-full bg-transparent border-none text-foreground placeholder:text-muted-foreground/40 resize-none py-2 text-sm focus:ring-0 outline-none min-h-[60px]"
+                        />
+                        <div className="flex items-center justify-between pt-2 border-t border-border/5">
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="sm" className="h-8 text-[11px] gap-1 px-2 text-muted-foreground hover:text-foreground">
+                              <Star className="h-3.5 w-3.5" /> General
+                            </Button>
+                          </div>
+                          <Button
+                            onClick={handlePost}
+                            disabled={!newPost.trim()}
+                            size="sm"
+                            className="bg-primary text-primary-foreground font-semibold px-6 shadow-sm shadow-primary/20"
+                          >
+                            Publicar
+                          </Button>
+                        </div>
+                      </div>
                     </div>
+                  </CardContent>
+                </Card>
+
+                {/* Posts Feed */}
+                <div className="space-y-4">
+                  {posts.length === 0 ? (
+                    <div className="py-20 text-center">
+                      <Sparkles className="h-12 w-12 text-primary/20 mx-auto mb-4" />
+                      <p className="text-muted-foreground">La comunidad está tranquila hoy...</p>
+                    </div>
+                  ) : (
+                    posts.map((post) => (
+                      <Card key={post.id} className="border-border/10 bg-card/40 overflow-hidden shadow-sm hover:border-primary/10 transition-colors">
+                        <CardContent className="p-5">
+                          <div className="flex items-start gap-4">
+                            <div className="h-10 w-10 flex-shrink-0 rounded-full bg-secondary flex items-center justify-center text-foreground font-semibold">
+                              {post.authorName[0]}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-sm text-foreground">{post.authorName}</span>
+                                  <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">MIEMBRO</span>
+                                  <span className="text-[10px] text-muted-foreground">
+                                    • {formatDistanceToNow(new Date(post.timestamp), { addSuffix: true, locale: es })}
+                                  </span>
+                                </div>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                                {post.content}
+                              </p>
+                              <div className="mt-4 flex items-center gap-4 text-muted-foreground">
+                                <button className="flex items-center gap-1.5 hover:text-primary transition-colors text-xs font-medium">
+                                  <Heart className="h-4 w-4" /> 0
+                                </button>
+                                <button className="flex items-center gap-1.5 hover:text-primary transition-colors text-xs font-medium">
+                                  <MessageSquare className="h-4 w-4" /> 0
+                                </button>
+                                <button className="flex items-center gap-1.5 hover:text-primary transition-colors text-xs font-medium">
+                                  <Share2 className="h-4 w-4" /> Compartir
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </>
+            )}
+
+            {activeTab === "classroom" && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-foreground">Programas de Formación</h2>
+                  <Badge variant="outline" className="border-primary/20 text-primary">{community.id === 'comm-reset' ? 'RESETERS' : 'ACADEMIA'}</Badge>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <CourseCard title="Mentalidad Eskalia" lessons={12} students={450} color="#8b5cf6" progress={100} />
+                  <CourseCard title="El Sistema RESET" lessons={8} students={320} color="#06b6d4" progress={45} />
+                  <CourseCard title="Marketing Viral con IA" lessons={15} students={280} color="#f59e0b" progress={0} />
+                  <CourseCard title="Cierre Maestro WhatsApp" lessons={10} students={190} color="#10b981" progress={0} />
+                </div>
+              </div>
+            )}
+
+            {activeTab === "members" && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-foreground">Directorio de Miembros</h2>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <input className="bg-secondary/40 border-none rounded-lg pl-9 pr-4 py-1.5 text-xs w-48 outline-none focus:ring-1 focus:ring-primary/30" placeholder="Buscar socio..." />
                   </div>
-                </CardContent>
-              </Card>
-            )
-          })}
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {members.map((m) => (
+                    <div key={m.memberId} className="group flex flex-col items-center justify-center p-6 rounded-2xl bg-card/40 border border-border/10 text-center transition-all hover:border-primary/20 hover:bg-card/60">
+                      <div className="relative mb-3">
+                        <div className="h-16 w-16 rounded-full bg-secondary flex items-center justify-center text-xl font-bold text-foreground overflow-hidden border-2 border-border/30 group-hover:border-primary/50 transition-colors">
+                          {m.name[0].toUpperCase()}
+                        </div>
+                        <div className="absolute bottom-0 right-0 h-4 w-4 bg-emerald-500 border-2 border-background rounded-full shadow-sm" />
+                      </div>
+                      <span className="text-sm font-bold truncate w-full group-hover:text-primary transition-colors">{m.name}</span>
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">Socio Activo</span>
+                      <Button variant="ghost" size="sm" className="mt-3 h-7 text-[10px] uppercase font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                        Ver Perfil
+                      </Button>
+                    </div>
+                  ))}
+                  {members.length === 0 && (
+                    <div className="col-span-full py-20 text-center opacity-40 italic">No hay miembros registrados aún</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Sidebar */}
+          <div className="lg:col-span-4 space-y-6">
+            {/* Gamification Sidebar */}
+            <Card className="border-border/10 bg-card/40 overflow-hidden shadow-sm">
+              <CardContent className="p-6">
+                <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
+                  <Trophy className="h-4 w-4 text-amber-500" /> Leaderboard
+                </h3>
+                <div className="space-y-4">
+                  <LeaderItem rank={1} name="Socio Diamante" pts={4520} level={12} />
+                  <LeaderItem rank={2} name="Marketing Pro" pts={3890} level={9} />
+                  <LeaderItem rank={3} name="Reset Master" pts={3240} level={8} />
+                </div>
+                <div className="mt-6 pt-6 border-t border-border/5">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium">Tu progreso</span>
+                    <span className="text-[10px] text-muted-foreground">Level 1</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                    <div className="h-full bg-primary w-[30%]" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Upcoming Events or Links */}
+            <Card className="border-border/10 bg-card/40 overflow-hidden shadow-sm">
+              <CardContent className="p-6">
+                <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
+                  <Zap className="h-4 w-4 text-primary" /> Recursos Eskalia
+                </h3>
+                <div className="space-y-3">
+                  <ResourceLink icon={<Award className="h-4 w-4" />} label="Llamada Semanal VIP" date="Lunes 20:00" />
+                  <ResourceLink icon={<Layout className="h-4 w-4" />} label="Biblioteca de Anuncios" />
+                  <ResourceLink icon={<Users className="h-4 w-4" />} label="Grupo Privado WA" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
         </div>
-      )}
+      </div>
     </div>
   )
 }
+
+function TabButton({ active, label, icon, onClick }: { active: boolean, label: string, icon: React.ReactNode, onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all",
+        active
+          ? "bg-white text-black shadow-sm"
+          : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+      )}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  )
+}
+
+function CourseCard({ title, lessons, students, color, progress = 0 }: { title: string, lessons: number, students: number, color: string, progress?: number }) {
+  return (
+    <Card className="border-border/10 bg-card/40 overflow-hidden hover:border-primary/20 transition-all group cursor-pointer">
+      <div className="h-24 px-6 flex items-center relative overflow-hidden" style={{ backgroundColor: `${color}15` }}>
+        <Award className="h-10 w-10 text-primary group-hover:scale-110 transition-transform relative z-10" style={{ color }} />
+        {progress > 0 && (
+          <div className="absolute bottom-0 left-0 h-1 bg-primary/30 w-full">
+            <div className="h-full bg-primary" style={{ width: `${progress}%`, backgroundColor: color }} />
+          </div>
+        )}
+      </div>
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-1">
+          <h4 className="font-bold text-sm text-foreground">{title}</h4>
+          {progress > 0 && <span className="text-[10px] font-bold text-muted-foreground">{progress}%</span>}
+        </div>
+        <div className="flex items-center gap-3 text-[10px] text-muted-foreground font-semibold">
+          <span>{lessons} LECCIONES</span>
+          <span>{students} ALUMNOS</span>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function LeaderItem({ rank, name, pts, level }: { rank: number, name: string, pts: number, level: number }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className={cn(
+        "h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold",
+        rank === 1 ? "bg-amber-500 text-amber-950" : "bg-secondary text-muted-foreground"
+      )}>
+        {rank}
+      </span>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-bold truncate">{name}</p>
+        <p className="text-[10px] text-muted-foreground font-medium">{pts} pts • Nivel {level}</p>
+      </div>
+    </div>
+  )
+}
+
+function ResourceLink({ icon, label, date }: { icon: React.ReactNode, label: string, date?: string }) {
+  return (
+    <div className="flex items-center justify-between p-2 rounded-lg hover:bg-primary/5 cursor-pointer group transition-colors">
+      <div className="flex items-center gap-3">
+        <div className="h-8 w-8 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
+          {icon}
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs font-bold group-hover:text-primary transition-colors">{label}</span>
+          {date && <span className="text-[10px] text-muted-foreground">{date}</span>}
+        </div>
+      </div>
+      <ExternalLink className="h-3 w-3 text-muted-foreground/30 group-hover:text-primary/50" />
+    </div>
+  )
+}
+

@@ -14,6 +14,7 @@ import {
   User,
   Music,
   X,
+  Rocket,
 } from "lucide-react"
 
 import { playSwipe, playRestrictedAlert } from "@/lib/sounds"
@@ -465,9 +466,19 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
               </button>
             )}
 
-            {/* When video ends, cover to hide end screen */}
+            {/* When video ends, show finished overlay with notice */}
             {videoFinished[i] && (
-              <div className="absolute inset-0 z-[6] bg-black" />
+              <div className="absolute inset-0 z-[6] flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-500">
+                <div className="mb-6 flex animate-bounce flex-col items-center gap-2">
+                  <div className="h-14 w-14 rounded-full bg-primary/20 flex items-center justify-center">
+                    <Rocket className="h-8 w-8 text-primary shadow-lg" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Video Finalizado</h3>
+                <p className="text-sm text-white/60 text-center px-12 leading-relaxed">
+                  Has completado esta fase. Desliza hacia arriba para continuar al siguiente paso.
+                </p>
+              </div>
             )}
 
             {/* Double-tap heart animation */}

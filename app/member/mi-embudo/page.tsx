@@ -9,7 +9,7 @@ import { getMemberData } from "@/lib/team-data"
 import { getMemberCommunity } from "@/lib/communities-data"
 import {
   Rocket, ArrowRight, CheckCircle2, Eye, Copy, Check,
-  Layers, ChevronRight, ExternalLink,
+  Layers, ChevronRight, ExternalLink, Users, MessageSquare, Trophy
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import useSWR from "swr"
@@ -55,9 +55,17 @@ export default function MemberEmbudoPage() {
     ? embudosAsignados.find((e) => e.id === selectedEmbudo)
     : embudosAsignados[0] || null
 
-  const myLeads = (allLeads || []).filter(
-    (l) => activeEmbudo && l.embudo_id === activeEmbudo.id
-  )
+  const myLeads = (allLeads || []).filter((l) => {
+    const matchEmbudo = activeEmbudo && l.embudo_id === activeEmbudo.id
+    if (!matchEmbudo) return false
+
+    // If regular member, only show their own leads
+    if (user?.role === "member") {
+      return l.asignado_a === user.name
+    }
+    // Leaders see all leads for the community
+    return true
+  })
 
   const handleCopy = (embudoId: string) => {
     const url = `${window.location.origin}/funnel/${embudoId}?ref=${finalMember.id}`
@@ -187,86 +195,151 @@ export default function MemberEmbudoPage() {
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
             ) : (
-              <div className="flex flex-col gap-2">
-                {activeEmbudo.etapas.map((etapa, idx) => {
-                  const leadsAtStage = myLeads.filter((l) => l.etapa_maxima_alcanzada >= etapa.id)
-                  const pct = myLeads.length > 0
-                    ? Math.round((leadsAtStage.length / myLeads.length) * 100)
-                    : 0
+              <div className="space-y-6">
+                {/* Visual Funnel Representation */}
+                <div className="flex items-end justify-around h-32 bg-secondary/20 rounded-2xl px-6 pt-8 pb-2 border border-border/10">
+                  {activeEmbudo.etapas.map((etapa, idx) => {
+                    const count = myLeads.filter((l) => l.etapa_maxima_alcanzada >= etapa.id).length
+                    const maxCount = myLeads.length || 1
+                    const height = Math.max(10, Math.round((count / maxCount) * 100))
+                    return (
+                      <div key={etapa.id} className="flex flex-col items-center gap-2 w-12 group relative">
+                        <div
+                          className="w-full rounded-t-lg transition-all duration-700 ease-out shadow-lg shadow-primary/10"
+                          style={{
+                            height: `${height}%`,
+                            background: idx === 0 ? 'hsl(var(--primary))' : `hsl(var(--primary) / ${0.9 - (idx * 0.1)})`
+                          }}
+                        />
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase">{count}</span>
+                        <div className="absolute -top-10 scale-0 group-hover:scale-100 transition-transform bg-popover text-popover-foreground text-[10px] px-2 py-1 rounded shadow-xl border border-border/20 z-10 whitespace-nowrap">
+                          {etapa.label}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
 
-                  return (
-                    <div key={etapa.id} className="flex items-center gap-3">
-                      <div
-                        className={cn(
-                          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg transition-all",
-                          idx === 0
-                            ? "bg-primary/15 shadow-sm shadow-primary/10"
-                            : "bg-secondary/50"
+                <div className="flex flex-col gap-2">
+                  {activeEmbudo.etapas.map((etapa, idx) => {
+                    const leadsAtStage = myLeads.filter((l) => l.etapa_maxima_alcanzada >= etapa.id)
+                    const pct = myLeads.length > 0
+                      ? Math.round((leadsAtStage.length / myLeads.length) * 100)
+                      : 0
+
+                    return (
+                      <div key={etapa.id} className="flex items-center gap-3">
+                        <div
+                          className={cn(
+                            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg transition-all",
+                            idx === 0
+                              ? "bg-primary/15 shadow-sm shadow-primary/10"
+                              : "bg-secondary/50"
+                          )}
+                        >
+                          {ETAPA_ICONS[etapa.icon] || "●"}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-foreground">{etapa.label}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {pct}% ({leadsAtStage.length})
+                            </span>
+                          </div>
+                          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-secondary/50">
+                            <div
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{
+                                width: `${pct}%`,
+                                background: `linear-gradient(90deg, ${activeEmbudo.color}, hsl(var(--primary) / 0.6))`,
+                              }}
+                            />
+                          </div>
+                          <p className="mt-0.5 text-[11px] text-muted-foreground">{etapa.description}</p>
+                        </div>
+                        {idx < activeEmbudo.etapas.length - 1 && (
+                          <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground/30" />
                         )}
-                      >
-                        {ETAPA_ICONS[etapa.icon] || "●"}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-foreground">{etapa.label}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {pct}% ({leadsAtStage.length})
-                          </span>
-                        </div>
-                        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-secondary/50">
-                          <div
-                            className="h-full rounded-full transition-all duration-500"
-                            style={{
-                              width: `${pct}%`,
-                              background: `linear-gradient(90deg, ${activeEmbudo.color}, hsl(var(--primary) / 0.6))`,
-                            }}
-                          />
-                        </div>
-                        <p className="mt-0.5 text-[11px] text-muted-foreground">{etapa.description}</p>
-                      </div>
-                      {idx < activeEmbudo.etapas.length - 1 && (
-                        <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground/30" />
-                      )}
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
               </div>
             )}
           </div>
 
           {/* Summary Cards */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Card className="border-border/30">
+            <Card className="border-border/30 bg-card/40 backdrop-blur-sm shadow-sm group hover:border-primary/30 transition-all">
               <CardContent className="flex flex-col items-center gap-1 p-4">
+                <Users className="h-4 w-4 text-muted-foreground/50 mb-1 group-hover:text-primary transition-colors" />
                 <span className="text-2xl font-bold text-foreground">{myLeads.length}</span>
-                <span className="text-xs text-muted-foreground">Leads totales</span>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Leads Totales</span>
               </CardContent>
             </Card>
-            <Card className="border-border/30">
+            <Card className="border-border/30 bg-card/40 backdrop-blur-sm shadow-sm group hover:border-emerald-500/30 transition-all">
               <CardContent className="flex flex-col items-center gap-1 p-4">
+                <CheckCircle2 className="h-4 w-4 text-muted-foreground/50 mb-1 group-hover:text-emerald-400 transition-colors" />
                 <span className="text-2xl font-bold text-emerald-400">
                   {myLeads.filter((l) => l.etapa === "cerrado").length}
                 </span>
-                <span className="text-xs text-muted-foreground">Cerrados</span>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Cerrados</span>
               </CardContent>
             </Card>
-            <Card className="border-border/30">
+            <Card className="border-border/30 bg-card/40 backdrop-blur-sm shadow-sm group hover:border-amber-500/30 transition-all">
               <CardContent className="flex flex-col items-center gap-1 p-4">
+                <MessageSquare className="h-4 w-4 text-muted-foreground/50 mb-1 group-hover:text-amber-400 transition-colors" />
                 <span className="text-2xl font-bold text-amber-400">
                   {myLeads.filter((l) => l.whatsapp_cita_enviado).length}
                 </span>
-                <span className="text-xs text-muted-foreground">Citas enviadas</span>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Citas Enviadas</span>
               </CardContent>
             </Card>
-            <Card className="border-border/30">
+            <Card className="border-border/30 bg-card/40 backdrop-blur-sm shadow-sm group hover:border-primary/30 transition-all">
               <CardContent className="flex flex-col items-center gap-1 p-4">
+                <Trophy className="h-4 w-4 text-muted-foreground/50 mb-1 group-hover:text-primary transition-colors" />
                 <span className="text-2xl font-bold text-primary">
                   {myLeads.length > 0
                     ? Math.round((myLeads.filter((l) => l.etapa === "cerrado").length / myLeads.length) * 100)
                     : 0}%
                 </span>
-                <span className="text-xs text-muted-foreground">Conversion</span>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Conversión</span>
               </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h3 className="text-sm font-bold text-foreground">Actividad reciente</h3>
+              <button className="text-[10px] font-bold text-primary hover:underline uppercase tracking-wider">Ver todos</button>
+            </div>
+            <Card className="border-border/30 bg-card/40 overflow-hidden">
+              <div className="divide-y divide-border/5">
+                {myLeads.slice(0, 5).map(lead => (
+                  <div key={lead.id} className="flex items-center justify-between p-3 hover:bg-white/[0.02] transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+                        {lead.nombre[0]}
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold">{lead.nombre}</p>
+                        <p className="text-[10px] text-muted-foreground">Llegó desde {lead.fuente}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline" className="text-[9px] h-5 border-primary/20 bg-primary/5 text-primary">
+                        {lead.etapa.replace('_', ' ')}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+                {myLeads.length === 0 && (
+                  <div className="p-8 text-center">
+                    <p className="text-xs text-muted-foreground italic">No hay actividad reciente aún</p>
+                  </div>
+                )}
+              </div>
             </Card>
           </div>
         </>

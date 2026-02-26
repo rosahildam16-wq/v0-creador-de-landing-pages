@@ -37,6 +37,7 @@ const leads: Lead[] = SEED_LEADS.map((l) => ({
     autor: n.autor,
     created_at: n.fecha,
   })),
+  community_id: l.community_id || "general",
 }))
 
 const actividad: EventoActividad[] = SEED_ACTIVIDAD.map((a) => ({
@@ -237,6 +238,9 @@ export async function createLead(leadData: {
   telefono?: string
   whatsapp?: string
   fuente?: FuenteTrafico
+  embudo_id?: string
+  asignado_a?: string
+  community_id?: string
 }): Promise<Lead | null> {
   if (isSupabaseConfigured()) {
     const { createAdminClient } = await import("@/lib/supabase/admin")
@@ -249,6 +253,9 @@ export async function createLead(leadData: {
         telefono: leadData.telefono || "",
         whatsapp: leadData.whatsapp || leadData.telefono || "",
         fuente: leadData.fuente || "Organico",
+        embudo_id: leadData.embudo_id || "nomada-vip",
+        asignado_a: leadData.asignado_a || "Sin asignar",
+        community_id: leadData.community_id || "general",
       })
       .select()
       .single()
@@ -272,7 +279,7 @@ export async function createLead(leadData: {
     fecha_ingreso: new Date().toISOString(),
     etapa: "lead_nuevo",
     campana: "",
-    embudo_id: "nomada-vip",
+    embudo_id: leadData.embudo_id || "nomada-vip",
     tipo_embudo: "cita",
     whatsapp_cita_enviado: false,
     compra_completada: false,
@@ -290,10 +297,77 @@ export async function createLead(leadData: {
     tiempo_total_segundos: 0,
     ultimo_evento: new Date().toISOString(),
     notas: [],
-    asignado_a: "Sin asignar",
+    asignado_a: leadData.asignado_a || "Sin asignar",
+    community_id: leadData.community_id || "general",
   }
   leads.unshift(newLead)
   return newLead
+}
+
+export async function updateLeadFunnelProgress(
+  leadId: string,
+  step: number,
+  stepName?: string
+): Promise<boolean> {
+  if (isSupabaseConfigured()) {
+    const { createAdminClient } = await import("@/lib/supabase/admin")
+    const supabase = createAdminClient()
+
+    const update: any = {
+      etapa_maxima_alcanzada: step,
+      ultimo_evento: new Date().toISOString()
+    }
+
+    // Map step to lead boolean field
+    const stepToField: Record<number, string> = {
+      1: 'video_visto_pct', // will treat as 100 for simplicity
+      2: 'llamada_contestada',
+      3: 'quiz_completado',
+      4: 'terminal_completado',
+      5: 'whatsapp_leido',
+      6: 'login_completado',
+      7: 'feed_visto',
+      8: 'sales_page_vista',
+      9: 'cta_clicked'
+    }
+
+    const field = stepToField[step]
+    if (field) {
+      update[field] = (field === 'video_visto_pct') ? 100 : true
+    }
+
+    const { error } = await supabase
+      .from("leads")
+      .update(update)
+      .eq("id", leadId)
+
+    if (error) { console.error("Error updating lead progress:", error); return false }
+    return true
+  }
+
+  // Fallback
+  const lead = leads.find(l => l.id === leadId)
+  if (lead) {
+    lead.etapa_maxima_alcanzada = Math.max(lead.etapa_maxima_alcanzada, step)
+    lead.ultimo_evento = new Date().toISOString()
+    const stepToField: Record<number, keyof Lead> = {
+      1: 'video_visto_pct',
+      2: 'llamada_contestada',
+      3: 'quiz_completado',
+      4: 'terminal_completado',
+      5: 'whatsapp_leido',
+      6: 'login_completado',
+      7: 'feed_visto',
+      8: 'sales_page_vista',
+      9: 'cta_clicked'
+    }
+    const field = stepToField[step]
+    if (field) {
+      (lead as any)[field] = (field === 'video_visto_pct') ? 100 : true
+    }
+    return true
+  }
+  return false
 }
 
 export async function updateLeadEtapa(leadId: string, etapa: EtapaPipeline): Promise<boolean> {
@@ -389,5 +463,6 @@ function mapLeadRow(row: Record<string, unknown>, notas: Nota[] = []): Lead {
     ultimo_evento: (row.ultimo_evento as string) || (row.fecha_ingreso as string),
     notas,
     asignado_a: (row.asignado_a as string) || "Sin asignar",
+    community_id: (row.community_id as string) || "general",
   }
 }
