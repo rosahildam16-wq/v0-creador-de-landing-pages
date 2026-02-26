@@ -143,6 +143,18 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
     playRestrictedAlert()
   }, [])
 
+  // Auto-play local video when slide becomes active
+  useEffect(() => {
+    if (currentSlide?.videoSrc && videoRef.current) {
+      const playPromise = videoRef.current.play()
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.error("TikTok local video play error:", error)
+        })
+      }
+    }
+  }, [activeSlide, currentSlide?.videoSrc])
+
   // ── Toggle play/pause (Vimeo or Local) ──
   const togglePlay = useCallback((slideIndex: number) => {
     const slide = activeSlides[slideIndex]
@@ -377,16 +389,17 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
             {slide.videoSrc ? (
               <video
                 ref={i === activeSlide ? videoRef : null}
-                src={slide.videoSrc}
                 className="absolute inset-0 h-full w-full object-cover"
                 playsInline
                 muted={i !== activeSlide}
                 onEnded={() => setVideoFinished((prev) => ({ ...prev, [i]: true }))}
                 onPlay={() => setVideoPlaying((prev) => ({ ...prev, [i]: true }))}
                 onPause={() => setVideoPlaying((prev) => ({ ...prev, [i]: false }))}
-                // Case for auto-play when it becomes active
-                autoPlay={i === activeSlide}
-              />
+                preload="auto"
+              >
+                <source src={slide.videoSrc} type="video/mp4" />
+                <source src={slide.videoSrc} type="video/quicktime" />
+              </video>
             ) : slide.videoEmbed ? (
               <>
                 {/* Load iframe for active slide and next slide for preloading */}
