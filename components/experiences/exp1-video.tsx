@@ -12,7 +12,7 @@ interface Props {
 }
 
 // PLACEHOLDER: Replace this URL with your actual Vimeo/YouTube embed link
-const DEFAULT_EMBED = "https://player.vimeo.com/video/REPLACE_WITH_YOUR_VIDEO_ID?autoplay=0&title=0&byline=0&portrait=0&dnt=1&keyboard=0&controls=0"
+const DEFAULT_EMBED = "https://player.vimeo.com/video/1168000494?autoplay=1&muted=1&title=0&byline=0&portrait=0&dnt=1&keyboard=0&controls=0&playsinline=1"
 
 export function VideoPlayer({ onContinue, videoSrc, embedUrl }: Props) {
   const src = embedUrl || DEFAULT_EMBED
