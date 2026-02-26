@@ -138,12 +138,12 @@ export function VideoPlayer({ onContinue, videoSrc, embedUrl }: Props) {
           {started ? (
             <iframe
               id="exp1-vimeo"
-              src={autoplaySrc}
+              src={src}
               title="Video"
-              className="absolute inset-0 h-[100%] w-[100%] border-0 scale-[1.01]" // scale-1.01 hides tiny edge lines
-              allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+              className="absolute inset-x-0 top-1/2 z-[1] h-full w-full -translate-y-1/2 border-0"
+              style={{ minHeight: "100%", height: "100vh", objectFit: "cover", pointerEvents: 'none' }}
+              allow="autoplay; fullscreen; picture-in-picture; playsinline"
               allowFullScreen
-              style={{ pointerEvents: 'none' }}
             />
           ) : null}
 
