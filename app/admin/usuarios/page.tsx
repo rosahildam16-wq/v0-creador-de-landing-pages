@@ -312,13 +312,43 @@ export default function AdminUsuariosPage() {
                       {new Date(u.createdAt).toLocaleDateString("es-ES", { day: '2-digit', month: 'short', year: 'numeric' })}
                     </td>
                     <td className="px-4 py-3 text-right pr-6">
-                      <button
-                        onClick={() => handleDelete(u.id, u.username)}
-                        className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                        title="Eliminar usuario"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        {!u.activo || u.communityId !== 'skalia-vip' ? (
+                          <button
+                            onClick={async () => {
+                              if (!user?.email) return
+                              try {
+                                const res = await fetch('/api/admin/users', {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    adminEmail: user.email,
+                                    userId: u.id,
+                                    updates: { activo: true, community_id: 'skalia-vip' }
+                                  })
+                                })
+                                if (res.ok) {
+                                  toast.success(`${u.name} validado en Skalia VIP`)
+                                  fetchUsers()
+                                }
+                              } catch { toast.error('Error al validar') }
+                            }}
+                            className="rounded-lg bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold text-emerald-500 hover:bg-emerald-500/20 transition-all border border-emerald-500/20"
+                            title="Validar y Activar en Skalia VIP"
+                          >
+                            VALIDAR
+                          </button>
+                        ) : (
+                          <span className="text-[9px] font-bold text-muted-foreground uppercase bg-white/5 px-2 py-0.5 rounded">VALIDADO</span>
+                        )}
+                        <button
+                          onClick={() => handleDelete(u.id, u.username)}
+                          className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                          title="Eliminar usuario"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

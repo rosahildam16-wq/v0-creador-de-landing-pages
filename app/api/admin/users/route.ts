@@ -80,6 +80,33 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function PATCH(req: NextRequest) {
+  try {
+    const body = await req.json()
+    const { adminEmail, userId, updates } = body
+
+    if (adminEmail !== SUPER_ADMIN_EMAIL) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
+    }
+
+    if (!userId) return NextResponse.json({ error: "ID requerido" }, { status: 400 })
+
+    const supabase = createAdminClient()
+    if (!supabase) return NextResponse.json({ error: "Base de datos no disponible" }, { status: 500 })
+
+    const { error } = await supabase
+      .from("community_members")
+      .update(updates)
+      .eq("id", userId)
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ error: "Error interno" }, { status: 500 })
+  }
+}
+
 export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
