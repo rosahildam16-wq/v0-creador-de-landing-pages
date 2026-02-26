@@ -64,7 +64,7 @@ export async function POST(request: Request) {
           for (const r of [...new Set(refsToTry)]) {
             const { data } = await supabase
               .from("community_members")
-              .select("community_id, name")
+              .select("community_id, name, username")
               .or(`member_id.eq."${r}",username.eq."${r}"`)
               .maybeSingle()
             if (data) {
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
 
           if (foundMember) {
             communityId = foundMember.community_id
-            asignadoA = foundMember.name
+            asignadoA = foundMember.username || foundMember.name
           }
         }
       } catch (err) {

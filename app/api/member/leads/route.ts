@@ -12,10 +12,10 @@ export async function GET(req: NextRequest) {
 
         const supabase = await createClient()
 
-        // 1. Get member community_id
+        // 1. Get member details
         const { data: member, error: memberError } = await supabase
             .from("community_members")
-            .select("community_id, role")
+            .select("community_id, role, username")
             .eq("email", email)
             .maybeSingle()
 
@@ -24,12 +24,15 @@ export async function GET(req: NextRequest) {
             return NextResponse.json([])
         }
 
-        // 2. Fetch leads for this community
-        const { data: leads, error: leadsError } = await supabase
+        // 2. Fetch leads for this community OR assigned to this member
+        // Try community_id first, fallback to asignado_a if it fails or returns 0
+        let query = supabase
             .from("leads")
             .select("*")
-            .eq("community_id", member.community_id)
-            .order("created_at", { ascending: false })
+            .or(`community_id.eq."${member.community_id}",asignado_a.eq."${member.username}"`)
+            .order("fecha_ingreso", { ascending: false })
+
+        const { data: leads, error: leadsError } = await query
 
         if (leadsError) {
             console.error("Leads fetch error:", leadsError)

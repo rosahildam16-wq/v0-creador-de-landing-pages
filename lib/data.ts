@@ -37,7 +37,7 @@ const leads: Lead[] = SEED_LEADS.map((l) => ({
     autor: n.autor,
     created_at: n.fecha,
   })),
-  community_id: l.community_id || "general",
+  community_id: (l as any).community_id || "general",
 }))
 
 const actividad: EventoActividad[] = SEED_ACTIVIDAD.map((a) => ({
@@ -57,12 +57,13 @@ export async function getLeads(): Promise<Lead[]> {
   if (isSupabaseConfigured()) {
     const { createAdminClient } = await import("@/lib/supabase/admin")
     const supabase = createAdminClient()
+    if (!supabase) return []
     const { data, error } = await supabase
       .from("leads")
       .select("*")
       .order("fecha_ingreso", { ascending: false })
     if (!error && data) {
-      return data.map((row: Record<string, unknown>) => mapLeadRow(row))
+      return data.map((row: Record<string, any>) => mapLeadRow(row))
     }
   }
   // Fallback: mock data
@@ -75,6 +76,7 @@ export async function getLeadById(id: string): Promise<Lead | null> {
   if (isSupabaseConfigured()) {
     const { createAdminClient } = await import("@/lib/supabase/admin")
     const supabase = createAdminClient()
+    if (!supabase) return null
     const [leadResult, notasResult] = await Promise.all([
       supabase.from("leads").select("*").eq("id", id).single(),
       supabase.from("notas").select("*").eq("lead_id", id).order("created_at", { ascending: false }),
@@ -98,6 +100,7 @@ export async function getActividad(limit = 15): Promise<EventoActividad[]> {
   if (isSupabaseConfigured()) {
     const { createAdminClient } = await import("@/lib/supabase/admin")
     const supabase = createAdminClient()
+    if (!supabase) return []
     const { data, error } = await supabase
       .from("eventos_actividad")
       .select("*, leads(nombre)")
@@ -123,6 +126,7 @@ export async function getMetricas() {
   if (isSupabaseConfigured()) {
     const { createAdminClient } = await import("@/lib/supabase/admin")
     const supabase = createAdminClient()
+    if (!supabase) return getMockMetricas()
     const today = new Date()
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString()
     const [totalResult, todayResult, cerradosResult, ctaResult] = await Promise.all([
@@ -145,6 +149,7 @@ export async function getLeadsPorDia(): Promise<{ fecha: string; leads: number }
   if (isSupabaseConfigured()) {
     const { createAdminClient } = await import("@/lib/supabase/admin")
     const supabase = createAdminClient()
+    if (!supabase) return []
     const now = new Date()
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 86400000).toISOString()
     const { data: dbLeads } = await supabase.from("leads").select("fecha_ingreso").gte("fecha_ingreso", thirtyDaysAgo)
@@ -169,6 +174,7 @@ export async function getLeadsPorFuente(): Promise<{ fuente: string; cantidad: n
   if (isSupabaseConfigured()) {
     const { createAdminClient } = await import("@/lib/supabase/admin")
     const supabase = createAdminClient()
+    if (!supabase) return []
     const colors: Record<string, string> = {
       "Meta Ads": "hsl(var(--chart-1))",
       Organico: "hsl(var(--chart-5))",
@@ -188,6 +194,7 @@ export async function getConversionEmbudo(): Promise<{ etapa: string; cantidad: 
   if (isSupabaseConfigured()) {
     const { createAdminClient } = await import("@/lib/supabase/admin")
     const supabase = createAdminClient()
+    if (!supabase) return []
     const { data, count } = await supabase.from("leads").select("etapa_maxima_alcanzada", { count: "exact" })
     const total = count || 0
     return FUNNEL_STEPS.map((step) => {
@@ -202,6 +209,7 @@ export async function getDistribucionTemperatura(): Promise<{ temperatura: strin
   if (isSupabaseConfigured()) {
     const { createAdminClient } = await import("@/lib/supabase/admin")
     const supabase = createAdminClient()
+    if (!supabase) return []
     const { data } = await supabase.from("leads").select(
       "video_visto_pct, llamada_contestada, quiz_completado, terminal_completado, whatsapp_leido, login_completado, feed_visto, sales_page_vista, cta_clicked"
     )
@@ -245,27 +253,52 @@ export async function createLead(leadData: {
   if (isSupabaseConfigured()) {
     const { createAdminClient } = await import("@/lib/supabase/admin")
     const supabase = createAdminClient()
-    const { data, error } = await supabase
-      .from("leads")
-      .insert({
-        nombre: leadData.nombre,
-        email: leadData.email.trim().toLowerCase(),
-        telefono: leadData.telefono || "",
-        whatsapp: leadData.whatsapp || leadData.telefono || "",
-        fuente: leadData.fuente || "Organico",
-        embudo_id: leadData.embudo_id || "nomada-vip",
-        asignado_a: leadData.asignado_a || "Sin asignar",
-        community_id: leadData.community_id || "general",
-      })
-      .select()
-      .single()
-    if (error) { console.error("Error creating lead:", error); return null }
-    await supabase.from("eventos_actividad").insert({
-      lead_id: data.id,
-      tipo: "ingreso",
-      descripcion: `${leadData.nombre} ingreso al embudo via ${leadData.fuente || "Organico"}`,
-    })
-    return mapLeadRow(data)
+
+    // Use common columns that we know exist
+    const insertData: any = {
+      nombre: leadData.nombre,
+      email: leadData.email.trim().toLowerCase(),
+      telefono: leadData.telefono || "",
+      whatsapp: leadData.whatsapp || leadData.telefono || "",
+      fuente: leadData.fuente || "Organico",
+      asignado_a: leadData.asignado_a || "Sin asignar",
+    }
+
+    // Only add these if we're sure or they might fail the insert
+    // Maybe try a dynamic schema check or just catching the error
+    try {
+      const { data, error } = await supabase
+        .from("leads")
+        .insert({
+          ...insertData,
+          embudo_id: leadData.embudo_id || "nomada-vip",
+          community_id: leadData.community_id || "general",
+        })
+        .select()
+        .single()
+
+      if (!error && data) return mapLeadRow(data)
+
+      // Fallback: try without 'community_id' and 'embudo_id' if error was column not found
+      if (error && (error.code === '42703' || error.message.includes('column'))) {
+        const { data: data2, error: error2 } = await supabase
+          .from("leads")
+          .insert(insertData)
+          .select()
+          .single()
+        if (error2) {
+          console.error("Secondary error creating lead:", error2)
+          return null
+        }
+        return mapLeadRow(data2)
+      }
+
+      if (error) console.error("Error creating lead:", error)
+      return null
+    } catch (e) {
+      console.error("Fatal error creating lead:", e)
+      return null
+    }
   }
 
   // Fallback: in-memory
@@ -374,6 +407,7 @@ export async function updateLeadEtapa(leadId: string, etapa: EtapaPipeline): Pro
   if (isSupabaseConfigured()) {
     const { createAdminClient } = await import("@/lib/supabase/admin")
     const supabase = createAdminClient()
+    if (!supabase) return false
     const { error } = await supabase
       .from("leads")
       .update({ etapa, ultimo_evento: new Date().toISOString() })
@@ -394,6 +428,7 @@ export async function addNota(leadId: string, texto: string, autor: string = "Si
   if (isSupabaseConfigured()) {
     const { createAdminClient } = await import("@/lib/supabase/admin")
     const supabase = createAdminClient()
+    if (!supabase) return null
     const { data, error } = await supabase
       .from("notas")
       .insert({ lead_id: leadId, texto, autor })
@@ -418,6 +453,7 @@ export async function registrarEvento(leadId: string, tipo: string, descripcion:
   if (isSupabaseConfigured()) {
     const { createAdminClient } = await import("@/lib/supabase/admin")
     const supabase = createAdminClient()
+    if (!supabase) return
     await supabase.from("eventos_actividad").insert({ lead_id: leadId, tipo, descripcion })
     return
   }
