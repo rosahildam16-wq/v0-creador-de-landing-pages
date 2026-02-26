@@ -32,14 +32,27 @@ interface MetaInsightsResponse {
 // GET /api/meta-ads?date_preset=last_30d
 // GET /api/meta-ads?since=2026-01-01&until=2026-02-15
 export async function GET(request: Request) {
-  const token = process.env.META_ACCESS_TOKEN
-  const accountId = process.env.META_AD_ACCOUNT_ID
+  const { searchParams } = new URL(request.url)
+  const memberId = searchParams.get("memberId") || "super-admin"
 
-  // If credentials are missing, return clearly labeled demo data
+  let token = process.env.META_ACCESS_TOKEN
+  let accountId = process.env.META_AD_ACCOUNT_ID
+
+  // If environment variables are missing, try to load from database for the specified member
+  if (!token || !accountId) {
+    const { loadMetaAdsConfig } = await import("@/lib/meta-client")
+    const dbConfig = await loadMetaAdsConfig(memberId)
+    if (dbConfig) {
+      token = dbConfig.accessToken
+      accountId = dbConfig.adAccountId.startsWith("act_") ? dbConfig.adAccountId : `act_${dbConfig.adAccountId}`
+    }
+  }
+
+  // If still missing, return clearly labeled demo data
   if (!token || !accountId) {
     return NextResponse.json({
       mode: "demo",
-      message: "META_ACCESS_TOKEN y META_AD_ACCOUNT_ID no configurados. Mostrando datos de demo.",
+      message: "Configura tus credenciales en el dashboard para ver datos reales.",
       data: generateDemoData(),
     })
   }

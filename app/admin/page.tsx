@@ -3,7 +3,9 @@
 import { MetricCard } from "@/components/admin/metric-card"
 import { TemperatureBadge } from "@/components/admin/temperature-badge"
 // SetupBanner no longer needed — data layer has mock fallback
+import { useAuth } from "@/lib/auth-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+
 import {
   Table,
   TableBody,
@@ -37,6 +39,8 @@ import { ChallengeLeaderboard } from "@/components/shared/challenge-leaderboard"
 import type { Challenge } from "@/lib/challenges-data"
 import { DEFAULT_CHALLENGES } from "@/lib/challenges-data"
 import { useState, useEffect } from "react"
+import { MetaAdsSection } from "@/components/member/meta-ads-section"
+
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
@@ -58,6 +62,8 @@ function safeGet(key: string): string | null {
 }
 
 export default function AdminDashboard() {
+  const { user } = useAuth()
+
   const { data, error: fetchError, isLoading } = useSWR("/api/admin/dashboard", fetcher, {
     refreshInterval: 30000,
   })
@@ -346,7 +352,6 @@ export default function AdminDashboard() {
             </Card>
           </div>
 
-          {/* Recent registrations table */}
           <Card className="border-border/50">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Registros Recientes</CardTitle>
@@ -431,6 +436,9 @@ export default function AdminDashboard() {
           </Card>
         </>
       )}
+
+      {/* Meta Ads Stats for Super Admin */}
+      <MetaAdsSection memberId="super-admin" />
 
       {metricas.total > 0 && (
         <>
@@ -688,3 +696,4 @@ export default function AdminDashboard() {
     </div>
   )
 }
+

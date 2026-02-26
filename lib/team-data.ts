@@ -130,6 +130,19 @@ export const TEAM_MEMBERS: TeamMember[] = [
     embudos_asignados: ["nomada-vip"],
     fecha_ingreso: "2026-01-20",
   },
+  {
+    id: "sensei",
+    nombre: "Sensei",
+    email: "sensei@correo.com",
+    avatar_initials: "SE",
+    publicidad_activa: true,
+    fecha_renovacion: "22 ene 2026",
+    metricas: { leads: 42, cerrados: 8, afiliados: 3 },
+    publicidad: { inversion_total: 100, saldo_disponible: 40, leads_totales: 35, leads_cerrados: 5 },
+    organico: { saldo_disponible: 40, leads_totales: 7, leads_cerrados: 3 },
+    embudos_asignados: ["franquicia-reset", "nomada-vip"],
+    fecha_ingreso: "2026-01-10",
+  },
 ]
 
 export function getTeamMemberById(id: string): TeamMember | undefined {

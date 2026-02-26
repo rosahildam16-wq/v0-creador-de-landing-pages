@@ -51,10 +51,11 @@ export function MetaAdsSection({ memberId }: { memberId: string }) {
                 setShowConfig(false)
                 mutate()
             } else {
-                toast.error("Error al guardar configuración")
+                const errData = await res.json()
+                toast.error(`Error: ${errData.error || "No se pudo guardar"}`)
             }
         } catch (err) {
-            toast.error("Error de conexión")
+            toast.error("Error de conexión con el servidor")
         } finally {
             setLoading(false)
         }

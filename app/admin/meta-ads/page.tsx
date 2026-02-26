@@ -231,23 +231,80 @@ export default function MetaAdsPage() {
 
       {/* Config panel */}
       {showConfig && (
-        <Card className="border-amber-500/20 bg-amber-500/5">
-          <CardContent className="p-4">
-            <h3 className="mb-2 text-sm font-semibold text-foreground">Como conectar Meta Ads en vivo</h3>
-            <ol className="flex flex-col gap-1.5 text-xs leading-relaxed text-muted-foreground">
-              <li><span className="font-medium text-foreground">1.</span> Ve a <span className="font-medium text-foreground">developers.facebook.com</span> y crea una app tipo Business</li>
-              <li><span className="font-medium text-foreground">2.</span> Activa el producto <span className="font-medium text-foreground">Marketing API</span></li>
-              <li><span className="font-medium text-foreground">3.</span> En el Graph API Explorer, genera un token con permisos <code className="rounded bg-secondary px-1 py-0.5 text-foreground">ads_read</code></li>
-              <li><span className="font-medium text-foreground">4.</span> Obtén tu Ad Account ID en Business Suite {'>'} Configuracion (formato: <code className="rounded bg-secondary px-1 py-0.5 text-foreground">act_XXXXXXXXX</code>)</li>
-              <li><span className="font-medium text-foreground">5.</span> Agrega estas variables de entorno en la seccion <span className="font-medium text-foreground">Vars</span> del sidebar:</li>
-            </ol>
-            <div className="mt-3 flex flex-col gap-1.5">
-              <code className="rounded-lg bg-secondary px-3 py-2 text-xs text-foreground">META_ACCESS_TOKEN=tu_token_aqui</code>
-              <code className="rounded-lg bg-secondary px-3 py-2 text-xs text-foreground">META_AD_ACCOUNT_ID=act_XXXXXXXXX</code>
+        <Card className="border-primary/30 bg-card/80 backdrop-blur-md">
+          <CardContent className="p-6">
+            <div className="flex flex-col gap-6">
+              <div>
+                <h3 className="text-lg font-bold text-foreground">Configuración de Integración</h3>
+                <p className="text-sm text-muted-foreground">Ingresa tus credenciales para conectar este dashboard con la cuenta real.</p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ad Account ID</label>
+                  <input
+                    type="text"
+                    placeholder="act_XXXXXXXXX"
+                    className="w-full rounded-lg border border-border/50 bg-secondary/50 px-4 py-2 text-sm focus:border-primary focus:outline-none"
+                    defaultValue={process.env.NEXT_PUBLIC_META_AD_ACCOUNT_ID || ""}
+                    id="config-account-id"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Access Token</label>
+                  <input
+                    type="password"
+                    placeholder="EAAB..."
+                    className="w-full rounded-lg border border-border/50 bg-secondary/50 px-4 py-2 text-sm focus:border-primary focus:outline-none"
+                    id="config-token"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-2">
+                <button
+                  onClick={async () => {
+                    const accId = (document.getElementById("config-account-id") as HTMLInputElement).value
+                    const token = (document.getElementById("config-token") as HTMLInputElement).value
+                    if (!accId || !token) {
+                      alert("Por favor completa ambos campos")
+                      return
+                    }
+                    try {
+                      const res = await fetch("/api/meta/insights", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ memberId: "super-admin", adAccountId: accId, accessToken: token }),
+                      })
+                      if (res.ok) {
+                        alert("Configuración guardada correctamente. Recargando...")
+                        fetchData()
+                        setShowConfig(false)
+                      }
+                    } catch (e) {
+                      alert("Error al guardar")
+                    }
+                  }}
+                  className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:opacity-90"
+                >
+                  Guardar y Sincronizar
+                </button>
+                <button
+                  onClick={() => setShowConfig(false)}
+                  className="rounded-lg bg-secondary px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary/80"
+                >
+                  Cancelar
+                </button>
+                <a
+                  href="https://developers.facebook.com/tools/explorer/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="ml-auto flex items-center gap-1 text-xs text-primary hover:underline"
+                >
+                  Obtener Token en Meta <ArrowUpRight className="h-3 w-3" />
+                </a>
+              </div>
             </div>
-            <p className="mt-3 text-xs text-muted-foreground">
-              Una vez configuradas, el dashboard se conectara automaticamente y mostrara datos reales.
-            </p>
           </CardContent>
         </Card>
       )}
