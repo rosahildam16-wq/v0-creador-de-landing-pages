@@ -59,28 +59,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
 
   useEffect(() => {
-    const stored = safeGet("mf_auth")
-    if (stored) {
+    async function checkSession() {
+      // 1. Instant UI: Check localStorage/sessionStorage for last session
+      const stored = safeGet("mf_auth")
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as AuthUser
+          setUser(parsed)
+          setIsAuthenticated(true)
+        } catch { /* noop */ }
+      }
+
+      // 2. Shield Check: Verify with server (the real truth)
       try {
-        const parsed = JSON.parse(stored) as AuthUser
-
-        // Patch: If username is missing, try to restore it
-        if (!parsed.username && parsed.email) {
-          const staticMatch = TEAM_MEMBERS.find(m => m.email.toLowerCase() === parsed.email.toLowerCase())
-          if (staticMatch) {
-            parsed.username = staticMatch.id
-            parsed.memberId = staticMatch.id
-            safeSet("mf_auth", JSON.stringify(parsed))
+        const res = await fetch("/api/auth/me")
+        if (res.ok) {
+          const data = await res.json()
+          if (data.authenticated && data.user) {
+            setUser(data.user)
+            setIsAuthenticated(true)
+            safeSet("mf_auth", JSON.stringify(data.user))
+          } else {
+            throw new Error("Invalid session")
           }
+        } else {
+          throw new Error("No session")
         }
-
-        setUser(parsed)
-        setIsAuthenticated(true)
       } catch {
+        // If server says no session, clear everything
+        setUser(null)
+        setIsAuthenticated(false)
         safeRemove("mf_auth")
+      } finally {
+        setIsLoading(false)
       }
     }
-    setIsLoading(false)
+
+    checkSession()
   }, [])
 
   // NOTE: Route protection is handled by individual layouts (AdminLayout, MemberLayout)
@@ -88,94 +103,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true)
-    await new Promise((r) => setTimeout(r, 1200))
-
-    const ADMIN_EMAIL = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || "iajorgeleon21@gmail.com"
-    const ADMIN_PASSWORD = "Leon321$#"
-    const MEMBER_DEFAULT_PASSWORD = "Member123$"
-    const LAUNCH_TEST_CODE = "LANZAMIENTO2026"
-
     const normalizedEmail = email.toLowerCase().trim()
 
-    // Check Super Admin credentials
-    if (normalizedEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      const userData: AuthUser = { email: ADMIN_EMAIL, name: "Jorge Leon", role: "super_admin" }
-      setUser(userData)
-      setIsAuthenticated(true)
-      safeSet("mf_auth", JSON.stringify(userData))
-      setIsLoading(false)
-      return true
-    }
-
-    // TEST SHORTCUT: Member
-    if (normalizedEmail === "test_member@magic.com" && password === "test1234") {
-      const userData: AuthUser = { email: normalizedEmail, name: "Miembro de Prueba", role: "member", communityId: "general" }
-      setUser(userData)
-      setIsAuthenticated(true)
-      safeSet("mf_auth", JSON.stringify(userData))
-      setIsLoading(false)
-      return true
-    }
-
-    // Check launch test code (free trial for team members)
-    if (password === LAUNCH_TEST_CODE) {
-      const existingMember = TEAM_MEMBERS.find((m) => m.email.toLowerCase() === normalizedEmail)
-      const nameFromEmail = normalizedEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-      const memberId = existingMember?.id || `test-${normalizedEmail.replace(/[^a-z0-9]/g, "")}`
-
-      // Check if this email is a community leader (now treated as member)
-      const leaderComm = getLeaderCommunity(normalizedEmail)
-
-      const userData: AuthUser = {
-        email: normalizedEmail,
-        name: existingMember?.nombre || nameFromEmail,
-        role: "member",
-        memberId,
-        username: memberId, // Use memberId as username for tracking/partners
-        communityId: leaderComm?.id,
-      }
-      setUser(userData)
-      setIsAuthenticated(true)
-      safeSet("mf_auth", JSON.stringify(userData))
-      setIsLoading(false)
-      return true
-    }
-
-    // Check team member credentials
-    const teamMember = TEAM_MEMBERS.find((m) => m.email.toLowerCase() === normalizedEmail)
-    if (teamMember && password === MEMBER_DEFAULT_PASSWORD) {
-      const userData: AuthUser = {
-        email: teamMember.email,
-        name: teamMember.nombre,
-        role: "member",
-        memberId: teamMember.id,
-        username: teamMember.id, // Static members use ID as username
-      }
-      setUser(userData)
-      setIsAuthenticated(true)
-      safeSet("mf_auth", JSON.stringify(userData))
-      setIsLoading(false)
-      return true
-    }
-
-    // Check registered users in Supabase
     try {
-      const res = await fetch(`/api/communities/login`, {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: normalizedEmail, password }),
       })
+
       if (res.ok) {
         const data = await res.json()
         if (data.success) {
-          let dbRole: UserRole = "member"
-          if (data.role === "super_admin") dbRole = "super_admin"
-
           const userData: AuthUser = {
             email: normalizedEmail,
             name: data.name,
             username: data.username,
-            role: dbRole,
+            role: data.role,
             memberId: data.memberId,
             communityId: data.communityId,
           }
@@ -231,10 +175,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const logout = () => {
+  const logout = async () => {
     setUser(null)
     setIsAuthenticated(false)
     safeRemove("mf_auth")
+    try {
+      await fetch("/api/auth/logout", { method: "POST" })
+    } catch { /* noop */ }
     router.replace("/login")
   }
 

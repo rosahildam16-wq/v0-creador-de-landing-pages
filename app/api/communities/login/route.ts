@@ -21,13 +21,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false }, { status: 401 })
     }
 
-    return NextResponse.json({
-      success: true,
+    const userData = {
       memberId: member.member_id,
       name: member.name,
       username: member.username,
       communityId: member.community_id,
       role: member.role || "member",
+      email: normalizedEmail
+    }
+
+    // Shield Phase 2: Create secure session cookie
+    const { createSession } = await import("@/lib/auth/session")
+    await createSession(userData)
+
+    return NextResponse.json({
+      success: true,
+      ...userData
     })
   } catch (err) {
     console.error("Login error:", err)

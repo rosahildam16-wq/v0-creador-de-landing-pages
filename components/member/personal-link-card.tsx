@@ -39,7 +39,7 @@ export function PersonalLinkCard({ memberId }: PersonalLinkCardProps) {
   const memberSlug = memberId
 
   // Build the personalized link
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "")
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "")
   const personalLink = `${baseUrl}/r/${memberSlug}/${selectedFunnel}`
 
   const shareText = currentFunnel?.persuasiveText
