@@ -80,13 +80,17 @@ export default function LoginPage() {
     }, 500)
     return () => clearTimeout(timer)
   }, [sponsorUsername])
-  // Handle referral from URL
+  // Handle referral from URL or SessionStorage
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const ref = params.get("ref") || params.get("sponsor")
-    if (ref) {
+    const storedRef = typeof window !== "undefined" ? (sessionStorage.getItem("last_referrer") || sessionStorage.getItem("referring_member")) : null
+
+    const finalRef = ref || storedRef
+
+    if (finalRef) {
       setMode("register")
-      setSponsorUsername(ref.toLowerCase())
+      setSponsorUsername(finalRef.toLowerCase())
       setShowDiscountField(false) // prioritise sponsor
     }
   }, [])
@@ -165,9 +169,9 @@ export default function LoginPage() {
   }
 
   const features = [
-    { icon: Bot, label: "IA Avanzada", desc: "Automatización inteligente que aprende y optimiza" },
-    { icon: TrendingUp, label: "Marketing Elite", desc: "Embudos de alta conversión con analytics en tiempo real" },
-    { icon: Network, label: "Estructura Global", desc: "Escalamiento con estructura de equipos integrada" },
+    { icon: Bot, label: "IA Avanzada", desc: "Automatización del 90% de tus procesos de venta" },
+    { icon: TrendingUp, label: "Concepto Replicable", desc: "Modelo de negocio 100% replicable y escalable" },
+    { icon: Network, label: "Marketing Elite", desc: "Embudos de alta conversión con analytics en tiempo real" },
   ]
 
   return (
@@ -238,8 +242,8 @@ export default function LoginPage() {
             <div className="flex items-center gap-10">
               {[
                 { value: "2,400+", label: "Marketers activos" },
-                { value: "98.7%", label: "Uptime garantizado" },
-                { value: "3.2x", label: "ROI promedio" },
+                { value: "90%", label: "Automatizado" },
+                { value: "100%", label: "Replicable" },
               ].map((stat) => (
                 <div key={stat.label}>
                   <div className="text-xl font-bold text-white">{stat.value}</div>

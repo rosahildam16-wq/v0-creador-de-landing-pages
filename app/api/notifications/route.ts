@@ -4,9 +4,10 @@ import { NextRequest, NextResponse } from "next/server"
 export async function GET(req: NextRequest) {
   try {
     const role = req.nextUrl.searchParams.get("role") || "member"
+    const username = req.nextUrl.searchParams.get("username") || ""
     const supabase = await createClient()
 
-    // Build filter: show "all" + role-specific + "admin" for super_admin/leader
+    // Build filter: show "all" + role-specific + "admin" for super_admin/leader + user-specific
     let query = supabase
       .from("admin_notifications")
       .select("*")
@@ -21,6 +22,7 @@ export async function GET(req: NextRequest) {
       if (n.destinatario === "all") return true
       if (n.destinatario === role) return true
       if (n.destinatario === "admin" && role === "super_admin") return true
+      if (username && n.destinatario === username) return true
       return false
     })
 

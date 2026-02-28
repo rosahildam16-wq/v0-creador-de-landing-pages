@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/shared/theme-toggle"
 import { MemberProfileDropdown } from "@/components/member/member-profile-dropdown"
 import { SubscriptionGuard } from "@/components/subscription-guard"
 import { MobileBottomNav } from "@/components/member/mobile-bottom-nav"
+import { DailyQuotePopup } from "@/components/member/daily-quote-popup"
 
 export default function MemberLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, user } = useAuth()
@@ -59,10 +60,10 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
       <main className="relative z-10 flex-1 overflow-auto pb-24 md:pb-0">
         {/* Mobile top bar */}
         <div className="flex items-center justify-between border-b border-border/10 bg-background/60 px-6 py-3 backdrop-blur-md md:hidden">
-          <MagicFunnelLogo size="xs" showText={false} animated />
+          <MagicFunnelLogo size="sm" showText={false} animated />
           <div className="flex items-center gap-3">
-             <ThemeToggle />
-             <NotificationBell />
+            <ThemeToggle />
+            <NotificationBell />
           </div>
         </div>
 
@@ -80,6 +81,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
         </div>
       </main>
       <MobileBottomNav />
+      <DailyQuotePopup />
     </div>
   )
 }

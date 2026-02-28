@@ -235,8 +235,8 @@ export default function MemberDashboard() {
   const trainingPercent = member.progreso_academia || 0
   const totalSteps = 8
   const currentStep = Math.round((trainingPercent / 100) * totalSteps)
-  const achievements = 3
-  const streak = 12
+  const achievements = 0
+  const streak = 0
 
   return (
     <div className={`flex flex-col gap-8 transition-opacity duration-700 ${mounted ? "opacity-100" : "opacity-0"}`}>
@@ -259,7 +259,7 @@ export default function MemberDashboard() {
                 {getGreeting()}, {firstName}
               </h1>
               <p className="text-xs text-muted-foreground md:text-sm">
-                Tu centro de comando
+                Sistema <span className="text-primary font-bold">90% automatizado</span> y <span className="text-violet-400 font-bold">100% replicable</span>
               </p>
             </div>
           </div>

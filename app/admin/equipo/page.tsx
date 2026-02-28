@@ -1,9 +1,13 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useAuth } from "@/lib/auth-context"
+import useSWR from "swr"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search, Plus, Link2, ChevronDown, Shield } from "lucide-react"
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
 import { getTeamMembers } from "@/lib/team-data"
 import { TeamMemberCard } from "@/components/admin/team-member-card"
 import { getAllCommunities, getAllCommunityMembers, type CommunityMember } from "@/lib/communities-data"
@@ -16,7 +20,7 @@ import {
 import { cn } from "@/lib/utils"
 
 type SortOption = "reciente" | "renovacion" | "estado"
-type FilterOption = "leads" | "cerrados" | "afiliados"
+type FilterOption = "leads" | "cerrados" | "afiliados" | "lideres"
 type MetricViewOption = "publicidad" | "organico"
 
 const SORT_LABELS: Record<SortOption, string> = {
@@ -29,12 +33,44 @@ const FILTER_LABELS: Record<FilterOption, string> = {
   leads: "Mas leads totales",
   cerrados: "Mas cerrados",
   afiliados: "Mas afiliados",
+  lideres: "Lideres de equipo",
 }
 
 export default function EquipoPage() {
-  const allMembers = getTeamMembers()
+  const { user } = useAuth()
+  const staticMembers = getTeamMembers()
   const communities = getAllCommunities()
   const communityMembers = getAllCommunityMembers()
+
+  // Fetch dynamic members from database
+  const { data: dbData, isLoading } = useSWR(
+    user?.email ? `/api/admin/users?email=${user.email}` : null,
+    fetcher
+  )
+
+  const dbMembers = useMemo(() => (dbData?.users || []).map((u: any) => ({
+    id: u.memberId,
+    nombre: u.name,
+    email: u.email,
+    username: u.username,
+    avatar_initials: u.name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "S",
+    publicidad_activa: u.activo || false,
+    fecha_renovacion: u.trialEndsAt ? new Date(u.trialEndsAt).toLocaleDateString() : null,
+    metricas: { leads: 0, cerrados: 0, afiliados: 0 },
+    publicidad: { inversion_total: 0, saldo_disponible: 0, leads_totales: 0, leads_cerrados: 0 },
+    organico: { saldo_disponible: 0, leads_totales: 0, leads_cerrados: 0 },
+    progreso_academia: 0,
+    sponsorUsername: u.sponsorUsername,
+    fecha_ingreso: u.createdAt || new Date().toISOString(),
+  })), [dbData])
+
+  const allMembers = useMemo(() => {
+    const combined = [...staticMembers, ...dbMembers]
+    // Deduplicate by email
+    return combined.filter((m, i, self) =>
+      i === self.findIndex((t) => t.email === m.email)
+    )
+  }, [staticMembers, dbMembers])
 
   const [search, setSearch] = useState("")
   const [sort, setSort] = useState<SortOption>("reciente")
@@ -76,13 +112,23 @@ export default function EquipoPage() {
       result.sort((a, b) => (a.publicidad_activa === b.publicidad_activa ? 0 : a.publicidad_activa ? -1 : 1))
     }
 
-    // filter (secondary sort by metric)
+    // filter (secondary sort by metric or leaders filter)
     if (filter === "leads") {
       result.sort((a, b) => b.metricas.leads - a.metricas.leads)
     } else if (filter === "cerrados") {
       result.sort((a, b) => b.metricas.cerrados - a.metricas.cerrados)
     } else if (filter === "afiliados") {
       result.sort((a, b) => b.metricas.afiliados - a.metricas.afiliados)
+    } else if (filter === "lideres") {
+      // Find who is a sponsor
+      const sponsorUsernames = new Set(allMembers.map(m => m.sponsorUsername).filter(Boolean))
+      result = result.filter(m => sponsorUsernames.has(m.username))
+      // Sort by how many people they sponsored
+      result.sort((a, b) => {
+        const countA = allMembers.filter(m => m.sponsorUsername === a.username).length
+        const countB = allMembers.filter(m => m.sponsorUsername === b.username).length
+        return countB - countA
+      })
     }
 
     return result

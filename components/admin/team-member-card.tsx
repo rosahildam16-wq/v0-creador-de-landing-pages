@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { MoreVertical } from "lucide-react"
+import { MoreVertical, Shield } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { TeamMember } from "@/lib/team-data"
 
@@ -34,6 +34,7 @@ export function TeamMemberCard({ member, index, metricView }: TeamMemberCardProp
             </div>
             <div>
               <h3 className="text-sm font-semibold text-foreground leading-tight">{member.nombre}</h3>
+              <p className="text-[10px] text-muted-foreground">@{member.username || member.id}</p>
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 <span
                   className={cn(
@@ -61,6 +62,12 @@ export function TeamMemberCard({ member, index, metricView }: TeamMemberCardProp
                 >
                   {member.fecha_renovacion ? `Renov.: ${member.fecha_renovacion}` : "Sin fecha"}
                 </span>
+                {member.sponsorUsername && (
+                  <span className="flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-400">
+                    <Shield className="h-2.5 w-2.5" />
+                    Patroc.: @{member.sponsorUsername}
+                  </span>
+                )}
               </div>
             </div>
           </div>

@@ -125,8 +125,8 @@ export function CallInterface({ onContinue, audioSrc = "/audio/call-voice.mp3", 
         {/* Caller info */}
         <div className="flex flex-col items-center">
           {/* Avatar with pulse rings */}
-          <div className="relative mb-8">
-            <div className="flex h-28 w-28 items-center justify-center rounded-full bg-[#2c2c2e]">
+          <div className="relative mb-8 animate-in zoom-in duration-500">
+            <div className="relative z-10 flex h-28 w-28 items-center justify-center rounded-full bg-[#2c2c2e] shadow-2xl animate-shake">
               <User className="h-14 w-14 text-[#8e8e93]" />
             </div>
             <div className="animate-pulse-ring absolute inset-0 rounded-full border-2 border-[#34c759]/30" />

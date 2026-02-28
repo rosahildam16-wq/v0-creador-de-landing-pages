@@ -19,7 +19,7 @@ export async function sendWelcomeEmail({
             react: WelcomeEmail({
                 name,
                 communityCode,
-                dashboardUrl: "http://localhost:3000/login"
+                dashboardUrl: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/login`
             }),
         })
 

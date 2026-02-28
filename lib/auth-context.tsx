@@ -62,7 +62,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const stored = safeGet("mf_auth")
     if (stored) {
       try {
-        const parsed = JSON.parse(stored)
+        const parsed = JSON.parse(stored) as AuthUser
+
+        // Patch: If username is missing, try to restore it
+        if (!parsed.username && parsed.email) {
+          const staticMatch = TEAM_MEMBERS.find(m => m.email.toLowerCase() === parsed.email.toLowerCase())
+          if (staticMatch) {
+            parsed.username = staticMatch.id
+            parsed.memberId = staticMatch.id
+            safeSet("mf_auth", JSON.stringify(parsed))
+          }
+        }
+
         setUser(parsed)
         setIsAuthenticated(true)
       } catch {
@@ -120,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         name: existingMember?.nombre || nameFromEmail,
         role: "member",
         memberId,
+        username: memberId, // Use memberId as username for tracking/partners
         communityId: leaderComm?.id,
       }
       setUser(userData)
@@ -137,6 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         name: teamMember.nombre,
         role: "member",
         memberId: teamMember.id,
+        username: teamMember.id, // Static members use ID as username
       }
       setUser(userData)
       setIsAuthenticated(true)

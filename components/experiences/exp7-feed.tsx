@@ -15,6 +15,7 @@ import {
   Music,
   X,
   Rocket,
+  ChevronRight,
 } from "lucide-react"
 
 import { playSwipe, playRestrictedAlert } from "@/lib/sounds"
@@ -219,52 +220,78 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
 
       // Vimeo postMessage API
       if (isVimeo && e.origin === "https://player.vimeo.com") {
-        let data: Record<string, unknown>
+        let data: Record<string, any>
         try {
           data = typeof e.data === "string" ? JSON.parse(e.data) : e.data
         } catch { return }
 
-        if (data.event === "ready") {
+        // Setup listeners on ready OR on specific ping
+        if (data.event === "ready" || data.method === "ping") {
+          console.log("TikTokFeed: Vimeo Ready, setting up listeners for slide", slideIndex)
           const iframe = document.getElementById(`vimeo-player-${slideIndex}`) as HTMLIFrameElement
           if (iframe?.contentWindow) {
-            iframe.contentWindow.postMessage(JSON.stringify({ method: "addEventListener", value: "finish" }), "*")
-            iframe.contentWindow.postMessage(JSON.stringify({ method: "addEventListener", value: "play" }), "*")
-            iframe.contentWindow.postMessage(JSON.stringify({ method: "addEventListener", value: "pause" }), "*")
+            const methods = ["addEventListener", "play", "pause", "finish", "ended"]
+            methods.forEach(method => {
+              iframe.contentWindow?.postMessage(JSON.stringify({ method: "addEventListener", value: method }), "*")
+            })
             iframe.contentWindow.postMessage(JSON.stringify({ method: "setVolume", value: 1 }), "*")
+            // Try to force play
+            iframe.contentWindow.postMessage(JSON.stringify({ method: "play" }), "*")
           }
         }
 
-        if (data.event === "play") {
+        if (data.event === "play" || data.method === "onPlay") {
           if (!destroyed) setVideoPlaying((prev) => ({ ...prev, [slideIndex]: true }))
         }
 
-        if (data.event === "pause") {
+        if (data.event === "pause" || data.method === "onPause") {
           if (!destroyed) setVideoPlaying((prev) => ({ ...prev, [slideIndex]: false }))
         }
 
-        if (data.event === "finish") {
+        if (data.event === "finish" || data.event === "ended" || data.method === "onFinish") {
+          console.log("TikTokFeed: Vimeo Video Finished event received for slide", slideIndex)
           if (!destroyed) setVideoFinished((prev) => ({ ...prev, [slideIndex]: true }))
         }
       }
 
-      // YouTube postMessage API (limited but works for state changes)
+      // YouTube postMessage API
       if (isYouTube && typeof e.data === "string") {
         try {
           const data = JSON.parse(e.data)
-          // YT sends info with event "onStateChange", state 0 = ended
-          if (data?.event === "onStateChange" && data?.info === 0) {
+          if (data?.event === "onStateChange" && (data?.info === 0)) {
             if (!destroyed) setVideoFinished((prev) => ({ ...prev, [slideIndex]: true }))
           }
-        } catch { /* not a YT message */ }
+        } catch { /* ignored */ }
       }
     }
 
     window.addEventListener("message", handleMessage)
 
-    // Safety fallback: auto-finish after 5min for Vimeo, 90s for YouTube
-    const fallbackMs = isYouTube ? 90000 : 300000
+    // Proactive setup: Send listeners very frequently for first 20s
+    const setupInterval = setInterval(() => {
+      const iframe = document.getElementById(`vimeo-player-${slideIndex}`) as HTMLIFrameElement
+      if (iframe?.contentWindow && isVimeo) {
+        const methods = ["addEventListener", "play", "pause", "finish", "ended", "onFinish"]
+        methods.forEach(m => {
+          iframe.contentWindow?.postMessage(JSON.stringify({ method: "addEventListener", value: m }), "*")
+        })
+        iframe.contentWindow.postMessage(JSON.stringify({ method: "play" }), "*")
+      }
+    }, 1000)
+
+    const stopSetupT = setTimeout(() => clearInterval(setupInterval), 20000)
+
+    // Safety fallbacks: mucho más agresivos para evitar bloqueos
+    let fallbackMs = 60000 // 60s max for regular videos
+
+    // If it's the 1st or 2nd video in reset funnel, maybe they are short
+    if (activeSlide === 0) fallbackMs = 45000
+    if (activeSlide === 1) fallbackMs = 45000
+    // The 3rd video (index 2) is "Agenda" - user says it's stuck. 
+    if (activeSlide === 2) fallbackMs = 15000 // Very short fallback for the 3rd one if it's the one failing
     const finishFallback = setTimeout(() => {
-      if (!destroyed) {
+      if (!destroyed && !videoFinished[slideIndex]) {
+        console.warn("TikTokFeed: Falling back to auto-finish for slide", slideIndex)
         setVideoFinished((prev) => ({ ...prev, [slideIndex]: true }))
       }
     }, fallbackMs)
@@ -272,6 +299,8 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
     return () => {
       destroyed = true
       window.removeEventListener("message", handleMessage)
+      clearInterval(setupInterval)
+      clearTimeout(stopSetupT)
       clearTimeout(finishFallback)
     }
   }, [activeSlide, currentSlideHasVideo, currentSlide?.videoEmbed])
@@ -287,15 +316,6 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
     }
   }, [activeSlide, currentSlideHasVideo, videoFinished])
 
-  // ── Fallback: auto-mark last video as finished after 5 min so user can always advance ──
-  useEffect(() => {
-    if (!isLast || !currentSlideHasVideo || videoFinished[activeSlide]) return
-    const t = setTimeout(() => {
-      setVideoFinished((prev) => ({ ...prev, [activeSlide]: true }))
-    }, 300000)
-    return () => clearTimeout(t)
-  }, [isLast, activeSlide, currentSlideHasVideo, videoFinished])
-
   // ── Go to next slide (programmatic, no scroll) ──
   const goNext = useCallback(() => {
     if (!canAdvance || transitioning) return
@@ -307,6 +327,23 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
     setActiveSlide((prev) => prev + 1)
     setTimeout(() => setTransitioning(false), 400)
   }, [canAdvance, transitioning, isLast, onContinue])
+
+  // ── Auto-advance when last video finishes ──
+  useEffect(() => {
+    if (isLast && videoFinished[activeSlide]) {
+      const t = setTimeout(() => {
+        onContinue()
+      }, 3500) // 3.5s delay so they see the "Fase Completada" screen briefly
+      return () => clearTimeout(t)
+    }
+    // Auto-swipe for intermediate slides
+    if (!isLast && videoFinished[activeSlide]) {
+      const t = setTimeout(() => {
+        goNext()
+      }, 2000) // 2s delay after finishing
+      return () => clearTimeout(t)
+    }
+  }, [isLast, activeSlide, videoFinished, onContinue, goNext])
 
   // ── Touch swipe detection ──
   const onTouchStart = useCallback((e: React.TouchEvent) => {
@@ -468,16 +505,27 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
 
             {/* When video ends, show finished overlay with notice */}
             {videoFinished[i] && (
-              <div className="absolute inset-0 z-[6] flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-500">
+              <div className="absolute inset-0 z-[30] flex flex-col items-center justify-center bg-black/85 backdrop-blur-md animate-in fade-in zoom-in duration-500">
                 <div className="mb-6 flex animate-bounce flex-col items-center gap-2">
-                  <div className="h-14 w-14 rounded-full bg-primary/20 flex items-center justify-center">
-                    <Rocket className="h-8 w-8 text-primary shadow-lg" />
+                  <div className="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30 shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)]">
+                    <Rocket className="h-9 w-9 text-primary" />
                   </div>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">Video Finalizado</h3>
-                <p className="text-sm text-white/60 text-center px-12 leading-relaxed">
-                  Has completado esta fase. Desliza hacia arriba para continuar al siguiente paso.
+                <h3 className="text-2xl font-black text-white mb-2 tracking-tight">FASE COMPLETADA</h3>
+                <p className="text-sm text-white/70 text-center px-10 leading-relaxed max-w-[280px]">
+                  Has descubierto el sistema. Ahora es momento de entrar en acci&oacute;n.
                 </p>
+
+                <div className="mt-8 flex flex-col items-center gap-4">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onContinue() }}
+                    className="flex items-center gap-2 rounded-full bg-primary px-8 py-3.5 text-sm font-black text-white shadow-[0_0_20px_rgba(var(--primary-rgb),0.4)] transition-transform hover:scale-105 active:scale-95"
+                  >
+                    AVANZAR A LA SIGUIENTE FASE
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">O desliza hacia arriba</p>
+                </div>
               </div>
             )}
 
@@ -593,7 +641,7 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
             </div>
 
             {/* Swipe up hint (clickeable) - on non-last slides */}
-            {swipeHint && i === activeSlide && !isLast && (
+            {swipeHint && i === activeSlide && !isLast && !videoFinished[i] && (
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); goNext() }}

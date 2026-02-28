@@ -30,6 +30,58 @@ const STEP_NAMES: Record<Experience, string> = {
   9: "sales_page",
 }
 
+// --- STABLE CONFIGS FOR FEED ---
+const RESET_SLIDES = [
+  {
+    videoEmbed: "https://player.vimeo.com/video/1167997342?api=1&badge=0&autopause=0&player_id=0&app_id=58479&controls=0&title=0&byline=0&portrait=0&playsinline=1&keyboard=0&autoplay=1&muted=0",
+    overlayText: [],
+    username: "reset.system",
+    caption: "El Arma",
+    music: "Sonido original - reset.system",
+    likes: "482.1 mil",
+    commentCount: "2,847",
+    saves: "58 mil",
+    shares: "73.5 mil",
+  },
+  {
+    videoSrc: "/videos/tiktok-2.mov",
+    overlayText: [],
+    username: "reset.system",
+    caption: "El Sistema",
+    music: "Sonido original - reset.system",
+    likes: "321.4 mil",
+    commentCount: "1,102",
+    saves: "24 mil",
+    shares: "55.2 mil",
+  },
+  {
+    videoEmbed: "https://player.vimeo.com/video/1167999493?api=1&badge=0&autopause=0&player_id=0&app_id=58479&controls=0&title=0&byline=0&portrait=0&playsinline=1&keyboard=0&autoplay=1&muted=0",
+    overlayText: [],
+    username: "reset.system",
+    caption: "Agenda tu llamada",
+    music: "Sonido original - reset.system",
+    likes: "589.1 mil",
+    commentCount: "3,421",
+    saves: "67 mil",
+    shares: "88.3 mil",
+  },
+]
+
+const RESET_COMMENTS = [
+  { user: "emprendedor.digital", text: "Esto es lo que estaba buscando, los embudos normales ya no funcionan!", likes: 3241 },
+  { user: "maria_ventas", text: "Yo probe de todo y nada me daba resultados hasta que vi esto", likes: 2892 },
+  { user: "carlos.funnel", text: "Alguien mas siente que el marketing tradicional ya murio??", likes: 4104 },
+  { user: "laura_reset", text: "Me dieron acceso y no puedo creer lo que vi adentro", likes: 5421 },
+  { user: "sofi.marketing", text: "Necesito este sistema YA, como consigo el codigo?", likes: 1567 },
+  { user: "diego_automatiza", text: "Llevo 3 meses usando esto y mis ventas se triplicaron", likes: 6743 },
+  { user: "vale.negocio", text: "El arma injusta es real, lo puedo confirmar", likes: 4210 },
+  { user: "juanpa_ventas", text: "Los que siguen con embudos tradicionales van a quedarse atras", likes: 2890 },
+  { user: "camila.digital", text: "Quien mas quiere acceso? Necesitamos compartir esto!", likes: 5632 },
+  { user: "roberto_reset", text: "Esto va a cambiar la industria por completo", likes: 2987 },
+  { user: "ana.franquicia", text: "El codigo secreto funciona, acabo de entrar!!", likes: 3345 },
+  { user: "pedro_sistema", text: "Mi agencia de marketing no se compara con este sistema", likes: 1876 },
+]
+
 interface FunnelControllerProps {
   embudoId?: string
   startAt?: Experience
@@ -151,69 +203,14 @@ export function FunnelController({ embudoId = "nomada-vip", startAt, referrer }:
         {currentExp === 7 && (
           <TikTokFeed
             onContinue={goToNext}
-            customSlides={
-              embudoId === "franquicia-reset"
-                ? [
-                  {
-                    videoEmbed: "https://player.vimeo.com/video/1167997342?api=1&badge=0&autopause=0&player_id=0&app_id=58479&controls=0&title=0&byline=0&portrait=0&playsinline=1&keyboard=0&autoplay=1&muted=0",
-                    overlayText: [],
-                    username: "reset.system",
-                    caption: "El Arma",
-                    music: "Sonido original - reset.system",
-                    likes: "482.1 mil",
-                    commentCount: "2,847",
-                    saves: "58 mil",
-                    shares: "73.5 mil",
-                  },
-                  {
-                    videoSrc: "/videos/tiktok-2.mov",
-                    overlayText: [],
-                    username: "reset.system",
-                    caption: "El Sistema",
-                    music: "Sonido original - reset.system",
-                    likes: "321.4 mil",
-                    commentCount: "1,102",
-                    saves: "24 mil",
-                    shares: "55.2 mil",
-                  },
-                  {
-                    videoEmbed: "https://player.vimeo.com/video/1167999493?api=1&badge=0&autopause=0&player_id=0&app_id=58479&controls=0&title=0&byline=0&portrait=0&playsinline=1&keyboard=0&autoplay=1&muted=0",
-                    overlayText: [],
-                    username: "reset.system",
-                    caption: "Agenda tu llamada",
-                    music: "Sonido original - reset.system",
-                    likes: "589.1 mil",
-                    commentCount: "3,421",
-                    saves: "67 mil",
-                    shares: "88.3 mil",
-                  },
-                ]
-                : undefined
-            }
-            customComments={
-              embudoId === "franquicia-reset"
-                ? [
-                  { user: "emprendedor.digital", text: "Esto es lo que estaba buscando, los embudos normales ya no funcionan!", likes: 3241 },
-                  { user: "maria_ventas", text: "Yo probe de todo y nada me daba resultados hasta que vi esto", likes: 2892 },
-                  { user: "carlos.funnel", text: "Alguien mas siente que el marketing tradicional ya murio??", likes: 4104 },
-                  { user: "laura_reset", text: "Me dieron acceso y no puedo creer lo que vi adentro", likes: 5421 },
-                  { user: "sofi.marketing", text: "Necesito este sistema YA, como consigo el codigo?", likes: 1567 },
-                  { user: "diego_automatiza", text: "Llevo 3 meses usando esto y mis ventas se triplicaron", likes: 6743 },
-                  { user: "vale.negocio", text: "El arma injusta es real, lo puedo confirmar", likes: 4210 },
-                  { user: "juanpa_ventas", text: "Los que siguen con embudos tradicionales van a quedarse atras", likes: 2890 },
-                  { user: "camila.digital", text: "Quien mas quiere acceso? Necesitamos compartir esto!", likes: 5632 },
-                  { user: "roberto_reset", text: "Esto va a cambiar la industria por completo", likes: 2987 },
-                  { user: "ana.franquicia", text: "El codigo secreto funciona, acabo de entrar!!", likes: 3345 },
-                  { user: "pedro_sistema", text: "Mi agencia de marketing no se compara con este sistema", likes: 1876 },
-                ]
-                : undefined
-            }
+            customSlides={embudoId === "franquicia-reset" ? RESET_SLIDES : undefined}
+            customComments={embudoId === "franquicia-reset" ? RESET_COMMENTS : undefined}
           />
         )}
         {currentExp === 8 && embudoId === "franquicia-reset" && (
           <DecisionVideo
             onContinue={goToNext}
-            videoSrc="/videos/fase8-decision.mov"
+            videoSrc="/videos/fase8-final.mov"
           />
         )}
         {currentExp === 8 && embudoId !== "franquicia-reset" && (

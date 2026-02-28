@@ -41,9 +41,9 @@ export const DEFAULT_CHALLENGES: Challenge[] = [
     fecha_fin: "2026-02-28",
     activo: true,
     premios: [
-      { puesto: 1, monto: 100, moneda: "USD" },
-      { puesto: 2, monto: 50, moneda: "USD" },
-      { puesto: 3, monto: 25, moneda: "USD" },
+      { puesto: 1, monto: 50, moneda: "USD" },
+      { puesto: 2, monto: 25, moneda: "USD" },
+      { puesto: 3, monto: 15, moneda: "USD" },
     ],
   },
 ]

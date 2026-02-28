@@ -47,7 +47,7 @@ export function PsychQuiz({ onContinue, onLeadCreated, embudoId = "nomada-vip" }
   const [questionIndex, setQuestionIndex] = useState(0)
   const [showRegistration, setShowRegistration] = useState(false)
   const [animating, setAnimating] = useState(false)
-  const [formData, setFormData] = useState({ nombre: "", correo: "", whatsapp: "" })
+  const [formData, setFormData] = useState({ nombre: "", correo: "", whatsapp: "", countryCode: "+52" })
   const [formErrors, setFormErrors] = useState({ nombre: false, correo: false, whatsapp: false })
   const [submitting, setSubmitting] = useState(false)
   const [answers, setAnswers] = useState<Record<string, string>>({})
@@ -83,7 +83,7 @@ export function PsychQuiz({ onContinue, onLeadCreated, embudoId = "nomada-vip" }
     const errors = {
       nombre: formData.nombre.trim().length < 2,
       correo: !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.correo.trim()),
-      whatsapp: formData.whatsapp.trim().replace(/\D/g, "").length < 8,
+      whatsapp: formData.whatsapp.trim().length < 7,
     }
     setFormErrors(errors)
     return !errors.nombre && !errors.correo && !errors.whatsapp
@@ -104,13 +104,14 @@ export function PsychQuiz({ onContinue, onLeadCreated, embudoId = "nomada-vip" }
     }
 
     try {
+      const fullWhatsApp = `${formData.countryCode}${formData.whatsapp.trim()}`
       const res = await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nombre: formData.nombre.trim(),
           correo: formData.correo.trim().toLowerCase(),
-          whatsapp: formData.whatsapp.trim(),
+          whatsapp: fullWhatsApp,
           embudo_id: embudoId,
           fuente: "Organico",
           quiz_respuestas: answers,
@@ -236,20 +237,44 @@ export function PsychQuiz({ onContinue, onLeadCreated, embudoId = "nomada-vip" }
               {/* WhatsApp */}
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="reg-whatsapp" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Tu WhatsApp (con codigo de pais)
+                  Tu WhatsApp
                 </label>
-                <input
-                  id="reg-whatsapp"
-                  type="tel"
-                  placeholder="+52 55 1234 5678"
-                  value={formData.whatsapp}
-                  onChange={(e) => {
-                    setFormData((prev) => ({ ...prev, whatsapp: e.target.value }))
-                    if (formErrors.whatsapp) setFormErrors((prev) => ({ ...prev, whatsapp: false }))
-                  }}
-                  className={`rounded-lg border bg-secondary/50 px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-colors focus:border-primary/60 focus:bg-secondary ${formErrors.whatsapp ? "border-destructive" : "border-border"
-                    }`}
-                />
+                <div className="flex gap-2">
+                  <div className="relative w-24 shrink-0">
+                    <select
+                      value={formData.countryCode}
+                      onChange={(e) => setFormData(prev => ({ ...prev, countryCode: e.target.value }))}
+                      className="h-full w-full appearance-none rounded-lg border border-border bg-secondary/50 px-3 pr-8 text-sm text-foreground outline-none transition-colors focus:border-primary/60"
+                    >
+                      <option value="+52">🇲🇽 +52</option>
+                      <option value="+57">🇨🇴 +57</option>
+                      <option value="+51">🇵🇪 +51</option>
+                      <option value="+54">🇦🇷 +54</option>
+                      <option value="+56">🇨🇱 +56</option>
+                      <option value="+593">🇪🇨 +593</option>
+                      <option value="+34">🇪🇸 +34</option>
+                      <option value="+1">🇺🇸 +1</option>
+                      <option value="+58">🇻🇪 +58</option>
+                      <option value="+502">🇬🇹 +502</option>
+                    </select>
+                    <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2">
+                      <svg width="10" height="6" viewBox="0 0 10 6" fill="none" className="text-muted-foreground"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    </div>
+                  </div>
+                  <input
+                    id="reg-whatsapp"
+                    type="tel"
+                    placeholder="Ej: 55 1234 5678"
+                    value={formData.whatsapp}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "")
+                      setFormData((prev) => ({ ...prev, whatsapp: val }))
+                      if (formErrors.whatsapp) setFormErrors((prev) => ({ ...prev, whatsapp: false }))
+                    }}
+                    className={`flex-1 rounded-lg border bg-secondary/50 px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-colors focus:border-primary/60 focus:bg-secondary ${formErrors.whatsapp ? "border-destructive" : "border-border"
+                      }`}
+                  />
+                </div>
                 {formErrors.whatsapp && (
                   <span className="text-xs text-destructive">Ingresa tu numero de WhatsApp</span>
                 )}

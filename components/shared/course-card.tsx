@@ -27,14 +27,25 @@ export function CourseCard({ course, basePath, progress }: CourseCardProps) {
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
+
+        {/* Construction Overlay (Universal for all courses for now) */}
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/60 backdrop-blur-[1px] transition-opacity duration-300 group-hover:bg-black/40">
+          <div className="rounded-lg border border-white/20 bg-black/40 px-3 py-1.5 backdrop-blur-md">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">
+              En Construcción
+            </span>
+          </div>
+        </div>
+
         {/* Overlay on hover */}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover:bg-black/40">
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover:bg-black/20">
           <div className="flex h-12 w-12 scale-0 items-center justify-center rounded-full bg-primary/90 text-primary-foreground transition-transform duration-300 group-hover:scale-100">
             <Play className="h-5 w-5 ml-0.5" />
           </div>
         </div>
+
         {/* Level badge */}
-        <div className="absolute right-2 top-2">
+        <div className="absolute right-2 top-2 z-20">
           <span className={cn("rounded-full border px-2 py-0.5 text-[10px] font-semibold", NIVEL_COLORS[course.nivel])}>
             {NIVEL_LABELS[course.nivel]}
           </span>

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { NextRequest, NextResponse } from "next/server"
 import { sendWelcomeEmail } from "@/lib/email-service"
+import { TEAM_MEMBERS } from "@/lib/team-data"
 
 export const dynamic = "force-dynamic"
 
@@ -61,13 +62,29 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate sponsor exists and find their community
-    const { data: sponsor } = await supabase
+    let sponsorData = null
+    const { data: dbSponsor } = await supabase
       .from("community_members")
       .select("id, name, community_id, username")
       .eq("username", normalizedSponsor)
       .maybeSingle()
 
-    if (!sponsor) {
+    if (dbSponsor) {
+      sponsorData = dbSponsor
+    } else {
+      // Check static team members
+      const staticSponsor = TEAM_MEMBERS.find(m => m.id.toLowerCase() === normalizedSponsor || m.email.toLowerCase() === normalizedSponsor)
+      if (staticSponsor) {
+        sponsorData = {
+          id: staticSponsor.id,
+          name: staticSponsor.nombre,
+          username: staticSponsor.id,
+          community_id: "general" // Default for static members
+        }
+      }
+    }
+
+    if (!sponsorData) {
       return NextResponse.json({ error: "El nombre de usuario del patrocinador no es valido." }, { status: 404 })
     }
 
@@ -80,8 +97,8 @@ export async function POST(req: NextRequest) {
     let freeTrialDays = 5 // default 5 day trial for everyone
 
     // If sponsor belongs to a specific community, use it, otherwise use provided code
-    if (sponsor.community_id) {
-      communityId = sponsor.community_id
+    if (sponsorData.community_id) {
+      communityId = sponsorData.community_id
       const { data: comm } = await supabase.from("communities").select("nombre, free_trial_days").eq("id", communityId).maybeSingle()
       if (comm) {
         communityName = comm.nombre
@@ -106,8 +123,8 @@ export async function POST(req: NextRequest) {
       password_hash: password,
       password_plain: password,
       discount_code: code || null,
-      sponsor_username: sponsor.username,
-      sponsor_name: sponsor.name,
+      sponsor_username: sponsorData.username,
+      sponsor_name: sponsorData.name,
       role: userRole,
       trial_ends_at: trialEndsAt,
       activo: true, // AUTO-ACTIVATE: Remove need for leader validation
@@ -156,6 +173,16 @@ export async function POST(req: NextRequest) {
       mensaje: `${trimmedName} (@${normalizedUsername}) se registro como miembro en ${communityName}${codeLabel}${sponsorLabel}.`,
       destinatario: "admin",
     })
+
+    // Create notification for sponsor
+    if (sponsorData) {
+      await supabase.from("admin_notifications").insert({
+        tipo: "team",
+        titulo: `¡Nuevo socio en tu equipo!`,
+        mensaje: `${trimmedName} (@${normalizedUsername}) se ha unido a tu red.`,
+        destinatario: sponsorData.username,
+      })
+    }
 
     // Send Welcome Email (non-blocking)
     const welcomeCode = code || normalizedUsername.toUpperCase()

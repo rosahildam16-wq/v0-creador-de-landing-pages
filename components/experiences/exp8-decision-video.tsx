@@ -81,9 +81,9 @@ export function DecisionVideo({
   videoSrc,
   embedUrl,
 }: Props) {
-  const src = embedUrl || DEFAULT_EMBED
+  const isEmbed = !!embedUrl || (!videoSrc && !!DEFAULT_EMBED)
+  const src = embedUrl || (isEmbed ? DEFAULT_EMBED : "")
   const isVimeo = src.includes("vimeo.com")
-  const isEmbed = isVimeo || src.includes("youtube.com")
 
   const [isLoading, setIsLoading] = useState(true)
   const [started, setStarted] = useState(false)

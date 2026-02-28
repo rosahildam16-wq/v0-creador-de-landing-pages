@@ -54,14 +54,33 @@ let ringtoneInterval: ReturnType<typeof setInterval> | null = null
 
 export function startRingtone() {
   resumeAudio()
-  // Play the tri-tone pattern immediately, then repeat
+
+  // iPhone "Opening" style synthesized marimba
   const playPattern = () => {
-    playTone(1200, 0.15, "sine", 0.12)
-    setTimeout(() => playTone(1400, 0.15, "sine", 0.12), 180)
-    setTimeout(() => playTone(1600, 0.15, "sine", 0.12), 360)
+    const ctx = getCtx()
+    const now = ctx.currentTime
+
+    // Sequence of notes (Approximate Opening theme)
+    const notes = [
+      { f: 659.25, t: 0 },    // E5
+      { f: 880.00, t: 0.15 }, // A5
+      { f: 987.77, t: 0.30 }, // B5
+      { f: 1318.51, t: 0.45 }, // E6
+      { f: 987.77, t: 0.70 }, // B5
+      { f: 1318.51, t: 0.85 }  // E6
+    ]
+
+    notes.forEach(n => {
+      setTimeout(() => {
+        // Dual oscillator for marimba effect
+        playTone(n.f, 0.4, "sine", 0.1)
+        playTone(n.f * 2, 0.2, "sine", 0.03)
+      }, n.t * 1000)
+    })
   }
+
   playPattern()
-  ringtoneInterval = setInterval(playPattern, 2000)
+  ringtoneInterval = setInterval(playPattern, 2500)
 }
 
 export function stopRingtone() {

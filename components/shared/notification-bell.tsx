@@ -39,7 +39,8 @@ export function NotificationBell() {
 
     const loadNotifs = async () => {
       try {
-        const res = await fetch(`/api/notifications?role=${user.role}`)
+        const usernameParam = user.role === "member" && user.username ? `&username=${user.username}` : ""
+        const res = await fetch(`/api/notifications?role=${user.role}${usernameParam}`)
         if (!res.ok) return
         const data = await res.json()
         const notifs = (data.notifications || []) as AppNotification[]
@@ -129,9 +130,8 @@ export function NotificationBell() {
         {/* Unread Badge */}
         {unreadCount > 0 && (
           <span
-            className={`absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground ${
-              animateBadge ? "notif-badge-bounce" : ""
-            }`}
+            className={`absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground ${animateBadge ? "notif-badge-bounce" : ""
+              }`}
           >
             {unreadCount}
           </span>
@@ -194,9 +194,8 @@ export function NotificationBell() {
                   <button
                     key={notif.id}
                     onClick={() => markRead(notif.id)}
-                    className={`notif-item-enter group flex w-full items-start gap-3 border-b border-border/20 px-4 py-3 text-left transition-all duration-200 hover:bg-secondary/40 ${
-                      !notif.leida ? "bg-primary/[0.03]" : ""
-                    }`}
+                    className={`notif-item-enter group flex w-full items-start gap-3 border-b border-border/20 px-4 py-3 text-left transition-all duration-200 hover:bg-secondary/40 ${!notif.leida ? "bg-primary/[0.03]" : ""
+                      }`}
                     style={{ animationDelay: `${idx * 50}ms` }}
                   >
                     {/* Icon */}

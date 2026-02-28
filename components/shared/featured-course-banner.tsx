@@ -29,6 +29,15 @@ export function FeaturedCourseBanner({ course, basePath }: FeaturedCourseBannerP
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+
+        {/* Construction Overlay */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="rounded-xl border border-white/10 bg-black/40 px-6 py-3 backdrop-blur-md rotate-[-5deg] shadow-2xl">
+            <span className="text-sm font-black uppercase tracking-[0.4em] text-white/80">
+              En Construcción
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Content overlay */}

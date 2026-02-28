@@ -27,6 +27,8 @@ export interface TeamMember {
   fecha_ingreso: string
   whatsapp_number?: string
   whatsapp_message?: string
+  username?: string
+  sponsorUsername?: string
 }
 
 export const TEAM_MEMBERS: TeamMember[] = [
