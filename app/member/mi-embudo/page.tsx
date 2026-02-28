@@ -245,7 +245,13 @@ export default function MemberEmbudoPage() {
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-foreground">{etapa.label}</span>
                             <span className="text-xs text-muted-foreground">
-                              {pct}% ({leadsAtStage.length})
+                              {pct}% total
+                              {idx > 0 && myLeads.filter(l => l.etapa_maxima_alcanzada >= activeEmbudo.etapas[idx - 1].id).length > 0 && (
+                                <span className="ml-1 text-[10px] text-emerald-500/60 font-bold">
+                                  ({Math.round((leadsAtStage.length / myLeads.filter(l => l.etapa_maxima_alcanzada >= activeEmbudo.etapas[idx - 1].id).length) * 100)}% de etapa anterior)
+                                </span>
+                              )}
+                              {" "}({leadsAtStage.length})
                             </span>
                           </div>
                           <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-secondary/50">

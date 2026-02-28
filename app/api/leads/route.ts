@@ -252,7 +252,8 @@ export async function POST(request: Request) {
                 raw_ai_analysis: insight
               })
 
-              // Send a notification if score is high (Unicorn Alert)
+              // Send a notification if score is high (Magic Prospect Alert)
+              // Future: Send WhatsApp/Email notification to the sponsor
               if (insight.score >= 8) {
                 console.log(`🔥 HIGH QUALITY LEAD for ${asignadoA}: ${body.nombre} (${insight.score}/10)`)
               }

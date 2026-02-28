@@ -24,11 +24,18 @@ export async function GET(req: NextRequest) {
             return NextResponse.json([])
         }
 
-        // 2. Fetch leads assigned to this member (and optionally their community)
-        // We know 'asignado_a' exists, so we use it as the primary filter.
+        // 2. Fetch leads assigned to this member with AI insights
         let leadsResult = await supabase
             .from("leads")
-            .select("*")
+            .select(`
+                *,
+                lead_insights (
+                    qualification_score,
+                    summary,
+                    recommended_action,
+                    suggested_message
+                )
+            `)
             .eq("asignado_a", member.username)
             .order("fecha_ingreso", { ascending: false })
 
@@ -39,7 +46,11 @@ export async function GET(req: NextRequest) {
             console.error("Primary leads fetch error:", leadsResult.error)
         }
 
-        const leads = leadsResult.data || []
+        const rawLeads = leadsResult.data || []
+        const leads = rawLeads.map((l: any) => ({
+            ...l,
+            insight: l.lead_insights && l.lead_insights.length > 0 ? l.lead_insights[0] : undefined
+        }))
         const leadsError = leadsResult.error
 
         if (leadsError) {

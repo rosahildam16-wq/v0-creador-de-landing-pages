@@ -6,7 +6,7 @@ import { calcularTemperatura } from "@/lib/lead-scoring"
 import type { Lead } from "@/lib/types"
 import { formatDistanceToNow } from "date-fns"
 import { es } from "date-fns/locale"
-import { GripVertical } from "lucide-react"
+import { GripVertical, Sparkles } from "lucide-react"
 
 interface LeadCardProps {
   lead: Lead
@@ -52,6 +52,12 @@ export function LeadCard({ lead, isDragging, onDragStart, onDragEnd, onClick }: 
             <TemperatureBadge temperatura={temperatura} score={score} />
             <span className="text-[10px] text-muted-foreground">{timeAgo}</span>
           </div>
+          {lead.insight && lead.insight.qualification_score >= 8 && (
+            <div className="flex items-center gap-1.5 rounded-md bg-primary/10 border border-primary/20 px-2 py-0.5 w-fit">
+              <Sparkles className="h-3 w-3 text-primary animate-pulse" />
+              <span className="text-[9px] font-black text-primary uppercase tracking-widest">Magic Prospect</span>
+            </div>
+          )}
           {lead.asignado_a && lead.asignado_a !== "Sin asignar" && (
             <div className="pt-1 border-t border-border/10">
               <span className="text-[8px] font-black uppercase text-primary/60 tracking-widest italic leading-none">

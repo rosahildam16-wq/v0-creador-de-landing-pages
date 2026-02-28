@@ -81,10 +81,16 @@ export interface Lead {
   etapa_maxima_alcanzada: number
   tiempo_total_segundos: number
   ultimo_evento: string
-  // CRM
+  // AI & CRM
   notas: Nota[]
   asignado_a: string
   community_id: string
+  insight?: {
+    qualification_score: number
+    summary: string
+    recommended_action: string
+    suggested_message: string
+  }
 }
 
 export interface EventoActividad {
