@@ -10,8 +10,10 @@ const MOBILE_ITEMS = [
   { href: "/member/mis-leads", label: "Leads", icon: User },
   { href: "/member/mi-equipo", label: "Equipo", icon: Users },
   { href: "/member/academia", label: "Cursos", icon: GraduationCap },
-  { href: "/member/perfil", label: "Perfil", icon: User },
+  { href: "/member/social-center", label: "Social", icon: Globe },
 ]
+
+import { Globe } from "lucide-react"
 
 import { useAuth } from "@/lib/auth-context"
 
