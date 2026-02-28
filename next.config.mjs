@@ -4,7 +4,11 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    unoptimized: true,
+    remotePatterns: [
+      { protocol: "https", hostname: "*.supabase.co" },
+      { protocol: "https", hostname: "*.vercel-storage.com" },
+      { protocol: "https", hostname: "*.vercel.app" },
+    ],
   },
 }
 

@@ -328,22 +328,35 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
     setTimeout(() => setTransitioning(false), 400)
   }, [canAdvance, transitioning, isLast, onContinue])
 
-  // ── Auto-advance when last video finishes ──
+  // ── Preload/Auto-advance ──
   useEffect(() => {
+    // 1. Preload NEXT slide for Speed Lightning
+    if (activeSlide < activeSlides.length - 1) {
+      const nextSlide = activeSlides[activeSlide + 1]
+      const nextVid = nextSlide.videoSrc || nextSlide.videoEmbed
+      if (nextVid && typeof window !== "undefined") {
+        const link = document.createElement("link")
+        link.rel = "preload"
+        link.as = (nextSlide.videoSrc) ? "video" : "document"
+        link.href = nextVid
+        document.head.appendChild(link)
+      }
+    }
+
+    // 2. Auto-swipe logic
     if (isLast && videoFinished[activeSlide]) {
       const t = setTimeout(() => {
         onContinue()
-      }, 3500) // 3.5s delay so they see the "Fase Completada" screen briefly
+      }, 3500)
       return () => clearTimeout(t)
     }
-    // Auto-swipe for intermediate slides
     if (!isLast && videoFinished[activeSlide]) {
       const t = setTimeout(() => {
         goNext()
-      }, 2000) // 2s delay after finishing
+      }, 2000)
       return () => clearTimeout(t)
     }
-  }, [isLast, activeSlide, videoFinished, onContinue, goNext])
+  }, [isLast, activeSlide, videoFinished, onContinue, goNext, activeSlides])
 
   // ── Touch swipe detection ──
   const onTouchStart = useCallback((e: React.TouchEvent) => {
