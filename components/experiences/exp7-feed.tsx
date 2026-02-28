@@ -145,17 +145,28 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
     playRestrictedAlert()
   }, [])
 
-  // Auto-play local video when slide becomes active
+  // Auto-play video (Vimeo or Local) when slide becomes active
   useEffect(() => {
-    if (currentSlide?.videoSrc && videoRef.current) {
+    const slide = activeSlides[activeSlide]
+    if (!slide) return
+
+    // Local Video
+    if (slide.videoSrc && videoRef.current) {
       const playPromise = videoRef.current.play()
       if (playPromise !== undefined) {
-        playPromise.catch(error => {
-          console.error("TikTok local video play error:", error)
-        })
+        playPromise.catch(error => console.error("TikTok local auto-play error:", error))
       }
     }
-  }, [activeSlide, currentSlide?.videoSrc])
+
+    // Vimeo Video
+    if (slide.videoEmbed) {
+      const iframe = document.getElementById(`vimeo-player-${activeSlide}`) as HTMLIFrameElement
+      if (iframe?.contentWindow) {
+        iframe.contentWindow.postMessage(JSON.stringify({ method: "play" }), "*")
+        iframe.contentWindow.postMessage(JSON.stringify({ method: "setVolume", value: 1 }), "*")
+      }
+    }
+  }, [activeSlide, activeSlides])
 
   // ── Toggle play/pause (Vimeo or Local) ──
   const togglePlay = useCallback((slideIndex: number) => {
@@ -652,21 +663,21 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
             </div>
 
             {/* Swipe up hint (clickeable) - on non-last slides */}
-            {swipeHint && i === activeSlide && !isLast && !videoFinished[i] && (
+            {swipeHint && i === activeSlide && !isLast && (
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); goNext() }}
-                className="absolute inset-x-0 bottom-28 z-30 flex flex-col items-center gap-2"
+                className="absolute inset-x-0 bottom-28 z-30 flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom-4 duration-500"
               >
                 <div className="flex animate-bounce flex-col items-center gap-1">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-white drop-shadow-lg">
-                    <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white/60 drop-shadow-lg">
+                    <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
                 <span
-                  className="rounded-full border border-white/20 bg-black/70 px-5 py-2 text-sm font-bold text-white shadow-lg backdrop-blur-md"
+                  className="rounded-full border border-white/10 bg-black/40 px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white/70 shadow-lg backdrop-blur-md"
                 >
-                  Desliza hacia arriba
+                  Desliza para continuar
                 </span>
               </button>
             )}
