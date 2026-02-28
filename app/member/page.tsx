@@ -298,11 +298,8 @@ export default function MemberDashboard() {
         </div>
       </div>
 
-      {/* === MAGIC REFERRAL LINK (TEAM) === */}
-      <MagicReferralCard
-        username={user?.username || user?.memberId || "socio"}
-        displayName={member.nombre}
-      />
+      {/* === DASHBOARD MAIN LINK (FUNNEL) === */}
+      <PersonalLinkCard memberId={user?.username || member?.id || "socio"} />
 
       {/* === BENTO METRICS GRID === */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -410,8 +407,6 @@ export default function MemberDashboard() {
           {/* Meta Ads Stats */}
           <MetaAdsSection memberId={member.id} />
 
-          {/* Personal link */}
-          <PersonalLinkCard memberId={user?.username || member?.id || "socio"} />
 
           {/* Quick Access */}
           <div className="flex flex-col gap-3">

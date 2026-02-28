@@ -4,11 +4,12 @@ import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { getMemberData } from "@/lib/team-data"
 import { EMBUDOS } from "@/lib/embudos-config"
-import { User, Mail, Shield, Calendar, Filter, Lock, Save, Check, Trophy, CreditCard, Zap } from "lucide-react"
+import { User, Mail, Shield, Calendar, Filter, Lock, Save, Check, Trophy, CreditCard, Zap, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { useSearchParams } from "next/navigation"
+import { MagicReferralCard } from "@/components/member/magic-referral-card"
 
 export default function MemberPerfilPage() {
   const { user } = useAuth()
@@ -134,6 +135,15 @@ export default function MemberPerfilPage() {
                   </div>
                 </CardContent>
               </Card>
+              <div className="mt-8">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2 mb-4">
+                  <Users className="h-4 w-4 text-primary" /> Invitar nuevos socios
+                </h3>
+                <MagicReferralCard
+                  username={user?.username || member.id || "socio"}
+                  displayName={member.nombre}
+                />
+              </div>
             </>
           )}
 
