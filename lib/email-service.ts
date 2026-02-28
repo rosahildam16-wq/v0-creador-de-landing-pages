@@ -13,7 +13,7 @@ export async function sendWelcomeEmail({
     try {
         const resend = getResend();
         const { data, error } = await resend.emails.send({
-            from: "Magic Funnel <onboarding@resend.dev>", // Cambiar por dominio propio luego
+            from: "Magic Funnel <notificaciones@magicfunnel.app>",
             to: [email],
             subject: "¡Bienvenido a Magic Funnel! 🚀",
             react: WelcomeEmail({
