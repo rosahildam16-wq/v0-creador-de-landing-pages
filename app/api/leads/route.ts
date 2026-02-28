@@ -69,21 +69,17 @@ export async function POST(request: Request) {
             ]
 
             let foundMember = null
-            for (const r of [...new Set(refsToTry)]) {
-              const { data } = await supabase
-                .from("community_members")
-                .select("community_id, name, username")
-                .or(`member_id.eq."${r}",username.eq."${r}"`)
-                .maybeSingle()
-              if (data) {
-                foundMember = data
-                break
-              }
-            }
+            const refsCsv = refsToTry.map(r => `"${r}"`).join(',')
+            const { data } = await supabase
+              .from("community_members")
+              .select("community_id, name, username")
+              .or(`member_id.in.(${refsCsv}),username.in.(${refsCsv})`)
+              .maybeSingle()
 
-            if (foundMember) {
-              communityId = foundMember.community_id
-              asignadoA = foundMember.username || foundMember.name
+            if (data) {
+              foundMember = data
+              communityId = data.community_id
+              asignadoA = data.username || data.name
             }
           }
         }
