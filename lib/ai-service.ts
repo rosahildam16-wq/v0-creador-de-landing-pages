@@ -1,8 +1,12 @@
 import OpenAI from "openai"
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-})
+const getOpenAIClient = () => {
+    const apiKey = process.env.OPENAI_API_KEY
+    if (!apiKey) {
+        throw new Error("Missing OPENAI_API_KEY")
+    }
+    return new OpenAI({ apiKey })
+}
 
 const SYSTEM_PROMPT = `
 Eres la Inteligencia Artificial oficial de Magic Funnel, diseñada para ser el Asistente de Crecimiento de los socios de la comunidad.
@@ -25,6 +29,7 @@ Reglas:
 
 export async function askMagicAI(message: string, history: { role: "user" | "assistant", content: string }[] = []) {
     try {
+        const openai = getOpenAIClient()
         const response = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [
@@ -70,6 +75,7 @@ export async function qualifyLead(leadData: any, quizAnswers: any[]) {
     `
 
     try {
+        const openai = getOpenAIClient()
         const response = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [{ role: "system", content: prompt }],
