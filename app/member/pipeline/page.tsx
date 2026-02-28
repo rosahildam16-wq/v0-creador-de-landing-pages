@@ -9,49 +9,54 @@ import { ETAPA_LABELS, type EtapaPipeline, type Lead } from "@/lib/types"
 import { useAuth } from "@/lib/auth-context"
 import { TEAM_MEMBERS } from "@/lib/team-data"
 import { cn } from "@/lib/utils"
-import { Loader2, Users, Kanban } from "lucide-react"
+import { Loader2, Users, Kanban, Settings2, Plus, Trash2, Check, X as XIcon } from "lucide-react"
 import useSWR from "swr"
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
-const PIPELINE_ETAPAS: EtapaPipeline[] = [
-  "lead_nuevo", "llamada_agendada", "no_respondio", "presentado", "cerrado", "perdido",
-]
-
-const COLUMN_COLORS: Record<string, string> = {
-  lead_nuevo: "border-t-blue-500",
-  llamada_agendada: "border-t-amber-500",
-  no_respondio: "border-t-orange-500",
-  presentado: "border-t-violet-500",
-  cerrado: "border-t-emerald-500",
-  perdido: "border-t-red-500",
-}
-
 export default function MemberPipelinePage() {
   const { user } = useAuth()
-  const { data: leads, isLoading, mutate } = useSWR<Lead[]>(
+  const [isConfiguring, setIsConfiguring] = useState(false)
+  const [newStageLabel, setNewStageLabel] = useState("")
+
+  // Fetch Stages
+  const { data: stages, mutate: mutateStages } = useSWR<any[]>(
+    user?.username ? `/api/member/pipeline-stages?username=${user.username}` : null,
+    fetcher
+  )
+
+  // Fetch Leads
+  const { data: leads, isLoading, mutate: mutateLeads } = useSWR<Lead[]>(
     user?.email ? `/api/member/leads?email=${encodeURIComponent(user.email)}` : null,
     fetcher,
     { refreshInterval: 10000 }
   )
 
-  const [draggedLead, setDraggedLead] = useState<{ lead: Lead; fromColumn: EtapaPipeline } | null>(null)
-  const [dragOverColumn, setDragOverColumn] = useState<EtapaPipeline | null>(null)
+  const activeStages = stages && stages.length > 0
+    ? stages
+    : [
+      { label: "lead_nuevo", color: "#3b82f6" },
+      { label: "llamada_agendada", color: "#f59e0b" },
+      { label: "cerrado", color: "#10b981" }
+    ]
+
+  const [draggedLead, setDraggedLead] = useState<{ lead: Lead; fromColumn: string } | null>(null)
+  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null)
 
   const pipeline = useMemo(() => {
     const cols: Record<string, Lead[]> = {}
-    PIPELINE_ETAPAS.forEach((etapa) => { cols[etapa] = [] })
+    activeStages.forEach((s) => { cols[s.label] = [] })
     if (leads) {
       leads.forEach((lead) => {
-        const etapa = lead.etapa as EtapaPipeline
+        const etapa = lead.etapa || activeStages[0].label
         if (cols[etapa]) cols[etapa].push(lead)
-        else cols["lead_nuevo"].push(lead)
+        else if (activeStages[0]) cols[activeStages[0].label].push(lead)
       })
     }
     return cols
-  }, [leads])
+  }, [leads, activeStages])
 
-  const handleDragStart = useCallback((lead: Lead, fromColumn: EtapaPipeline) => {
+  const handleDragStart = useCallback((lead: Lead, fromColumn: string) => {
     setDraggedLead({ lead, fromColumn })
   }, [])
 
@@ -60,24 +65,23 @@ export default function MemberPipelinePage() {
     setDragOverColumn(null)
   }, [])
 
-  const handleDragOver = useCallback((e: React.DragEvent, column: EtapaPipeline) => {
+  const handleDragOver = useCallback((e: React.DragEvent, column: string) => {
     e.preventDefault()
     setDragOverColumn(column)
   }, [])
 
   const handleDrop = useCallback(
-    async (e: React.DragEvent, toColumn: EtapaPipeline) => {
+    async (e: React.DragEvent, toColumn: string) => {
       e.preventDefault()
       if (!draggedLead || draggedLead.fromColumn === toColumn) {
         setDragOverColumn(null)
         return
       }
 
-      // Optimistic update
       const updatedLeads = (leads || []).map((l) =>
         l.id === draggedLead.lead.id ? { ...l, etapa: toColumn } : l
-      )
-      mutate(updatedLeads, false)
+      ) as Lead[]
+      mutateLeads(updatedLeads, false)
 
       try {
         await fetch("/api/member/leads", {
@@ -86,26 +90,36 @@ export default function MemberPipelinePage() {
           body: JSON.stringify({ lead_id: draggedLead.lead.id, etapa: toColumn }),
         })
       } catch (err) {
-        console.error("Failed to update lead stage:", err)
-        mutate() // Revert on error
+        mutateLeads()
       }
 
       setDraggedLead(null)
       setDragOverColumn(null)
     },
-    [draggedLead, leads, mutate]
+    [draggedLead, leads, mutateLeads]
   )
+
+  const addStage = async () => {
+    if (!newStageLabel.trim() || !user?.username) return
+    const newStage = { username: user.username, label: newStageLabel, color: "#8b5cf6", order_index: (stages?.length || 0) }
+    setNewStageLabel("")
+    await fetch("/api/member/pipeline-stages", {
+      method: "POST",
+      body: JSON.stringify(newStage)
+    })
+    mutateStages()
+  }
+
+  const deleteStage = async (id: string) => {
+    await fetch(`/api/member/pipeline-stages?id=${id}`, { method: "DELETE" })
+    mutateStages()
+  }
 
   if (isLoading) {
     return (
       <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
-        <div className="relative">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-violet-500/20 border-t-violet-500" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="h-6 w-6 animate-pulse rounded-full bg-violet-500/40" />
-          </div>
-        </div>
-        <p className="text-sm font-medium text-violet-300/60 animate-pulse">Sincronizando pipeline...</p>
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="text-sm font-medium text-white/40">Sincronizando pipeline...</p>
       </div>
     )
   }
@@ -126,7 +140,8 @@ export default function MemberPipelinePage() {
 
       <ScrollArea className="w-full whitespace-nowrap rounded-3xl border border-white/[0.05] bg-white/[0.01] p-6">
         <div className="flex gap-6 min-h-[600px]">
-          {PIPELINE_ETAPAS.map((etapa) => {
+          {activeStages.map((stage) => {
+            const etapa = stage.label
             const columnLeads = pipeline[etapa] || []
             const isOver = dragOverColumn === etapa
 
@@ -138,28 +153,24 @@ export default function MemberPipelinePage() {
                 onDragLeave={() => setDragOverColumn(null)}
                 onDrop={(e) => handleDrop(e, etapa)}
               >
-                {/* Column Header */}
                 <div className="flex items-center justify-between px-3">
                   <div className="flex items-center gap-2">
-                    <div className={cn("h-2 w-2 rounded-full",
-                      etapa === 'cerrado' ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" :
-                        etapa === 'perdido' ? "bg-red-500" : "bg-violet-500"
-                    )} />
-                    <span className="text-xs font-bold uppercase tracking-wider text-violet-200/70">
-                      {ETAPA_LABELS[etapa]}
+                    <div
+                      className="h-2.5 w-2.5 rounded-full"
+                      style={{ backgroundColor: stage.color, boxShadow: `0 0 10px ${stage.color}80` }}
+                    />
+                    <span className="text-[11px] font-black uppercase tracking-wider text-white/50">
+                      {ETAPA_LABELS[etapa as EtapaPipeline] || etapa.replace(/_/g, " ")}
                     </span>
                   </div>
-                  <Badge variant="outline" className="bg-white/[0.03] border-white/[0.08] text-violet-300/60 px-2 py-0.5 text-[10px]">
+                  <Badge className="bg-white/5 border-white/10 text-white/40 text-[10px] tabular-nums font-bold">
                     {columnLeads.length}
                   </Badge>
                 </div>
 
-                {/* Column Content */}
                 <div className={cn(
-                  "flex-1 flex flex-col gap-3 p-3 rounded-2xl border transition-all duration-300",
-                  isOver
-                    ? "bg-violet-600/[0.08] border-violet-500/40 shadow-[inner_0_0_20px_rgba(139,92,246,0.1)]"
-                    : "bg-white/[0.02] border-white/[0.05]"
+                  "flex-1 flex flex-col gap-3 p-3 rounded-3xl border transition-all duration-300 min-h-[400px]",
+                  isOver ? "bg-primary/10 border-primary/40 shadow-[0_0_20px_rgba(var(--primary-rgb),0.1)]" : "bg-white/[0.02] border-white/5"
                 )}>
                   {columnLeads.map((lead) => (
                     <LeadCard
@@ -176,15 +187,15 @@ export default function MemberPipelinePage() {
                   ))}
 
                   {columnLeads.length === 0 && !isOver && (
-                    <div className="flex flex-1 flex-col items-center justify-center opacity-20 py-10">
-                      <Users className="h-8 w-8 mb-2" />
-                      <span className="text-[10px] font-medium">Vacío</span>
+                    <div className="flex flex-1 flex-col items-center justify-center opacity-10 py-20">
+                      <Users className="h-10 w-10 mb-2" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">Sin leads</span>
                     </div>
                   )}
 
-                  {isOver && columnLeads.length === 0 && (
-                    <div className="flex-1 rounded-xl border-2 border-dashed border-violet-500/30 flex items-center justify-center">
-                      <span className="text-[10px] font-bold text-violet-400 animate-pulse">Soltar aquí</span>
+                  {isOver && (
+                    <div className="flex-1 rounded-2xl border-2 border-dashed border-primary/20 flex items-center justify-center">
+                      <span className="text-[10px] font-black text-primary uppercase tracking-widest animate-pulse">Soltar aquí</span>
                     </div>
                   )}
                 </div>
@@ -192,7 +203,7 @@ export default function MemberPipelinePage() {
             )
           })}
         </div>
-        <ScrollBar orientation="horizontal" className="bg-white/[0.02]" />
+        <ScrollBar orientation="horizontal" className="bg-white/5" />
       </ScrollArea>
     </div>
   )
