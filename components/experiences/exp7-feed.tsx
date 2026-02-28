@@ -281,27 +281,11 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
 
     const stopSetupT = setTimeout(() => clearInterval(setupInterval), 20000)
 
-    // Safety fallbacks: mucho más agresivos para evitar bloqueos
-    let fallbackMs = 60000 // 60s max for regular videos
-
-    // If it's the 1st or 2nd video in reset funnel, maybe they are short
-    if (activeSlide === 0) fallbackMs = 45000
-    if (activeSlide === 1) fallbackMs = 45000
-    // The 3rd video (index 2) is "Agenda" - user says it's stuck. 
-    if (activeSlide === 2) fallbackMs = 15000 // Very short fallback for the 3rd one if it's the one failing
-    const finishFallback = setTimeout(() => {
-      if (!destroyed && !videoFinished[slideIndex]) {
-        console.warn("TikTokFeed: Falling back to auto-finish for slide", slideIndex)
-        setVideoFinished((prev) => ({ ...prev, [slideIndex]: true }))
-      }
-    }, fallbackMs)
-
     return () => {
       destroyed = true
       window.removeEventListener("message", handleMessage)
       clearInterval(setupInterval)
       clearTimeout(stopSetupT)
-      clearTimeout(finishFallback)
     }
   }, [activeSlide, currentSlideHasVideo, currentSlide?.videoEmbed])
 
@@ -343,20 +327,34 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
       }
     }
 
-    // 2. Auto-swipe logic
+    // 2. Auto-swipe logic (Last slide only or wait for user action)
     if (isLast && videoFinished[activeSlide]) {
       const t = setTimeout(() => {
         onContinue()
-      }, 3500)
+      }, 5000) // Longer delay on last slide to let them see the success screen
       return () => clearTimeout(t)
     }
-    if (!isLast && videoFinished[activeSlide]) {
-      const t = setTimeout(() => {
-        goNext()
-      }, 2000)
-      return () => clearTimeout(t)
-    }
+
+    // NOTE: Removed automatic goNext() for intermediate slides 
+    // to let users watch the full videos at their own pace.
   }, [isLast, activeSlide, videoFinished, onContinue, goNext, activeSlides])
+
+  // ── Safety Fallbacks for "Unicorn" Resilience ──
+  useEffect(() => {
+    if (!currentSlideHasVideo) return
+    const slideIndex = activeSlide
+
+    // Safety fallback: 180s max to prevent getting truly stuck if connection fails
+    // This is much safer than the previous short timers.
+    const finishFallback = setTimeout(() => {
+      if (!videoFinished[slideIndex]) {
+        console.warn("TikTokFeed: Universal safety fallback triggered for slide", slideIndex)
+        setVideoFinished((prev) => ({ ...prev, [slideIndex]: true }))
+      }
+    }, 180000)
+
+    return () => clearTimeout(finishFallback)
+  }, [activeSlide, currentSlideHasVideo, videoFinished])
 
   // ── Touch swipe detection ──
   const onTouchStart = useCallback((e: React.TouchEvent) => {
