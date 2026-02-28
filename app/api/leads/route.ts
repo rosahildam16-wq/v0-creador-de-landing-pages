@@ -5,6 +5,8 @@ import { EMBUDOS } from "@/lib/embudos-config"
 import { upsertContact, sendToWebhook, resolveWebhookUrl, resolveGHLConfig } from "@/lib/ghl-client"
 import { addGHLLog } from "@/lib/ghl-log-store"
 import { loadGHLConfigFromDB } from "@/lib/integrations-store"
+import { qualifyLead } from "@/lib/ai-service"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 // POST /api/leads
 // Receives lead data from the quiz registration form,
@@ -217,7 +219,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       message: "Lead registrado correctamente",
       lead_id: lead.id,
@@ -225,6 +227,44 @@ export async function POST(request: Request) {
       ghl_tag: embudoTag,
       integrations: results,
     })
+
+    // ─── AI PROSPECTOR (Background Analysis) ───
+    if (body.quiz_respuestas && Object.keys(body.quiz_respuestas).length > 0) {
+      // We do this non-blocking to return response faster
+      ; (async () => {
+        try {
+          const quizList = Object.entries(body.quiz_respuestas || {}).map(([q, a]) => ({
+            pregunta: q,
+            respuesta: a
+          }))
+
+          const insight = await qualifyLead(body, quizList)
+
+          if (insight) {
+            const supabase = createAdminClient()
+            if (supabase) {
+              await supabase.from("lead_insights").insert({
+                lead_id: lead.id,
+                qualification_score: insight.score,
+                summary: insight.summary,
+                recommended_action: insight.action,
+                suggested_message: insight.icebreaker,
+                raw_ai_analysis: insight
+              })
+
+              // Send a notification if score is high (Unicorn Alert)
+              if (insight.score >= 8) {
+                console.log(`🔥 HIGH QUALITY LEAD for ${asignadoA}: ${body.nombre} (${insight.score}/10)`)
+              }
+            }
+          }
+        } catch (error) {
+          console.error("AI Prospector Error:", error)
+        }
+      })()
+    }
+
+    return response
   } catch (err) {
     return NextResponse.json(
       {
