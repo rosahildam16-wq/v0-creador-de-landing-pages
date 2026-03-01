@@ -96,7 +96,11 @@ export async function saveMetaAdsConfig(memberId: string, config: MetaAdsConfig)
     const supabase = createAdminClient()
     if (supabase) {
         try {
-            const { error } = await supabase.from("meta_ads_config").upsert(payload)
+            // Explicitly specify onConflict to help PostgREST
+            const { error } = await supabase
+                .from("meta_ads_config")
+                .upsert(payload, { onConflict: 'member_id' })
+
             if (!error) return // Success
             console.warn("Supabase client upsert failed, falling back to direct REST:", error.message)
         } catch (e) {
@@ -108,7 +112,11 @@ export async function saveMetaAdsConfig(memberId: string, config: MetaAdsConfig)
     const result = await directSupabaseRest("POST", "meta_ads_config?on_conflict=member_id", payload)
 
     if (result && (result as any).error) {
-        throw new Error(`Error de base de datos: ${(result as any).message || "Desconocido"}`)
+        const msg = (result as any).message || ""
+        if (msg.includes("PGRST205") || msg.includes("schema cache")) {
+            throw new Error("La base de datos se está actualizando. Por favor, intenta de nuevo en 10 segundos.")
+        }
+        throw new Error(`Error de base de datos: ${msg}`)
     }
 
     if (!result) {
