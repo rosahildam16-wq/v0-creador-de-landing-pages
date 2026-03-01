@@ -46,8 +46,15 @@ export async function askMagicAI(message: string, history: { role: "user" | "ass
         })
 
         return response.choices[0].message.content
-    } catch (error) {
+    } catch (error: any) {
         console.error("askMagicAI Runtime Error:", error)
+
+        // Detect OpenAI specific errors
+        const isQuotaError = error?.status === 429 || error?.code === 'insufficient_quota' || error?.message?.includes('exceeded your current quota')
+
+        if (isQuotaError) {
+            console.error("CRITICAL: OpenAI Account has no balance or exceeded quota.")
+        }
 
         // Friendly fallback message that doesn't feel like a crash
         return "¡Vaya! Parece que la magia está un poco saturada en este momento. ✨ \n\nNo te preocupes, mi conexión con el servidor está en ajustes técnicos. Mientras tanto, puedes revisar la Academia o contactar directamente a soporte técnico en el grupo de WhatsApp. ¡Seguimos escalando! 🚀💎"
