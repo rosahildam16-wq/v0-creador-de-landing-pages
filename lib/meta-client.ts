@@ -65,13 +65,18 @@ async function directSupabaseRest(method: string, path: string, body?: any) {
 
     if (!res.ok) {
         const errText = await res.text()
-        console.error("Direct Supabase REST error:", errText)
-        return null
+        console.error(`Direct Supabase REST error (${res.status}):`, errText)
+        // Return error details instead of just null
+        return { error: true, status: res.status, message: errText }
     }
 
     const text = await res.text()
     if (!text) return []
-    return JSON.parse(text)
+    try {
+        return JSON.parse(text)
+    } catch (e) {
+        return []
+    }
 }
 
 /**
@@ -100,9 +105,14 @@ export async function saveMetaAdsConfig(memberId: string, config: MetaAdsConfig)
     }
 
     // Fallback: Direct REST API call (bypasses schema cache issues)
-    const result = await directSupabaseRest("POST", "meta_ads_config", payload)
+    const result = await directSupabaseRest("POST", "meta_ads_config?on_conflict=member_id", payload)
+
+    if (result && (result as any).error) {
+        throw new Error(`Error de base de datos: ${(result as any).message || "Desconocido"}`)
+    }
+
     if (!result) {
-        throw new Error("No se pudo guardar la configuración de Meta Ads")
+        throw new Error("No se pudo conectar con la base de datos (verifique configuración de Supabase)")
     }
 }
 

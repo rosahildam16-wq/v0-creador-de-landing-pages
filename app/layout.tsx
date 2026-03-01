@@ -16,9 +16,9 @@ export const metadata: Metadata = {
   title: 'Magic Funnel - Marketing Automation Premium',
   description: 'Convierte visitantes en clientes. La plataforma de marketing automation que las marcas premium eligen para escalar.',
   icons: {
-    icon: '/favicon.jpg',
-    shortcut: '/favicon.jpg',
-    apple: '/favicon.jpg',
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
   },
 }
 
