@@ -127,6 +127,7 @@ export function LoginScreen({ onContinue }: Props) {
                 placeholder="Usuario"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                autoComplete="off"
                 className="relative w-full rounded-xl border border-white/5 bg-neutral-900/80 px-4 py-4 text-[15px] text-white placeholder:text-neutral-600 outline-none focus:border-[#25F4EE]/30 focus:bg-neutral-900 transition-all backdrop-blur-xl"
                 required
               />
@@ -141,6 +142,7 @@ export function LoginScreen({ onContinue }: Props) {
                   placeholder={"Contrase\u00f1a"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="off"
                   className="w-full rounded-xl border border-white/5 bg-neutral-900/80 px-4 py-4 pr-12 text-[15px] text-white placeholder:text-neutral-600 outline-none focus:border-[#FE2C55]/30 focus:bg-neutral-900 transition-all backdrop-blur-xl"
                   required
                 />

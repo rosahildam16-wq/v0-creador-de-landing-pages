@@ -10,7 +10,8 @@ interface MagicReferralCardProps {
 }
 
 export function MagicReferralCard({ username, displayName }: MagicReferralCardProps) {
-    const [copied, setCopied] = useState(false)
+    const [copiedLink, setCopiedLink] = useState(false)
+    const [copiedFull, setCopiedFull] = useState(false)
 
     const baseUrl = typeof window !== "undefined" ? window.location.origin : ""
     const referralLink = `${baseUrl}/login?ref=${username}`
@@ -22,7 +23,22 @@ Estamos usando Inteligencia Artificial para automatizar nuestras ventas y escala
 Regístrate aquí para empezar a trabajar juntos:
 ${referralLink}`
 
-    const handleCopy = async () => {
+    const handleCopyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(referralLink)
+        } catch {
+            const input = document.createElement("input")
+            input.value = referralLink
+            document.body.appendChild(input)
+            input.select()
+            document.execCommand("copy")
+            document.body.removeChild(input)
+        }
+        setCopiedLink(true)
+        setTimeout(() => setCopiedLink(false), 2000)
+    }
+
+    const handleCopyFull = async () => {
         try {
             await navigator.clipboard.writeText(shareText)
         } catch {
@@ -33,22 +49,13 @@ ${referralLink}`
             document.execCommand("copy")
             document.body.removeChild(input)
         }
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
+        setCopiedFull(true)
+        setTimeout(() => setCopiedFull(false), 2000)
     }
 
-    const handleShare = async () => {
-        if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: "Únete a mi equipo en Magic Funnel",
-                    text: shareText,
-                    url: referralLink,
-                })
-            } catch { /* cancelled */ }
-        } else {
-            handleCopy()
-        }
+    const handleShareWhatsApp = () => {
+        const url = `https://wa.me/?text=${encodeURIComponent(shareText)}`
+        window.open(url, '_blank')
     }
 
     return (
@@ -88,20 +95,37 @@ ${referralLink}`
 
                     <div className="flex gap-2">
                         <button
-                            onClick={handleCopy}
+                            onClick={handleCopyLink}
                             className={cn(
-                                "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border transition-all duration-300",
-                                copied
+                                "flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl border transition-all duration-300 md:flex-initial md:px-6",
+                                copiedLink
                                     ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
                                     : "border-white/5 bg-white/[0.03] text-violet-300 hover:border-violet-500/30 hover:bg-violet-500/10 hover:text-white"
                             )}
                         >
-                            {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+                            {copiedLink ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+                            <span className="text-xs font-bold uppercase tracking-wider">Copiar Link</span>
                         </button>
 
                         <button
-                            onClick={handleShare}
-                            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/5 bg-white/[0.03] text-violet-300 transition-all duration-300 hover:border-violet-500/30 hover:bg-violet-500/10 hover:text-white"
+                            onClick={handleShareWhatsApp}
+                            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 transition-all duration-300 hover:border-emerald-500/40 hover:bg-emerald-500/20 md:flex-initial md:px-6"
+                        >
+                            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .004 5.412.001 12.049c0 2.123.554 4.197 1.611 6.041l-1.712 6.25 6.395-1.677c1.782.97 3.8 1.482 5.854 1.485h.005c6.634 0 12.044-5.412 12.048-12.05a11.82 11.82 0 00-3.522-8.421z" />
+                            </svg>
+                            <span className="text-xs font-bold uppercase tracking-wider">WhatsApp</span>
+                        </button>
+
+                        <button
+                            onClick={handleCopyFull}
+                            className={cn(
+                                "hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl border transition-all duration-300 md:flex",
+                                copiedFull
+                                    ? "border-violet-500/40 bg-violet-500/10 text-white shadow-[0_0_15px_rgba(139,92,246,0.3)]"
+                                    : "border-white/5 bg-white/[0.03] text-violet-300 hover:border-violet-500/30 hover:bg-violet-500/10 hover:text-white"
+                            )}
+                            title="Copiar Texto + Link"
                         >
                             <Share2 className="h-5 w-5" />
                         </button>

@@ -339,6 +339,7 @@ export default function LoginPage() {
                         onFocus={() => setFocusedField("name")}
                         onBlur={() => setFocusedField(null)}
                         placeholder="Tu nombre completo"
+                        autoComplete="off"
                         className="w-full px-5 py-4 bg-white/[0.02] text-white text-sm placeholder:text-violet-400/20 focus:outline-none rounded-2xl transition-all"
                         required
                       />
@@ -362,6 +363,7 @@ export default function LoginPage() {
                       onFocus={() => setFocusedField("email")}
                       onBlur={() => setFocusedField(null)}
                       placeholder="tu@empresa.com"
+                      autoComplete="off"
                       className="w-full px-5 py-4 bg-white/[0.02] text-white text-sm placeholder:text-violet-400/20 focus:outline-none rounded-2xl transition-all"
                       required
                     />
@@ -391,6 +393,7 @@ export default function LoginPage() {
                       onFocus={() => setFocusedField("password")}
                       onBlur={() => setFocusedField(null)}
                       placeholder="Ingresa tu contraseña"
+                      autoComplete="off"
                       className="w-full px-5 py-4 bg-white/[0.02] text-white text-sm placeholder:text-violet-400/20 focus:outline-none rounded-2xl pr-12 transition-all"
                       required
                     />
@@ -430,6 +433,7 @@ export default function LoginPage() {
                           onFocus={() => setFocusedField("username")}
                           onBlur={() => setFocusedField(null)}
                           placeholder="tu_usuario"
+                          autoComplete="off"
                           className="w-full pl-11 pr-11 py-4 bg-white/[0.02] text-white text-sm font-mono placeholder:text-violet-400/20 focus:outline-none rounded-2xl transition-all"
                           required
                         />
@@ -477,6 +481,7 @@ export default function LoginPage() {
                           onFocus={() => setFocusedField("sponsor")}
                           onBlur={() => setFocusedField(null)}
                           placeholder="usuario_de_quien_te_invito"
+                          autoComplete="off"
                           className="w-full pl-11 pr-11 py-4 bg-white/[0.02] text-white text-sm font-mono placeholder:text-violet-400/20 focus:outline-none rounded-2xl transition-all"
                         />
                         <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
@@ -527,6 +532,7 @@ export default function LoginPage() {
                               onFocus={() => setFocusedField("discount")}
                               onBlur={() => setFocusedField(null)}
                               placeholder="Ej: MIEQUIPO2026"
+                              autoComplete="off"
                               className="w-full pl-11 pr-4 py-4 bg-white/[0.02] text-white text-sm font-mono placeholder:text-violet-400/20 focus:outline-none rounded-2xl uppercase transition-all"
                             />
                           </div>

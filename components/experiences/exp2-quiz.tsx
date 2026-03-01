@@ -198,6 +198,7 @@ export function PsychQuiz({ onContinue, onLeadCreated, embudoId = "nomada-vip" }
                 <input
                   id="reg-nombre"
                   type="text"
+                  autoComplete="off"
                   placeholder="Ej: Carlos Martinez"
                   value={formData.nombre}
                   onChange={(e) => {
@@ -220,6 +221,7 @@ export function PsychQuiz({ onContinue, onLeadCreated, embudoId = "nomada-vip" }
                 <input
                   id="reg-correo"
                   type="email"
+                  autoComplete="off"
                   placeholder="tu@correo.com"
                   value={formData.correo}
                   onChange={(e) => {
@@ -335,6 +337,7 @@ export function PsychQuiz({ onContinue, onLeadCreated, embudoId = "nomada-vip" }
                   <input
                     id="reg-whatsapp"
                     type="tel"
+                    autoComplete="off"
                     placeholder="Ej: 55 1234 5678"
                     value={formData.whatsapp}
                     onChange={(e) => {

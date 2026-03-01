@@ -35,7 +35,7 @@ export async function askMagicAI(message: string, history: { role: "user" | "ass
     try {
         const openai = getOpenAIClient()
         const response = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: "gpt-4o-mini",
             messages: [
                 { role: "system", content: SYSTEM_PROMPT },
                 ...history,
@@ -56,8 +56,11 @@ export async function askMagicAI(message: string, history: { role: "user" | "ass
             console.error("CRITICAL: OpenAI Account has no balance or exceeded quota.")
         }
 
+        // Diagnostic info
+        const diag = `[Code: ${error?.code || error?.status || 'Unknown'}]`
+
         // Friendly fallback message that doesn't feel like a crash
-        return "¡Vaya! Parece que la magia está un poco saturada en este momento. ✨ \n\nNo te preocupes, mi conexión con el servidor está en ajustes técnicos. Mientras tanto, puedes revisar la Academia o contactar directamente a soporte técnico en el grupo de WhatsApp. ¡Seguimos escalando! 🚀💎"
+        return `¡Vaya! Parece que la magia está un poco saturada en este momento. ✨ \n\nNo te preocupes, mi conexión con el servidor está en ajustes técnicos. ${diag} \n\nMientras tanto, puedes revisar la Academia o contactar directamente a soporte técnico en el grupo de WhatsApp. ¡Seguimos escalando! 🚀💎`
     }
 }
 
@@ -90,7 +93,7 @@ export async function qualifyLead(leadData: any, quizAnswers: any[]) {
     try {
         const openai = getOpenAIClient()
         const response = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: "gpt-4o-mini",
             messages: [{ role: "system", content: prompt }],
             response_format: { type: "json_object" }
         })
