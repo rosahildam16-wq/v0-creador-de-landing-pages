@@ -11,9 +11,14 @@ export async function GET(request: NextRequest) {
     const access = await hasValidAccess(email)
     const subscription = access.subscription
 
-    let payments: unknown[] = []
+    let payments: any[] = []
     if (subscription) {
-      payments = await getPaymentHistory(subscription.id)
+      try {
+        payments = await getPaymentHistory(subscription.id)
+      } catch (err) {
+        console.warn("Payment history fetch failed, returning empty:", err)
+        payments = []
+      }
     }
 
     return NextResponse.json({
@@ -21,14 +26,14 @@ export async function GET(request: NextRequest) {
       reason: access.reason,
       subscription: subscription
         ? {
-            id: subscription.id,
-            plan_id: subscription.plan_id,
-            status: subscription.status,
-            trial_ends_at: subscription.trial_ends_at,
-            current_period_start: subscription.current_period_start,
-            current_period_end: subscription.current_period_end,
-            plan: subscription.plan,
-          }
+          id: subscription.id,
+          plan_id: subscription.plan_id,
+          status: subscription.status,
+          trial_ends_at: subscription.trial_ends_at,
+          current_period_start: subscription.current_period_start,
+          current_period_end: subscription.current_period_end,
+          plan: subscription.plan,
+        }
         : null,
       payments,
     })

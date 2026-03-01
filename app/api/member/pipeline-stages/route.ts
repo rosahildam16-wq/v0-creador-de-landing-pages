@@ -16,7 +16,13 @@ export async function GET(req: Request) {
         .eq("owner_username", username)
         .order("order_index", { ascending: true })
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+        // Fallback for table not existence
+        if (error.code === '42P01') {
+            return NextResponse.json([])
+        }
+        return NextResponse.json({ error: error.message }, { status: 500 })
+    }
     return NextResponse.json(data)
 }
 

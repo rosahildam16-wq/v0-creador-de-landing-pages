@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json([])
         }
 
-        // 2. Fetch leads assigned to this member with AI insights
+        // 2. Fetch leads assigned to this member (Try with AI insights first)
         let leadsResult = await supabase
             .from("leads")
             .select(`
@@ -39,17 +39,22 @@ export async function GET(req: NextRequest) {
             .eq("asignado_a", member.username)
             .order("fecha_ingreso", { ascending: false })
 
-        // If that returned nothing or we want to try community-wide (if possible)
-        if (!leadsResult.error) {
-            // Success with asignado_a
-        } else {
-            console.error("Primary leads fetch error:", leadsResult.error)
+        // Fallback for insights if join fails (table doesn't exist yet)
+        if (leadsResult.error) {
+            console.warn("Insights fetch failed, falling back:", leadsResult.error.message)
+            leadsResult = await supabase
+                .from("leads")
+                .select("*")
+                .eq("asignado_a", member.username)
+                .order("fecha_ingreso", { ascending: false })
         }
 
         const rawLeads = leadsResult.data || []
         const leads = rawLeads.map((l: any) => ({
             ...l,
-            insight: l.lead_insights && l.lead_insights.length > 0 ? l.lead_insights[0] : undefined
+            insight: l.lead_insights && Array.isArray(l.lead_insights) && l.lead_insights.length > 0
+                ? l.lead_insights[0]
+                : undefined
         }))
         const leadsError = leadsResult.error
 
