@@ -69,7 +69,7 @@ function ParticleField() {
 
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(37, 244, 238, ${p.alpha})`
+        ctx.fillStyle = `rgba(0, 255, 65, ${p.alpha})`
         ctx.fill()
       }
 
@@ -82,7 +82,7 @@ function ParticleField() {
             ctx.beginPath()
             ctx.moveTo(particles[i].x, particles[i].y)
             ctx.lineTo(particles[j].x, particles[j].y)
-            ctx.strokeStyle = `rgba(37, 244, 238, ${0.04 * (1 - dist / 150)})`
+            ctx.strokeStyle = `rgba(0, 255, 65, ${0.04 * (1 - dist / 150)})`
             ctx.lineWidth = 0.5
             ctx.stroke()
           }
@@ -177,7 +177,7 @@ function MetallicCodeCard() {
           <div className="mb-1 text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Código de Activación:</div>
           <div className="relative flex items-center justify-center overflow-hidden rounded-xl bg-black border border-white/5 p-4">
             {/* Scan Line */}
-            <div className={`absolute top-0 left-0 h-full w-[2px] bg-primary shadow-[0_0_15px_#25F4EE] z-10 transition-all duration-1500 ease-in-out ${revealed ? "translate-x-[360px]" : "translate-x-[-10px]"}`} />
+            <div className={`absolute top-0 left-0 h-full w-[2px] bg-primary shadow-[0_0_15px_#00FF41] z-10 transition-all duration-1500 ease-in-out ${revealed ? "translate-x-[360px]" : "translate-x-[-10px]"}`} />
 
             <div className={`flex gap-3 transition-all duration-1000 ${revealed ? "opacity-100 blur-0 scale-100" : "opacity-20 blur-md scale-95"}`}>
               <span className="text-2xl font-black italic tracking-wider text-white">XR-782-RESET</span>
@@ -395,7 +395,7 @@ export function ResetLanding({ leadId, onTrack, referrer }: Props) {
       <div className="sticky top-0 z-[110] w-full bg-black/80 border-b border-white/5 backdrop-blur-md">
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-primary shadow-[0_0_10px_#25F4EE]" />
+            <div className="h-2 w-2 rounded-full bg-primary shadow-[0_0_10px_#00FF41]" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em] italic text-neutral-300">Reseteando sistema...</span>
           </div>
           <div className="flex items-center gap-2 font-mono text-sm font-black text-primary italic">
@@ -423,7 +423,7 @@ export function ResetLanding({ leadId, onTrack, referrer }: Props) {
           <div className="mt-16 w-full max-w-md space-y-6">
             <Button
               onClick={() => setQuizOpen(true)}
-              className="luxury-cta-btn group relative h-24 w-full overflow-hidden rounded-[2rem] bg-white transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] shadow-[0_20px_50px_rgba(255,255,255,0.08)]"
+              className="luxury-cta-btn group relative h-24 w-full overflow-hidden rounded-[2rem] bg-white transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] shadow-[0_20px_50px_rgba(0,255,65,0.15)]"
             >
               <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="relative flex w-full items-center justify-between px-4">
@@ -608,7 +608,7 @@ export function ResetLanding({ leadId, onTrack, referrer }: Props) {
 
       <style jsx global>{`
         :root {
-           --primary-rgb: 37, 244, 238;
+           --primary-rgb: 0, 255, 65;
         }
         @keyframes shine {
           0% { transform: translateX(-100%) skewX(-30deg); }

@@ -127,16 +127,16 @@ export function DiagnosticQuiz({ open, onClose, onComplete }: DiagnosticQuizProp
       {/* Quiz card */}
       <div
         className={`relative z-10 w-full max-w-sm overflow-hidden rounded-[2.5rem] border border-white/10 bg-[#0a0a0a] shadow-2xl transition-all duration-500 ${animatingOut ? "translate-y-8 scale-95 opacity-0" : "translate-y-0 scale-100 opacity-100"}`}
-        style={{ boxShadow: "0 0 80px rgba(37, 244, 238, 0.15), 0 25px 50px rgba(0, 0, 0, 0.8)" }}
+        style={{ boxShadow: "0 0 80px rgba(0, 255, 65, 0.15), 0 25px 50px rgba(0, 0, 0, 0.8)" }}
       >
 
         {/* Progress bar */}
         <div className="relative h-1.5 w-full bg-white/5">
           <div
-            className={`h-full transition-all duration-700 ease-out ${progressPulse ? "shadow-[0_0_15px_#25F4EE]" : ""}`}
+            className={`h-full transition-all duration-700 ease-out ${progressPulse ? "shadow-[0_0_15px_#00FF41]" : ""}`}
             style={{
               width: progressWidth,
-              background: "linear-gradient(90deg, #25F4EE, #18A5A0)",
+              background: "linear-gradient(90deg, #00FF41, #008F11)",
             }}
           />
         </div>
@@ -165,7 +165,7 @@ export function DiagnosticQuiz({ open, onClose, onComplete }: DiagnosticQuizProp
                     type="button"
                     onClick={() => handleBudgetSelect(opt.id)}
                     className={`group relative flex items-center gap-4 rounded-2xl border px-5 py-4 text-left transition-all duration-300 ${selectedBudget === opt.id
-                      ? "border-primary bg-primary/10 shadow-[0_0_20px_rgba(37,244,238,0.1)]"
+                      ? "border-primary bg-primary/10 shadow-[0_0_20px_rgba(0, 255, 65, 0.1)]"
                       : "border-white/5 bg-white/5 hover:border-white/20 hover:bg-white/10"
                       }`}
                     style={{

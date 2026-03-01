@@ -143,7 +143,7 @@ export function VideoPlayer({ onContinue, videoSrc, embedUrl }: Props) {
                 <div className="absolute inset-0 animate-ping rounded-full bg-primary/20 duration-[2s]" />
                 <div className="absolute -inset-4 animate-pulse rounded-full bg-primary/10 duration-[3s]" />
 
-                <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-primary/40 bg-black/80 shadow-[0_0_40px_rgba(34,211,238,0.2)] backdrop-blur-xl transition-all duration-300 group-hover:scale-110 group-hover:border-primary">
+                <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-primary/40 bg-black/80 shadow-[0_0_40px_rgba(0,255,65,0.25)] backdrop-blur-xl transition-all duration-300 group-hover:scale-110 group-hover:border-primary">
                   <Play className="ml-1 h-8 w-8 text-primary" fill="currentColor" />
                 </div>
               </div>
