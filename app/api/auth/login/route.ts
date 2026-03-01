@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
         const { email, password } = await req.json()
         const normalizedEmail = email.toLowerCase().trim()
 
-        const ADMIN_EMAIL = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || "iajorgeleon21@gmail.com"
+        const ADMIN_EMAIL = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || "iajorgeleon21@gmail.com").trim().toLowerCase()
         const ADMIN_PASSWORD = "Leon321$#"
         const MEMBER_DEFAULT_PASSWORD = "Member123$"
         const LAUNCH_TEST_CODE = "LANZAMIENTO2026"
