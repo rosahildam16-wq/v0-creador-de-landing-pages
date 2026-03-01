@@ -19,6 +19,7 @@ import { useAuth } from "@/lib/auth-context"
 import { getMemberData } from "@/lib/team-data"
 import {
   Search, Download, ChevronLeft, ChevronRight, Loader2, Users, ArrowUpDown, Plus, X,
+  Phone, Mail, MessageCircle, Globe, Calendar, Clock, StickyNote, Trash2, CalendarCheck, Lightbulb, User, ExternalLink, Link as LinkIcon
 } from "lucide-react"
 import {
   Dialog,
@@ -32,6 +33,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { format } from "date-fns"
+import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import useSWR from "swr"
 import type { Lead } from "@/lib/types"
@@ -85,6 +87,15 @@ export default function MemberLeadsPage() {
     email: "",
     whatsapp: "",
     campana: "Franquicia Reset"
+  })
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
+  const [isDetailOpen, setIsDetailOpen] = useState(false)
+  const [isAgendarDialogOpen, setIsAgendarDialogOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState("notas")
+  const [appointmentData, setAppointmentData] = useState({
+    date: "",
+    time: "",
+    motive: ""
   })
 
   const leadsConScore = useMemo(
@@ -175,11 +186,67 @@ export default function MemberLeadsPage() {
     }
   }
 
+  const handleAgendarCita = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedLead || !appointmentData.date || !appointmentData.time) return
+    setIsSubmitting(true)
+    try {
+      const startTime = new Date(`${appointmentData.date}T${appointmentData.time}`)
+      const endTime = new Date(startTime.getTime() + 45 * 60000) // 45 min default
+
+      const res = await fetch("/api/member/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leadId: selectedLead.id,
+          title: `Cita con ${selectedLead.nombre}`,
+          description: appointmentData.motive,
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+          provider: "manual"
+        }),
+      })
+
+      const data = await res.json()
+      if (data.success) {
+        toast.success("Cita agendada manualmente 🥂")
+        setIsAgendarDialogOpen(false)
+        setAppointmentData({ date: "", time: "", motive: "" })
+        mutate()
+      } else {
+        toast.error(data.error || "Error al agendar")
+      }
+    } catch (err) {
+      toast.error("Error al procesar la cita")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleDeleteLead = async (id: string) => {
+    if (!confirm("¿Estás seguro de eliminar este lead? Esta acción no se puede deshacer.")) return
+    try {
+      const res = await fetch(`/api/member/leads?id=${id}`, { method: "DELETE" })
+      if (res.ok) {
+        toast.success("Lead eliminado")
+        setIsDetailOpen(false)
+        mutate()
+      }
+    } catch (err) {
+      toast.error("Error al eliminar")
+    }
+  }
+
+  const handleOpenDetail = (lead: Lead) => {
+    setSelectedLead(lead)
+    setIsDetailOpen(true)
+  }
+
   const handleExport = () => {
     const csv = [
-      "Nombre,Email,WhatsApp,Temperatura,Score,Etapa,Fecha Ingreso",
+      "Nombre,Email,WhatsApp,Pais,Trafico,Embudo,Temperatura,Score,Etapa,Fecha Ingreso",
       ...sorted.map(
-        (l) => `"${l.nombre}","${l.email}","${l.whatsapp}","${l.temperatura}",${l.score},"${ETAPA_LABELS[l.etapa]}","${format(new Date(l.fecha_ingreso), "dd/MM/yyyy")}"`
+        (l) => `"${l.nombre}","${l.email}","${l.whatsapp}","${l.pais || ""}","${l.trafico || "Organico"}","${l.tipo_embudo || "cita"}","${l.temperatura}",${l.score},"${ETAPA_LABELS[l.etapa]}","${format(new Date(l.fecha_ingreso), "dd/MM/yyyy")}"`
       ),
     ].join("\n")
     const blob = new Blob([csv], { type: "text/csv" })
@@ -276,6 +343,113 @@ export default function MemberLeadsPage() {
               </form>
             </DialogContent>
           </Dialog>
+
+          {/* Manual Appointment Modal */}
+          <Dialog open={isAgendarDialogOpen} onOpenChange={setIsAgendarDialogOpen}>
+            <DialogContent className="max-w-md p-0 bg-white dark:bg-neutral-900 border-none rounded-3xl overflow-hidden shadow-2xl">
+              {selectedLead && (
+                <div className="flex flex-col">
+                  <div className="p-6 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-lg font-black tracking-tighter text-neutral-900 dark:text-white uppercase">
+                        Agendar cita manualmente
+                      </h2>
+                      <p className="text-[10px] text-neutral-400 font-medium">
+                        Registra una cita para un prospecto. Recibirá las mismas notificaciones que si la hubiera agendado él mismo.
+                      </p>
+                    </div>
+                    <button onClick={() => setIsAgendarDialogOpen(false)} className="text-neutral-400 hover:text-neutral-600">
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleAgendarCita} className="p-6 space-y-4">
+                    <div className="space-y-1">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Nombre del prospecto *</Label>
+                      <Input value={selectedLead.nombre} disabled className="bg-neutral-50 dark:bg-neutral-800 border-neutral-100 dark:border-neutral-700 font-bold" />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">WhatsApp *</Label>
+                        <div className="flex items-center gap-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700 rounded-md px-3 h-10">
+                          <span className="text-xs">🇲🇽 +52</span>
+                          <div className="w-px h-4 bg-neutral-200 dark:bg-neutral-700" />
+                          <span className="text-xs font-bold truncate">{selectedLead.whatsapp.replace(/^\+\d+/, '')}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Email *</Label>
+                        <Input value={selectedLead.email} disabled className="bg-neutral-50 dark:bg-neutral-800 border-neutral-100 dark:border-neutral-700 font-bold text-xs" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Modalidad *</Label>
+                      <div className="flex items-center gap-3">
+                        <Badge className="bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 px-4 py-1.5 rounded-lg gap-2 text-[10px] font-black uppercase tracking-widest">
+                          <Globe className="h-3 w-3" />
+                          Virtual
+                        </Badge>
+                        <span className="text-[10px] text-neutral-400">(según tu configuración de agenda)</span>
+                      </div>
+                      <p className="text-[9px] text-neutral-400 flex items-center gap-1 mt-1">
+                        <LinkIcon className="h-3 w-3" /> Link de reunión: <span className="text-primary underline">https://zoom.us/my/magic-room</span>
+                      </p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Fecha y hora *</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input
+                          type="date"
+                          required
+                          value={appointmentData.date}
+                          onChange={(e) => setAppointmentData({ ...appointmentData, date: e.target.value })}
+                          className="bg-white dark:bg-neutral-800 border-neutral-100 dark:border-neutral-700 font-bold"
+                        />
+                        <Input
+                          type="time"
+                          required
+                          value={appointmentData.time}
+                          onChange={(e) => setAppointmentData({ ...appointmentData, time: e.target.value })}
+                          className="bg-white dark:bg-neutral-800 border-neutral-100 dark:border-neutral-700 font-bold"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Motivo (opcional)</Label>
+                      <textarea
+                        placeholder="Ej: Presentación de plan de compensación"
+                        value={appointmentData.motive}
+                        onChange={(e) => setAppointmentData({ ...appointmentData, motive: e.target.value })}
+                        className="w-full min-h-[80px] bg-white dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700 rounded-xl p-3 text-sm outline-none focus:border-primary/50 transition-colors resize-none"
+                      />
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="flex-1 rounded-xl font-bold h-11"
+                        onClick={() => setIsAgendarDialogOpen(false)}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="flex-1 rounded-xl font-bold h-11 bg-emerald-500 hover:bg-emerald-600 text-white"
+                      >
+                        {isSubmitting ? "Agendando..." : "Agendar cita"}
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
           <Button variant="outline" size="sm" onClick={handleExport} className="gap-2" disabled={sorted.length === 0}>
             <Download className="h-4 w-4" /> Exportar CSV
           </Button>
@@ -333,6 +507,7 @@ export default function MemberLeadsPage() {
                     <TableHead><button type="button" className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide" onClick={() => toggleSort("nombre")}>Nombre <ArrowUpDown className="h-3 w-3 text-muted-foreground" /></button></TableHead>
                     <TableHead><button type="button" className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide" onClick={() => toggleSort("etapa")}>Etapa <ArrowUpDown className="h-3 w-3 text-muted-foreground" /></button></TableHead>
                     <TableHead><button type="button" className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide" onClick={() => toggleSort("score")}>Temperatura <ArrowUpDown className="h-3 w-3 text-muted-foreground" /></button></TableHead>
+                    <TableHead className="text-xs font-semibold uppercase tracking-wide">País / Tráfico</TableHead>
                     <TableHead className="text-xs font-semibold uppercase tracking-wide">WhatsApp</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -340,9 +515,13 @@ export default function MemberLeadsPage() {
                   {paginated.map((lead) => (
                     <TableRow key={lead.id} className="group hover:bg-white/[0.02]">
                       <TableCell className="py-4">
-                        <div className="flex flex-col">
+                        <div
+                          className="flex flex-col cursor-pointer hover:bg-white/5 p-1 rounded transition-colors"
+                          onClick={() => handleOpenDetail(lead)}
+                        >
                           <span className="font-bold text-foreground">{lead.nombre}</span>
                           <span className="text-[10px] text-muted-foreground uppercase tracking-tight">{lead.email}</span>
+                          {lead.tipo_embudo && <span className="text-[9px] text-primary/50 font-black uppercase mt-0.5">{lead.tipo_embudo}</span>}
                         </div>
                       </TableCell>
                       <TableCell className="py-4">
@@ -368,6 +547,20 @@ export default function MemberLeadsPage() {
                         <ScoreBars score={lead.score} temperatura={lead.temperatura} />
                       </TableCell>
                       <TableCell className="py-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs font-medium text-foreground">{lead.pais || "N/A"}</span>
+                          <Badge
+                            variant="secondary"
+                            className={cn(
+                              "w-fit text-[9px] px-1.5 py-0 uppercase font-black",
+                              lead.trafico === "Pauta" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                            )}
+                          >
+                            {lead.trafico || "Organico"}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-4">
                         <div className="flex items-center gap-2">
                           <WhatsAppStatus tipoEmbudo={lead.tipo_embudo} whatsappCitaEnviado={lead.whatsapp_cita_enviado} compraCompletada={lead.compra_completada} />
                           <Button
@@ -383,7 +576,7 @@ export default function MemberLeadsPage() {
                     </TableRow>
                   ))}
                   {paginated.length === 0 && (leads || []).length > 0 && (
-                    <TableRow><TableCell colSpan={4} className="h-24 text-center text-sm text-muted-foreground">No se encontraron leads con estos filtros.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} className="h-24 text-center text-sm text-muted-foreground">No se encontraron leads con estos filtros.</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -402,6 +595,166 @@ export default function MemberLeadsPage() {
           </div>
         </div>
       )}
+      {/* Lead Detail Modal */}
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="max-w-2xl p-0 bg-white dark:bg-neutral-900 border-none rounded-3xl overflow-hidden shadow-2xl">
+          {selectedLead && (
+            <div className="flex flex-col">
+              {/* Modal Header */}
+              <div className="p-6 pb-4 flex items-start justify-between">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-2xl font-black tracking-tighter text-neutral-900 dark:text-white uppercase">
+                      {selectedLead.nombre}
+                    </h2>
+                    <Badge className="bg-orange-500 hover:bg-orange-600 text-white border-none px-3 py-0.5 text-[10px] font-black uppercase tracking-widest">
+                      🔥 Super Caliente
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 font-medium">Estado CRM: {ETAPA_LABELS[selectedLead.etapa]}</p>
+                </div>
+                <button onClick={() => setIsDetailOpen(false)} className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors">
+                  <X className="h-5 w-5 text-neutral-400" />
+                </button>
+              </div>
+
+              {/* Data Grid */}
+              <div className="px-8 py-6 grid grid-cols-2 gap-x-12 gap-y-6 bg-neutral-50/50 dark:bg-white/[0.02]">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">WhatsApp</p>
+                  <p className="text-sm font-bold text-neutral-900 dark:text-white">{selectedLead.whatsapp}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Email</p>
+                  <p className="text-sm font-bold text-neutral-900 dark:text-white">{selectedLead.email}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Tiempo efectivo</p>
+                  <p className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+                    <Clock className="h-3.5 w-3.5 text-neutral-300" /> —
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Registrado</p>
+                  <p className="text-sm font-bold text-neutral-900 dark:text-white">
+                    {format(new Date(selectedLead.fecha_ingreso), "dd MMM yyyy HH:mm", { locale: es })}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Último contacto</p>
+                  <p className="text-sm font-bold text-neutral-900 dark:text-white">—</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Origen</p>
+                  <p className="text-sm font-bold text-neutral-900 dark:text-white uppercase">{selectedLead.campana || "Re-Lanzamiento 2026"}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">CTA WhatsApp</p>
+                  <p className="text-sm font-bold text-neutral-900 dark:text-white">No</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">ID Prospecto</p>
+                  <p className="text-[10px] font-mono text-neutral-400 truncate">{selectedLead.id}</p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="p-8 flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-3 bg-neutral-100 dark:bg-neutral-800 rounded-xl px-3 py-1.5 min-w-[180px]">
+                  <span className="text-[10px] font-bold text-neutral-400 uppercase">Estado:</span>
+                  <div className="flex-1">
+                    <Select
+                      value={selectedLead.etapa}
+                      onValueChange={(v) => handleUpdateEtapa(selectedLead.id, v as EtapaPipeline)}
+                    >
+                      <SelectTrigger className="h-7 border-none bg-transparent p-0 text-xs font-bold focus:ring-0">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ETAPA_ORDER.map((e) => (
+                          <SelectItem key={e} value={e} className="text-xs">{ETAPA_LABELS[e]}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <Button
+                  className="bg-[#25D366] hover:bg-[#20ba59] text-white font-bold h-11 px-6 rounded-xl gap-2 flex-1 shadow-lg shadow-[#25D366]/20 border-none"
+                  onClick={() => window.open(`https://wa.me/${selectedLead.whatsapp.replace(/\D/g, '')}`, '_blank')}
+                >
+                  <MessageCircle className="h-5 w-5" />
+                  Contactar por WhatsApp
+                  <ExternalLink className="h-3 w-3 opacity-50" />
+                </Button>
+
+                <div className="w-full flex gap-3 mt-1">
+                  <Button
+                    variant="outline"
+                    className="h-11 px-6 rounded-xl gap-2 font-bold border-neutral-200 dark:border-neutral-800"
+                    onClick={() => setIsAgendarDialogOpen(true)}
+                  >
+                    <CalendarCheck className="h-4 w-4" />
+                    Agendar cita
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="h-11 px-6 rounded-xl gap-2 font-bold bg-red-500 hover:bg-red-600 border-none"
+                    onClick={() => handleDeleteLead(selectedLead.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Eliminar
+                  </Button>
+                </div>
+              </div>
+
+              {/* Tabs Section */}
+              <div className="px-8 pb-10">
+                <div className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 p-1 rounded-2xl mb-6">
+                  {['notas', 'engagement', 'recordatorios'].map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={cn(
+                        "flex-1 flex items-center justify-center gap-2 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all",
+                        activeTab === tab ? "bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm" : "text-neutral-400 hover:text-neutral-600"
+                      )}
+                    >
+                      {tab === 'notas' && <StickyNote className="h-3 w-3" />}
+                      {tab === 'engagement' && <Users className="h-3 w-3" />}
+                      {tab === 'recordatorios' && <Calendar className="h-3 w-3" />}
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Tab Content */}
+                <div className="min-h-[120px] flex flex-col items-center justify-center text-center p-6 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl">
+                  {activeTab === 'notas' && (
+                    <div className="w-full space-y-4 text-left">
+                      <Button variant="ghost" size="sm" className="w-full border border-dashed border-neutral-200 dark:border-neutral-800 py-6 text-neutral-400 hover:text-primary gap-2">
+                        <Plus className="h-4 w-4" /> Nueva nota para este lead
+                      </Button>
+                      <p className="text-[10px] text-neutral-400 text-center italic">No hay notas registradas todavía.</p>
+                    </div>
+                  )}
+                  {activeTab === 'engagement' && (
+                    <p className="text-xs text-neutral-400 mt-2 font-medium">No se han registrado interacciones recientes.</p>
+                  )}
+                  {activeTab === 'recordatorios' && (
+                    <div className="space-y-4">
+                      <Button variant="ghost" size="sm" className="text-neutral-400 gap-2">
+                        <Plus className="h-4 w-4" /> Nuevo recordatorio
+                      </Button>
+                      <p className="text-[10px] text-neutral-400 italic">Los recordatorios están deshabilitados para leads cerrados o no interesados.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -33,7 +33,7 @@ const STEP_NAMES: Record<Experience, string> = {
 // --- STABLE CONFIGS FOR FEED ---
 const RESET_SLIDES = [
   {
-    videoSrc: "/videos/franquicia-reset.mov",
+    videoSrc: "/videos/tiktok-1.mp4",
     overlayText: [],
     username: "reset.system",
     caption: "El Arma Injusta",
@@ -44,7 +44,7 @@ const RESET_SLIDES = [
     shares: "73.5 mil",
   },
   {
-    videoSrc: "/videos/tiktok-2.mov",
+    videoSrc: "/videos/tiktok-2.mp4",
     overlayText: [],
     username: "reset.system",
     caption: "El Sistema Automático",
@@ -55,7 +55,7 @@ const RESET_SLIDES = [
     shares: "55.2 mil",
   },
   {
-    videoSrc: "/videos/tiktok-3-agenda.mp4",
+    videoSrc: "/videos/tiktok-3.mp4",
     overlayText: [],
     username: "reset.system",
     caption: "Agenda tu llamada ahora",

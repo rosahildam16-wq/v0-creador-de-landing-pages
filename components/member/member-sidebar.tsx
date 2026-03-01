@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
-import { LayoutDashboard, Link2, Users, ChevronLeft, ChevronRight, LogOut, GraduationCap, Kanban, Trophy, Sparkles, CreditCard, MessagesSquare, Globe, CalendarCheck } from "lucide-react"
+import { LayoutDashboard, Link2, Users, ChevronLeft, ChevronRight, LogOut, GraduationCap, Kanban, Trophy, Sparkles, CreditCard, MessagesSquare, Globe, CalendarCheck, Plug, Archive } from "lucide-react"
 import { useState } from "react"
 
 const NAV_ITEMS = [
@@ -19,7 +19,9 @@ const NAV_ITEMS = [
   { href: "/member/comunidad", label: "Comunidad", icon: MessagesSquare },
   { href: "/member/academia", label: "Academia", icon: GraduationCap },
   { href: "/member/mi-embudo", label: "Mis Embudos", icon: Link2 },
+  { href: "/member/integraciones", label: "Integraciones", icon: Plug },
   { href: "/member/social-center", label: "Social Center", icon: Globe },
+  { href: "/member/recursos", label: "Librería", icon: Archive },
   { href: "/member/suscripcion", label: "Suscripcion", icon: CreditCard },
 ]
 

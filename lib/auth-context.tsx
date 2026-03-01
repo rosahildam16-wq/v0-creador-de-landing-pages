@@ -14,6 +14,7 @@ export interface AuthUser {
   role: UserRole
   memberId?: string
   communityId?: string
+  planId?: string
 }
 
 interface AuthContextType {
@@ -122,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             role: data.role,
             memberId: data.memberId,
             communityId: data.communityId,
+            planId: data.planId,
           }
           setUser(userData)
           setIsAuthenticated(true)

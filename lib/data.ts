@@ -242,6 +242,8 @@ export async function createLead(leadData: {
   embudo_id?: string
   asignado_a?: string
   community_id?: string
+  pais?: string
+  trafico?: "Organico" | "Pauta"
 }): Promise<Lead | null> {
   if (isSupabaseConfigured()) {
     const { createAdminClient } = await import("@/lib/supabase/admin")
@@ -256,6 +258,8 @@ export async function createLead(leadData: {
       whatsapp: leadData.whatsapp || leadData.telefono || "",
       fuente: leadData.fuente || "Organico",
       asignado_a: leadData.asignado_a || "Sin asignar",
+      pais: leadData.pais || null,
+      trafico: leadData.trafico || "Organico",
     }
 
     // Only add these if we're sure or they might fail the insert
@@ -329,6 +333,8 @@ export async function createLead(leadData: {
     notas: [],
     asignado_a: leadData.asignado_a || "Sin asignar",
     community_id: leadData.community_id || "general",
+    pais: leadData.pais,
+    trafico: leadData.trafico || "Organico",
   }
   leads.unshift(newLead)
   return newLead
@@ -497,5 +503,7 @@ function mapLeadRow(row: Record<string, unknown>, notas: Nota[] = []): Lead {
     notas,
     asignado_a: (row.asignado_a as string) || "Sin asignar",
     community_id: (row.community_id as string) || "general",
+    pais: row.pais as string,
+    trafico: row.trafico as "Organico" | "Pauta",
   }
 }

@@ -39,6 +39,7 @@ import {
 } from "lucide-react"
 import { format } from "date-fns"
 import useSWR from "swr"
+import { cn } from "@/lib/utils"
 import type { Lead } from "@/lib/types"
 
 const fetcher = (url: string) =>
@@ -191,10 +192,10 @@ export default function LeadsPage() {
 
   const handleExport = () => {
     const csv = [
-      "Nombre,Email,WhatsApp,Campana,Fuente,Temperatura,Score,Etapa,WhatsApp Cita,Fecha Ingreso",
+      "Nombre,Email,WhatsApp,Campana,Embudo,Fuente,Pais,Trafico,Temperatura,Score,Etapa,WhatsApp Cita,Fecha Ingreso",
       ...sorted.map(
         (l) =>
-          `"${l.nombre}","${l.email}","${l.whatsapp}","${l.campana}","${l.fuente}","${l.temperatura}",${l.score},"${ETAPA_LABELS[l.etapa]}","${l.whatsapp_cita_enviado ? "Enviado" : "Pendiente"}","${format(new Date(l.fecha_ingreso), "dd/MM/yyyy")}"`
+          `"${l.nombre}","${l.email}","${l.whatsapp}","${l.campana}","${l.tipo_embudo || l.embudo_id}","${l.fuente}","${l.pais || ""}","${l.trafico || "Organico"}","${l.temperatura}",${l.score},"${ETAPA_LABELS[l.etapa]}","${l.whatsapp_cita_enviado ? "Enviado" : "Pendiente"}","${format(new Date(l.fecha_ingreso), "dd/MM/yyyy")}"`
       ),
     ].join("\n")
 
@@ -409,6 +410,9 @@ export default function LeadsPage() {
                       </button>
                     </TableHead>
                     <TableHead className="text-xs font-semibold uppercase tracking-wide">
+                      País / Tráfico
+                    </TableHead>
+                    <TableHead className="text-xs font-semibold uppercase tracking-wide">
                       Socio
                     </TableHead>
                     <TableHead className="text-xs font-semibold uppercase tracking-wide">
@@ -431,9 +435,10 @@ export default function LeadsPage() {
 
                       {/* Campana */}
                       <TableCell className="py-3">
-                        <span className="text-sm text-muted-foreground">
-                          {lead.campana || "Sin campana"}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-sm text-muted-foreground">{lead.campana || "Sin campana"}</span>
+                          <span className="text-[10px] text-primary/60 font-medium uppercase">{lead.tipo_embudo || "Cita"}</span>
+                        </div>
                       </TableCell>
 
                       {/* Estado del pipeline */}
@@ -461,6 +466,22 @@ export default function LeadsPage() {
                           whatsappCitaEnviado={lead.whatsapp_cita_enviado}
                           compraCompletada={lead.compra_completada}
                         />
+                      </TableCell>
+
+                      {/* País / Tráfico */}
+                      <TableCell className="py-3">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs font-medium text-foreground">{lead.pais || "N/A"}</span>
+                          <Badge
+                            variant="secondary"
+                            className={cn(
+                              "w-fit text-[9px] px-1.5 py-0 uppercase font-black",
+                              lead.trafico === "Pauta" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                            )}
+                          >
+                            {lead.trafico || "Organico"}
+                          </Badge>
+                        </div>
                       </TableCell>
 
                       {/* Socio */}
@@ -502,7 +523,7 @@ export default function LeadsPage() {
                   {paginated.length === 0 && Array.isArray(leads) && leads.length > 0 && (
                     <TableRow>
                       <TableCell
-                        colSpan={6}
+                        colSpan={8}
                         className="h-24 text-center text-sm text-muted-foreground"
                       >
                         No se encontraron leads con estos filtros.

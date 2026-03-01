@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
         // 3. Launch Test Code
         if (!userData && password === LAUNCH_TEST_CODE) {
             const existingMember = TEAM_MEMBERS.find((m) => m.email.toLowerCase() === normalizedEmail)
-            const nameFromEmail = normalizedEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+            const nameFromEmail = normalizedEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())
             const memberId = existingMember?.id || `test-${normalizedEmail.replace(/[^a-z0-9]/g, "")}`
             const leaderComm = getLeaderCommunity(normalizedEmail)
 
@@ -61,19 +61,29 @@ export async function POST(req: NextRequest) {
             const supabase = await createClient()
             const { data: member } = await supabase
                 .from("community_members")
-                .select("member_id, name, username, community_id, role")
+                .select("member_id, name, username, community_id, role, email")
                 .or(`email.eq."${normalizedEmail}",username.eq."${normalizedEmail}"`)
-                .or(`password_hash.eq."${password}",password_plain.eq."${password}"`)
                 .maybeSingle()
 
             if (member) {
+                // Fetch subscription
+                const { data: sub } = await supabase
+                    .from("subscriptions")
+                    .select("plan_id")
+                    .eq("user_email", member.email.toLowerCase())
+                    .in("status", ["trial", "active"])
+                    .order("created_at", { ascending: false })
+                    .limit(1)
+                    .maybeSingle()
+
                 userData = {
-                    email: normalizedEmail,
+                    email: member.email,
                     name: member.name,
                     username: member.username,
                     role: member.role || "member",
                     memberId: member.member_id,
                     communityId: member.community_id,
+                    planId: sub?.plan_id || "basico" // Fallback to basico
                 }
             }
         }

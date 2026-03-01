@@ -43,6 +43,28 @@ const questions = [
 // Total steps = questions + 1 registration form
 const TOTAL_STEPS = questions.length + 1
 
+const getCountryName = (code: string) => {
+  const map: Record<string, string> = {
+    "+52": "Mexico",
+    "+57": "Colombia",
+    "+51": "Peru",
+    "+54": "Argentina",
+    "+56": "Chile",
+    "+593": "Ecuador",
+    "+34": "España",
+    "+1": "USA",
+    "+58": "Venezuela",
+    "+502": "Guatemala",
+    "+506": "Costa Rica",
+    "+507": "Panama",
+    "+591": "Bolivia",
+    "+595": "Paraguay",
+    "+598": "Uruguay",
+    "+55": "Brasil"
+  }
+  return map[code] || "Otro"
+}
+
 export function PsychQuiz({ onContinue, onLeadCreated, embudoId = "nomada-vip" }: Props) {
   const [questionIndex, setQuestionIndex] = useState(0)
   const [showRegistration, setShowRegistration] = useState(false)
@@ -119,6 +141,8 @@ export function PsychQuiz({ onContinue, onLeadCreated, embudoId = "nomada-vip" }
           utm_source: urlParams?.get("utm_source") || "",
           utm_medium: urlParams?.get("utm_medium") || "",
           utm_campaign: urlParams?.get("utm_campaign") || "",
+          pais: getCountryName(formData.countryCode),
+          trafico: (urlParams?.get("utm_source") || urlParams?.get("fbclid") || urlParams?.get("gclid")) ? "Pauta" : "Organico",
         }),
       })
       const data = await res.json()

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { google } from "googleapis"
-import { setGoogleTokens } from "@/lib/integrations-store"
+import { saveIntegration } from "@/lib/integrations-db"
 
 function getOAuth2Client() {
   return new google.auth.OAuth2(
@@ -10,22 +10,23 @@ function getOAuth2Client() {
   )
 }
 
-// GET /api/integrations/google/callback — OAuth2 callback
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get("code")
+  const state = searchParams.get("state") // This is our memberId
   const error = searchParams.get("error")
 
+  const redirectBase = "/member/integraciones"
+
   if (error) {
-    // User denied access or an error occurred
     return NextResponse.redirect(
-      new URL("/admin/integraciones?google=error&reason=" + encodeURIComponent(error), request.url)
+      new URL(`${redirectBase}?google=error&reason=${encodeURIComponent(error)}`, request.url)
     )
   }
 
-  if (!code) {
+  if (!code || !state) {
     return NextResponse.redirect(
-      new URL("/admin/integraciones?google=error&reason=no_code", request.url)
+      new URL(`${redirectBase}?google=error&reason=invalid_callback`, request.url)
     )
   }
 
@@ -34,13 +35,12 @@ export async function GET(request: Request) {
     const { tokens } = await oauth2Client.getToken(code)
     oauth2Client.setCredentials(tokens)
 
-    // Get user email
     const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client })
     const userInfo = await oauth2.userinfo.get()
     const email = userInfo.data.email || ""
 
-    // Store tokens
-    setGoogleTokens({
+    // Persist to Supabase
+    await saveIntegration(state, "google", {
       access_token: tokens.access_token || "",
       refresh_token: tokens.refresh_token || undefined,
       expiry_date: tokens.expiry_date || undefined,
@@ -48,12 +48,12 @@ export async function GET(request: Request) {
     })
 
     return NextResponse.redirect(
-      new URL("/admin/integraciones?google=success&email=" + encodeURIComponent(email), request.url)
+      new URL(`${redirectBase}?google=success&email=${encodeURIComponent(email)}`, request.url)
     )
   } catch (err) {
     console.error("Google OAuth callback error:", err)
     return NextResponse.redirect(
-      new URL("/admin/integraciones?google=error&reason=token_exchange_failed", request.url)
+      new URL(`${redirectBase}?google=error&reason=token_exchange_failed`, request.url)
     )
   }
 }

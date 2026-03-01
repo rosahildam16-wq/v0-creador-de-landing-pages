@@ -37,3 +37,28 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Error al cargar comunidades" }, { status: 500 })
   }
 }
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const supabase = await createClient()
+    const { id, settings } = await req.json()
+
+    if (!id) {
+      return NextResponse.json({ error: "ID de comunidad requerido" }, { status: 400 })
+    }
+
+    const { data, error } = await supabase
+      .from("communities")
+      .update({ settings })
+      .eq("id", id)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    return NextResponse.json({ success: true, community: data })
+  } catch (err) {
+    console.error("Communities PATCH error:", err)
+    return NextResponse.json({ error: "Error al actualizar comunidad" }, { status: 500 })
+  }
+}

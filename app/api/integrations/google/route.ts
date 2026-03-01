@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { google } from "googleapis"
-import { getGoogleTokens, clearGoogleTokens } from "@/lib/integrations-store"
+import { getSession } from "@/lib/auth/session"
+import { getIntegration, deleteIntegration } from "@/lib/integrations-db"
 
 function getOAuth2Client() {
   return new google.auth.OAuth2(
@@ -10,17 +11,22 @@ function getOAuth2Client() {
   )
 }
 
-// GET /api/integrations/google — get auth URL or check status
 export async function GET(request: Request) {
+  const session = await getSession()
+  if (!session?.user) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+  }
+
   const { searchParams } = new URL(request.url)
   const action = searchParams.get("action")
+  const memberId = session.user.memberId || session.user.email
 
   if (action === "status") {
-    const tokens = getGoogleTokens()
-    if (tokens) {
+    const integration = await getIntegration(memberId, "google")
+    if (integration) {
       return NextResponse.json({
         connected: true,
-        email: tokens.email || "Cuenta conectada",
+        email: integration.email || "Cuenta conectada",
       })
     }
     return NextResponse.json({ connected: false })
@@ -29,7 +35,7 @@ export async function GET(request: Request) {
   // Generate OAuth URL
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
     return NextResponse.json(
-      { error: "Variables GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET no configuradas. Agregalas en Vars." },
+      { error: "Variables de entorno de Google no configuradas." },
       { status: 500 }
     )
   }
@@ -38,6 +44,7 @@ export async function GET(request: Request) {
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: "offline",
     prompt: "consent",
+    state: memberId, // Pass memberId to callback via state
     scope: [
       "https://www.googleapis.com/auth/calendar",
       "https://www.googleapis.com/auth/calendar.events",
@@ -48,8 +55,11 @@ export async function GET(request: Request) {
   return NextResponse.json({ url: authUrl })
 }
 
-// DELETE /api/integrations/google — disconnect
 export async function DELETE() {
-  clearGoogleTokens()
+  const session = await getSession()
+  if (!session?.user) return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+
+  const memberId = session.user.memberId || session.user.email
+  await deleteIntegration(memberId, "google")
   return NextResponse.json({ success: true })
 }

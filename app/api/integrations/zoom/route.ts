@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
-import { getZoomTokens, clearZoomTokens } from "@/lib/integrations-store"
+import { getSession } from "@/lib/auth/session"
+import { getIntegration, deleteIntegration } from "@/lib/integrations-db"
 
 const ZOOM_AUTH_URL = "https://zoom.us/oauth/authorize"
 
@@ -8,17 +9,20 @@ function getRedirectUri() {
   return `${base}/api/integrations/zoom/callback`
 }
 
-// GET /api/integrations/zoom — get auth URL or check status
 export async function GET(request: Request) {
+  const session = await getSession()
+  if (!session?.user) return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+
   const { searchParams } = new URL(request.url)
   const action = searchParams.get("action")
+  const memberId = session.user.memberId || session.user.email
 
   if (action === "status") {
-    const tokens = getZoomTokens()
-    if (tokens) {
+    const integration = await getIntegration(memberId, "zoom")
+    if (integration) {
       return NextResponse.json({
         connected: true,
-        email: tokens.email || "Cuenta conectada",
+        email: integration.email || "Cuenta conectada",
       })
     }
     return NextResponse.json({ connected: false })
@@ -27,7 +31,7 @@ export async function GET(request: Request) {
   // Generate OAuth URL
   if (!process.env.ZOOM_CLIENT_ID || !process.env.ZOOM_CLIENT_SECRET) {
     return NextResponse.json(
-      { error: "Variables ZOOM_CLIENT_ID y ZOOM_CLIENT_SECRET no configuradas. Agregalas en Vars." },
+      { error: "Variables ZOOM de entorno no configuradas." },
       { status: 500 }
     )
   }
@@ -36,14 +40,18 @@ export async function GET(request: Request) {
     response_type: "code",
     client_id: process.env.ZOOM_CLIENT_ID,
     redirect_uri: getRedirectUri(),
+    state: memberId, // Security & identification
   })
 
   const url = `${ZOOM_AUTH_URL}?${params.toString()}`
   return NextResponse.json({ url })
 }
 
-// DELETE /api/integrations/zoom — disconnect
 export async function DELETE() {
-  clearZoomTokens()
+  const session = await getSession()
+  if (!session?.user) return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+
+  const memberId = session.user.memberId || session.user.email
+  await deleteIntegration(memberId, "zoom")
   return NextResponse.json({ success: true })
 }

@@ -112,6 +112,11 @@ export default async function SocialCenterPage({ params }: Props) {
                             <Youtube className="h-6 w-6" />
                         </a>
                     )}
+                    {data.social_links.whatsapp && (
+                        <a href={data.social_links.whatsapp} className="text-white/30 transition-colors hover:text-white">
+                            <MessageCircle className="h-6 w-6" />
+                        </a>
+                    )}
                     <a href="#" className="text-white/30 transition-colors hover:text-white">
                         <Send className="h-6 w-6" />
                     </a>

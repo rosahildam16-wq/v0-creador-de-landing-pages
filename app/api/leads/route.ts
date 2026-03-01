@@ -25,6 +25,8 @@ interface LeadPayload {
   tags?: string[]
   funnel_step?: string
   ref?: string
+  pais?: string
+  trafico?: "Organico" | "Pauta"
 }
 
 export async function POST(request: Request) {
@@ -100,6 +102,8 @@ export async function POST(request: Request) {
       embudo_id: body.embudo_id || "nomada-vip",
       asignado_a: asignadoA,
       community_id: communityId,
+      pais: body.pais,
+      trafico: body.trafico || "Organico",
     })
 
     if (!lead) {

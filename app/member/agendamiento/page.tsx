@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { getMemberData } from "@/lib/team-data"
 import {
@@ -27,6 +27,37 @@ export default function AgendamientoPage() {
     const [copied, setCopied] = useState(false)
     const [bookingUrl, setBookingUrl] = useState(`https://magicfunnel.app/book/${user?.username || "socio"}`)
     const [isEditingLink, setIsEditingLink] = useState(false)
+    const [communitySettings, setCommunitySettings] = useState<any>(null)
+    const [integrationsStatus, setIntegrationsStatus] = useState({ zoom: false, calendar: false })
+
+    useEffect(() => {
+        if (!user?.communityId) return
+
+        async function loadConfig() {
+            try {
+                const res = await fetch(`/api/communities?communityId=${user?.communityId}`)
+                const data = await res.json()
+                const comm = data.communities.find((c: any) => c.id === user?.communityId)
+                setCommunitySettings(comm?.settings || {})
+
+                // Real integration check
+                const [gRes, zRes] = await Promise.all([
+                    fetch("/api/integrations/google?action=status"),
+                    fetch("/api/integrations/zoom?action=status")
+                ])
+                const gData = await gRes.json()
+                const zData = await zRes.json()
+
+                setIntegrationsStatus({
+                    calendar: gData.connected,
+                    zoom: zData.connected
+                })
+            } catch (err) {
+                console.error(err)
+            }
+        }
+        loadConfig()
+    }, [user])
 
     // Demo data for appointments
     const appointments = [
@@ -230,14 +261,48 @@ export default function AgendamientoPage() {
                     {/* Availability Preview Mockup */}
                     <Card className="border-border/20 bg-card/20 rounded-3xl flex-1 mt-4">
                         <CardHeader className="p-6">
-                            <CardTitle className="text-sm font-bold">Vista de Calendario</CardTitle>
+                            <CardTitle className="text-sm font-bold">Configuración de Agendamiento</CardTitle>
                         </CardHeader>
-                        <CardContent className="p-6 pt-0">
-                            <div className="aspect-[16/9] w-full bg-black/20 rounded-2xl flex flex-col items-center justify-center gap-3 border border-dashed border-white/5">
-                                <CalendarDays className="h-10 w-10 text-muted-foreground/20" />
-                                <p className="text-xs text-muted-foreground/50 italic font-medium">Próximamente: Integración con Google Calendar e iCal</p>
-                                <Badge variant="outline" className="text-[9px] uppercase tracking-widest border-primary/20 text-primary/60">
-                                    Modulo en Desarrollo
+                        <CardContent className="p-6 pt-0 space-y-6">
+                            {(communitySettings?.zoom_enabled && !integrationsStatus.zoom) && (
+                                <div className="flex items-center justify-between rounded-2xl bg-amber-500/5 border border-amber-500/10 p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                                            <Video className="h-5 w-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-foreground">Zoom no conectado</p>
+                                            <p className="text-[10px] text-muted-foreground">Tus citas no tendrán enlaces de reunión automáticos.</p>
+                                        </div>
+                                    </div>
+                                    <Button variant="outline" size="sm" className="h-8 rounded-lg text-[10px] font-bold border-amber-500/20 text-amber-500 hover:bg-amber-500/10" asChild>
+                                        <a href="/member/integraciones">Conectar</a>
+                                    </Button>
+                                </div>
+                            )}
+
+                            {(communitySettings?.calendar_enabled && !integrationsStatus.calendar) && (
+                                <div className="flex items-center justify-between rounded-2xl bg-blue-500/5 border border-blue-500/10 p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+                                            <CalendarDays className="h-5 w-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-foreground">Calendario no sincronizado</p>
+                                            <p className="text-[10px] text-muted-foreground">Las citas nuevas no aparecerán en tu Google Calendar.</p>
+                                        </div>
+                                    </div>
+                                    <Button variant="outline" size="sm" className="h-8 rounded-lg text-[10px] font-bold border-blue-500/20 text-blue-500 hover:bg-blue-500/10" asChild>
+                                        <a href="/member/integraciones">Sincronizar</a>
+                                    </Button>
+                                </div>
+                            )}
+
+                            <div className="aspect-[21/9] w-full bg-black/20 rounded-2xl flex flex-col items-center justify-center gap-3 border border-dashed border-white/5">
+                                <CalendarDays className="h-8 w-8 text-muted-foreground/20" />
+                                <p className="text-[10px] text-muted-foreground/50 italic font-medium">Panel de Disponibilidad Semanal</p>
+                                <Badge variant="outline" className="text-[8px] uppercase tracking-widest border-primary/20 text-primary/60">
+                                    Módulo Activo
                                 </Badge>
                             </div>
                         </CardContent>

@@ -31,6 +31,11 @@ interface DBCommunity {
   leader_name: string | null
   cuota_miembro: number
   member_count: number
+  settings: {
+    zoom_enabled: boolean
+    calendar_enabled: boolean
+    whatsapp_reminders_enabled: boolean
+  }
 }
 
 interface DBMember {
@@ -84,6 +89,25 @@ export default function AdminComunidadesPage() {
 
   const selected = communities.find((c) => c.id === selectedId)
   const filteredMembers = members.filter((m) => m.community_id === selectedId)
+
+  const handleUpdateSettings = async (field: keyof DBCommunity["settings"], value: boolean) => {
+    if (!selected) return
+    const newSettings = { ...selected.settings, [field]: value }
+    try {
+      const res = await fetch("/api/communities", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: selected.id, settings: newSettings }),
+      })
+      if (res.ok) {
+        setCommunities((prev) =>
+          prev.map((c) => (c.id === selected.id ? { ...c, settings: newSettings } : c))
+        )
+      }
+    } catch (err) {
+      console.error("Error updating settings:", err)
+    }
+  }
 
   const handleCopyCode = () => {
     if (selected?.codigo) {
@@ -313,16 +337,58 @@ export default function AdminComunidadesPage() {
                   <h4 className="text-sm font-medium text-foreground mb-2">Estadisticas</h4>
                   <div className="grid gap-3 sm:grid-cols-3">
                     <div className="rounded-lg border border-border/30 bg-muted/10 p-3 text-center">
-                      <p className="text-2xl font-bold text-foreground">{filteredMembers.length}</p>
-                      <span className="text-xs text-muted-foreground">Miembros</span>
-                    </div>
-                    <div className="rounded-lg border border-border/30 bg-muted/10 p-3 text-center">
-                      <p className="text-2xl font-bold text-foreground">{selected.embudos_default.length}</p>
-                      <span className="text-xs text-muted-foreground">Embudos</span>
-                    </div>
-                    <div className="rounded-lg border border-border/30 bg-muted/10 p-3 text-center">
                       <p className="text-2xl font-bold text-foreground">${selected.cuota_miembro}</p>
                       <span className="text-xs text-muted-foreground">Cuota/mes</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-medium text-foreground mb-4">Funciones Habilitadas</h4>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="flex items-center justify-between rounded-xl border border-border/30 bg-card/50 p-4 transition-all hover:border-primary/30">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs font-bold text-foreground">Zoom Meetings</span>
+                        <span className="text-[10px] text-muted-foreground font-medium">Crear enlaces de salas</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={selected.settings?.zoom_enabled ? "default" : "outline"}
+                        className={cn("h-8 px-4 rounded-lg text-[11px] font-bold", selected.settings?.zoom_enabled && "bg-emerald-500 hover:bg-emerald-600")}
+                        onClick={() => handleUpdateSettings("zoom_enabled", !selected.settings?.zoom_enabled)}
+                      >
+                        {selected.settings?.zoom_enabled ? "ON" : "OFF"}
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-xl border border-border/30 bg-card/50 p-4 transition-all hover:border-primary/30">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs font-bold text-foreground">Google Calendar</span>
+                        <span className="text-[10px] text-muted-foreground font-medium">Sincronizar citas</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={selected.settings?.calendar_enabled ? "default" : "outline"}
+                        className={cn("h-8 px-4 rounded-lg text-[11px] font-bold", selected.settings?.calendar_enabled && "bg-emerald-500 hover:bg-emerald-600")}
+                        onClick={() => handleUpdateSettings("calendar_enabled", !selected.settings?.calendar_enabled)}
+                      >
+                        {selected.settings?.calendar_enabled ? "ON" : "OFF"}
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-xl border border-border/30 bg-card/50 p-4 transition-all hover:border-primary/30">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs font-bold text-foreground">Recordatorios WhatsApp</span>
+                        <span className="text-[10px] text-muted-foreground font-medium">Mensajes automaticos</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={selected.settings?.whatsapp_reminders_enabled ? "default" : "outline"}
+                        className={cn("h-8 px-4 rounded-lg text-[11px] font-bold", selected.settings?.whatsapp_reminders_enabled && "bg-emerald-500 hover:bg-emerald-600")}
+                        onClick={() => handleUpdateSettings("whatsapp_reminders_enabled", !selected.settings?.whatsapp_reminders_enabled)}
+                      >
+                        {selected.settings?.whatsapp_reminders_enabled ? "ON" : "OFF"}
+                      </Button>
                     </div>
                   </div>
                 </div>

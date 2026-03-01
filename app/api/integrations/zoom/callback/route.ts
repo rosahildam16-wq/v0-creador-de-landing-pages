@@ -1,26 +1,28 @@
 import { NextResponse } from "next/server"
-import { setZoomTokens } from "@/lib/integrations-store"
+import { saveIntegration } from "@/lib/integrations-db"
 
 function getRedirectUri() {
   const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
   return `${base}/api/integrations/zoom/callback`
 }
 
-// GET /api/integrations/zoom/callback — OAuth2 callback
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get("code")
+  const state = searchParams.get("state") // MemberId
   const error = searchParams.get("error")
+
+  const redirectBase = "/member/integraciones"
 
   if (error) {
     return NextResponse.redirect(
-      new URL("/admin/integraciones?zoom=error&reason=" + encodeURIComponent(error), request.url)
+      new URL(`${redirectBase}?zoom=error&reason=${encodeURIComponent(error)}`, request.url)
     )
   }
 
-  if (!code) {
+  if (!code || !state) {
     return NextResponse.redirect(
-      new URL("/admin/integraciones?zoom=error&reason=no_code", request.url)
+      new URL(`${redirectBase}?zoom=error&reason=invalid_callback`, request.url)
     )
   }
 
@@ -29,7 +31,6 @@ export async function GET(request: Request) {
     const clientSecret = process.env.ZOOM_CLIENT_SECRET!
     const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64")
 
-    // Exchange code for tokens
     const tokenRes = await fetch("https://zoom.us/oauth/token", {
       method: "POST",
       headers: {
@@ -44,16 +45,13 @@ export async function GET(request: Request) {
     })
 
     if (!tokenRes.ok) {
-      const errData = await tokenRes.text()
-      console.error("Zoom token exchange error:", errData)
       return NextResponse.redirect(
-        new URL("/admin/integraciones?zoom=error&reason=token_exchange_failed", request.url)
+        new URL(`${redirectBase}?zoom=error&reason=token_exchange_failed`, request.url)
       )
     }
 
     const tokens = await tokenRes.json()
 
-    // Get user info
     const userRes = await fetch("https://api.zoom.us/v2/users/me", {
       headers: { Authorization: `Bearer ${tokens.access_token}` },
     })
@@ -64,8 +62,8 @@ export async function GET(request: Request) {
       email = userData.email || ""
     }
 
-    // Store tokens
-    setZoomTokens({
+    // Persist to Supabase
+    await saveIntegration(state, "zoom", {
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       expiry_date: Date.now() + tokens.expires_in * 1000,
@@ -73,12 +71,12 @@ export async function GET(request: Request) {
     })
 
     return NextResponse.redirect(
-      new URL("/admin/integraciones?zoom=success&email=" + encodeURIComponent(email), request.url)
+      new URL(`${redirectBase}?zoom=success&email=${encodeURIComponent(email)}`, request.url)
     )
   } catch (err) {
     console.error("Zoom OAuth callback error:", err)
     return NextResponse.redirect(
-      new URL("/admin/integraciones?zoom=error&reason=unknown", request.url)
+      new URL(`${redirectBase}?zoom=error&reason=unknown`, request.url)
     )
   }
 }

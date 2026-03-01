@@ -85,6 +85,8 @@ export interface Lead {
   notas: Nota[]
   asignado_a: string
   community_id: string
+  pais?: string
+  trafico?: "Organico" | "Pauta"
   insight?: {
     qualification_score: number
     summary: string
