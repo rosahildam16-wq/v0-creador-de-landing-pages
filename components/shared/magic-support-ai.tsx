@@ -54,7 +54,7 @@ export function MagicSupportAI() {
         return (
             <button
                 onClick={() => setIsOpen(true)}
-                className="fixed bottom-6 right-6 z-[9999] group flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-fuchsia-600 shadow-[0_10px_30px_-10px_rgba(var(--primary-rgb),0.5)] transition-all hover:scale-110 active:scale-95 animate-in zoom-in"
+                className="fixed bottom-20 md:bottom-6 right-6 z-[9999] group flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-fuchsia-600 shadow-[0_10px_30px_-10px_rgba(var(--primary-rgb),0.5)] transition-all hover:scale-110 active:scale-95 animate-in zoom-in"
             >
                 <div className="absolute inset-0 rounded-2xl bg-primary animate-ping opacity-20 group-hover:opacity-0" />
                 <div className="relative">
@@ -66,7 +66,7 @@ export function MagicSupportAI() {
     }
 
     return (
-        <div className={`fixed bottom-6 right-6 z-[9999] w-[90vw] md:w-[400px] flex flex-col transition-all duration-300 ${isMinimized ? "h-16" : "h-[70vh] md:h-[600px]"} animate-in slide-in-from-bottom-10`}>
+        <div className={`fixed bottom-20 md:bottom-6 right-6 z-[9999] w-[90vw] md:w-[400px] flex flex-col transition-all duration-300 ${isMinimized ? "h-16" : "h-[70vh] md:h-[600px]"} animate-in slide-in-from-bottom-10`}>
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-4 rounded-t-2xl bg-gradient-to-r from-primary to-fuchsia-700 border-b border-white/10 shadow-xl">
                 <div className="flex items-center gap-3">
