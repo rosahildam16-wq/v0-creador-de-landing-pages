@@ -206,7 +206,7 @@ export default function LoginPage() {
                 <span className="text-balance">
                   {"Pensabas que la "}
                   <span className="premium-gradient-text">magia</span>
-                  {" no existía..."}
+                  {" no existe..."}
                   <br />
                   <span className="premium-gradient-text">vamos a comprobarlo.</span>
                 </span>
