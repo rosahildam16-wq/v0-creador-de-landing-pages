@@ -43,7 +43,11 @@ export async function askMagicAI(message: string, history: { role: "user" | "ass
 
         return response.choices[0].message.content
     } catch (error) {
-        console.error("OpenAI Error:", error)
+        console.error("askMagicAI Runtime Error:", error)
+        // Check if it's a key issue
+        if (error instanceof Error && error.message.includes("OPENAI_API_KEY")) {
+            console.error("CRITICAL: OPENAI_API_KEY is missing in this environment.")
+        }
         return "Lo siento, mi cerebro de IA está en mantenimiento. Por favor, intenta de nuevo en un momento. 🚀"
     }
 }

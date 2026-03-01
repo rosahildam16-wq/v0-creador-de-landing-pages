@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { askMagicAI } from "@/lib/ai-service"
 
+export const dynamic = "force-dynamic"
+
 export async function POST(req: Request) {
     try {
         const { message, history } = await req.json()
