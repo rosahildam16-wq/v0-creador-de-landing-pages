@@ -364,14 +364,14 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
     if (!currentSlideHasVideo) return
     const slideIndex = activeSlide
 
-    // Safety fallback: 180s max to prevent getting truly stuck if connection fails
-    // This is much safer than the previous short timers.
+    // Safety fallback: 5 minutes max to prevent getting truly stuck if connection fails.
+    // Must be longer than any video to avoid cutting playback short.
     const finishFallback = setTimeout(() => {
       if (!videoFinished[slideIndex]) {
         console.warn("TikTokFeed: Universal safety fallback triggered for slide", slideIndex)
         setVideoFinished((prev) => ({ ...prev, [slideIndex]: true }))
       }
-    }, 60000)
+    }, 300000)
 
     return () => clearTimeout(finishFallback)
   }, [activeSlide, currentSlideHasVideo, videoFinished])

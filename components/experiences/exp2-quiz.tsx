@@ -69,7 +69,7 @@ export function PsychQuiz({ onContinue, onLeadCreated, embudoId = "nomada-vip" }
   const [questionIndex, setQuestionIndex] = useState(0)
   const [showRegistration, setShowRegistration] = useState(false)
   const [animating, setAnimating] = useState(false)
-  const [formData, setFormData] = useState({ nombre: "", correo: "", whatsapp: "", countryCode: "+52" })
+  const [formData, setFormData] = useState({ nombre: "", correo: "", whatsapp: "", countryCode: "+52", countryName: "Mexico" })
   const [formErrors, setFormErrors] = useState({ nombre: false, correo: false, whatsapp: false })
   const [submitting, setSubmitting] = useState(false)
   const [answers, setAnswers] = useState<Record<string, string>>({})
@@ -141,7 +141,7 @@ export function PsychQuiz({ onContinue, onLeadCreated, embudoId = "nomada-vip" }
           utm_source: urlParams?.get("utm_source") || "",
           utm_medium: urlParams?.get("utm_medium") || "",
           utm_campaign: urlParams?.get("utm_campaign") || "",
-          pais: getCountryName(formData.countryCode),
+          pais: formData.countryName,
           trafico: (urlParams?.get("utm_source") || urlParams?.get("fbclid") || urlParams?.get("gclid")) ? "Pauta" : "Organico",
         }),
       })
@@ -269,7 +269,11 @@ export function PsychQuiz({ onContinue, onLeadCreated, embudoId = "nomada-vip" }
                   <div className="relative w-32 shrink-0">
                     <select
                       value={formData.countryCode}
-                      onChange={(e) => setFormData(prev => ({ ...prev, countryCode: e.target.value }))}
+                      onChange={(e) => {
+                        const code = e.target.value
+                        const name = e.target.options[e.target.selectedIndex].text.split("(")[1]?.split(")")[0] || "Otro"
+                        setFormData(prev => ({ ...prev, countryCode: code, countryName: name }))
+                      }}
                       className="h-full w-full appearance-none rounded-lg border border-border bg-secondary/50 px-3 pr-8 text-sm text-foreground outline-none transition-colors focus:border-primary/60"
                     >
                       <option value="+52">🇲🇽 +52 (MX)</option>
@@ -402,6 +406,6 @@ export function PsychQuiz({ onContinue, onLeadCreated, embudoId = "nomada-vip" }
           </div>
         )}
       </div>
-    </div>
+    </div >
   )
 }

@@ -85,6 +85,26 @@ export default function AgendamientoPage() {
         setTimeout(() => setCopied(false), 2000)
     }
 
+    if (communitySettings && communitySettings.agenda_enabled === false) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-[2.5rem] bg-amber-500/10 border border-amber-500/20 shadow-2xl shadow-amber-500/10">
+                    <CalendarDays className="h-10 w-10 text-amber-500" />
+                </div>
+                <h2 className="text-2xl font-black uppercase italic tracking-tighter text-foreground mb-4">
+                    ESTA FUNCIÓN ESTÁ <span className="text-amber-500">RESTRINGIDA</span>
+                </h2>
+                <p className="max-w-md text-sm font-medium text-muted-foreground leading-relaxed balance mb-8">
+                    Tu comunidad no tiene habilitado el módulo de Agenda. Por favor contacta al administrador de tu comunidad para solicitar el acceso.
+                </p>
+                <div className="flex items-center gap-2 px-4 py-2 bg-secondary/50 rounded-2xl border border-border/40">
+                    <Badge className="bg-amber-500/20 text-amber-600 border-amber-500/30">Admin Only</Badge>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Community Permission Required</span>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="flex flex-col gap-8 pb-20">
             {/* Header */}

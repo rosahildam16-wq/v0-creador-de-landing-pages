@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { createLead } from "@/lib/data"
-import { normalizePhone } from "@/lib/phone-utils"
+import { normalizePhone, guessCountryFromPhone } from "@/lib/phone-utils"
 import { EMBUDOS } from "@/lib/embudos-config"
 import { upsertContact, sendToWebhook, resolveWebhookUrl, resolveGHLConfig } from "@/lib/ghl-client"
 import { addGHLLog } from "@/lib/ghl-log-store"
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
       embudo_id: body.embudo_id || "nomada-vip",
       asignado_a: asignadoA,
       community_id: communityId,
-      pais: body.pais,
+      pais: body.pais || guessCountryFromPhone(whatsappClean),
       trafico: body.trafico || "Organico",
     })
 

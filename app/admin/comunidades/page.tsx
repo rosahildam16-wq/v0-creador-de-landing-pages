@@ -35,6 +35,7 @@ interface DBCommunity {
     zoom_enabled: boolean
     calendar_enabled: boolean
     whatsapp_reminders_enabled: boolean
+    agenda_enabled: boolean
   }
 }
 
@@ -92,7 +93,13 @@ export default function AdminComunidadesPage() {
 
   const handleUpdateSettings = async (field: keyof DBCommunity["settings"], value: boolean) => {
     if (!selected) return
-    const newSettings = { ...selected.settings, [field]: value }
+    const currentSettings = selected.settings || {
+      zoom_enabled: false,
+      calendar_enabled: false,
+      whatsapp_reminders_enabled: false,
+      agenda_enabled: false
+    }
+    const newSettings = { ...currentSettings, [field]: value }
     try {
       const res = await fetch("/api/communities", {
         method: "PATCH",
@@ -388,6 +395,21 @@ export default function AdminComunidadesPage() {
                         onClick={() => handleUpdateSettings("whatsapp_reminders_enabled", !selected.settings?.whatsapp_reminders_enabled)}
                       >
                         {selected.settings?.whatsapp_reminders_enabled ? "ON" : "OFF"}
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-xl border border-border/30 bg-card/50 p-4 transition-all hover:border-primary/30">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs font-bold text-foreground">Agenda Configurable</span>
+                        <span className="text-[10px] text-muted-foreground font-medium">Permitir gestionar citas</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={selected.settings?.agenda_enabled ? "default" : "outline"}
+                        className={cn("h-8 px-4 rounded-lg text-[11px] font-bold", selected.settings?.agenda_enabled && "bg-emerald-500 hover:bg-emerald-600")}
+                        onClick={() => handleUpdateSettings("agenda_enabled", !selected.settings?.agenda_enabled)}
+                      >
+                        {selected.settings?.agenda_enabled ? "ON" : "OFF"}
                       </Button>
                     </div>
                   </div>

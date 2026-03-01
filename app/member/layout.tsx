@@ -9,6 +9,7 @@ import { NotificationBell } from "@/components/shared/notification-bell"
 import { ThemeToggle } from "@/components/shared/theme-toggle"
 import { MemberProfileDropdown } from "@/components/member/member-profile-dropdown"
 import { SubscriptionGuard } from "@/components/subscription-guard"
+import { MagicSupportAI } from "@/components/shared/magic-support-ai"
 import { MobileBottomNav } from "@/components/member/mobile-bottom-nav"
 import { DailyQuotePopup } from "@/components/member/daily-quote-popup"
 
@@ -82,6 +83,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
       </main>
       <MobileBottomNav />
       <DailyQuotePopup />
+      <MagicSupportAI />
     </div>
   )
 }

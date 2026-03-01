@@ -8,6 +8,7 @@ import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
 import { NotificationBell } from "@/components/shared/notification-bell"
 import { ThemeToggle } from "@/components/shared/theme-toggle"
 import { SubscriptionGuard } from "@/components/subscription-guard"
+import { MagicSupportAI } from "@/components/shared/magic-support-ai"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, user } = useAuth()
@@ -64,6 +65,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </SubscriptionGuard>
           )}
         </div>
+        <MagicSupportAI />
       </main>
     </div>
   )
