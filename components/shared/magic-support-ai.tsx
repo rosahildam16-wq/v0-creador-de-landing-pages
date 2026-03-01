@@ -9,7 +9,10 @@ export function MagicSupportAI() {
     const [message, setMessage] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const [chatHistory, setChatHistory] = useState<{ role: "user" | "assistant", content: string }[]>([
-        { role: "assistant", content: "¡Hola! Soy la IA de soporte de Magic Funnel. ¿En qué puedo ayudarte a escalar hoy? 🚀" }
+        {
+            role: "assistant",
+            content: "¡Hola! Soy tu Asistente Mágico de Crecimiento. 🪄✨ Estoy aquí para ayudarte a configurar tus embudos, atraer más socios o resolver cualquier duda técnica. \n\n¿En qué podemos hacer magia hoy? 🚀"
+        }
     ])
 
     const scrollRef = useRef<HTMLDivElement>(null)
@@ -51,10 +54,13 @@ export function MagicSupportAI() {
         return (
             <button
                 onClick={() => setIsOpen(true)}
-                className="fixed bottom-6 right-6 z-[9999] group flex items-center justify-center h-16 w-16 rounded-full bg-primary shadow-[0_0_20px_rgba(var(--primary-rgb),0.4)] transition-all hover:scale-110 active:scale-95 animate-in zoom-in"
+                className="fixed bottom-6 right-6 z-[9999] group flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-fuchsia-600 shadow-[0_10px_30px_-10px_rgba(var(--primary-rgb),0.5)] transition-all hover:scale-110 active:scale-95 animate-in zoom-in"
             >
-                <div className="absolute inset-0 rounded-full bg-primary animate-ping opacity-20 group-hover:opacity-0" />
-                <MessageSquare className="h-7 w-7 text-white" />
+                <div className="absolute inset-0 rounded-2xl bg-primary animate-ping opacity-20 group-hover:opacity-0" />
+                <div className="relative">
+                    <Bot className="h-8 w-8 text-white" />
+                    <Sparkles className="absolute -top-2 -right-2 h-4 w-4 text-white animate-pulse" />
+                </div>
             </button>
         )
     }
@@ -62,14 +68,15 @@ export function MagicSupportAI() {
     return (
         <div className={`fixed bottom-6 right-6 z-[9999] w-[90vw] md:w-[400px] flex flex-col transition-all duration-300 ${isMinimized ? "h-16" : "h-[70vh] md:h-[600px]"} animate-in slide-in-from-bottom-10`}>
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-4 rounded-t-2xl bg-primary border-b border-white/10 shadow-xl">
+            <div className="flex items-center justify-between px-4 py-4 rounded-t-2xl bg-gradient-to-r from-primary to-fuchsia-700 border-b border-white/10 shadow-xl">
                 <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-md">
-                        <Sparkles className="h-5 w-5 text-white" />
+                    <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-md">
+                        <Bot className="h-5 w-5 text-white" />
+                        <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-white" />
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-sm font-black text-white leading-tight uppercase tracking-widest">Magic Support AI</span>
-                        <span className="text-[10px] text-white/70 font-bold uppercase tracking-tighter">Powered by GPT-4o</span>
+                        <span className="text-sm font-black text-white leading-tight uppercase tracking-widest">Magic IA Support</span>
+                        <span className="text-[10px] text-white/70 font-bold uppercase tracking-tighter">Tu copiloto de crecimiento</span>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -101,8 +108,8 @@ export function MagicSupportAI() {
                                         {msg.role === "user" ? <User className="h-4 w-4 text-primary" /> : <Bot className="h-4 w-4 text-white/50" />}
                                     </div>
                                     <div className={`p-3.5 rounded-2xl text-[13px] leading-relaxed ${msg.role === "user"
-                                            ? "bg-primary text-white rounded-tr-none font-medium"
-                                            : "bg-white/[0.03] text-white/80 border border-white/5 rounded-tl-none"
+                                        ? "bg-primary text-white rounded-tr-none font-medium"
+                                        : "bg-white/[0.03] text-white/80 border border-white/5 rounded-tl-none"
                                         }`}>
                                         {msg.content}
                                     </div>

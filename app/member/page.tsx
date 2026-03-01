@@ -11,6 +11,7 @@ import { getMemberCommunity } from "@/lib/communities-data"
 import { ChallengeLeaderboard } from "@/components/shared/challenge-leaderboard"
 import { MetaAdsSection } from "@/components/member/meta-ads-section"
 import Link from "next/link"
+import { NotificationsWidget } from "@/components/member/notifications-widget"
 import {
   Users, Target, GraduationCap, Award, TrendingUp,
   Route, Trophy, Kanban, Bot, Calendar, Flame, Zap,
@@ -423,9 +424,11 @@ export default function MemberDashboard() {
             </div>
           </div>
         </div>
-
         {/* RIGHT: Leaderboard + Active Challenge */}
-        <div className="flex flex-col gap-6 lg:col-span-4">
+        <div className="flex flex-col gap-8 lg:col-span-4">
+          {/* Notifications Widget */}
+          <NotificationsWidget />
+
           {/* Active challenge card redesigned */}
           {activeChallenges.length > 0 && (
             <div className="relative overflow-hidden rounded-2xl border border-emerald-500/15 bg-gradient-to-br from-emerald-500/[0.04] to-transparent p-5">
