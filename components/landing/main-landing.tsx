@@ -18,7 +18,59 @@ import {
     CheckCircle2
 } from "lucide-react"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+
+const FAQ = [
+    {
+        q: "¿Qué es Magic Funnel?",
+        a: "Es la plataforma todo-en-uno definitiva diseñada para automatizar tus ventas por WhatsApp usando Inteligencia Artificial y embudos de alta conversión."
+    },
+    {
+        q: "¿Necesito conocimientos técnicos?",
+        a: "Para nada. Hemos creado un sistema 'llave en mano' donde puedes configurar tu embudo en menos de 5 minutos sin tocar una sola línea de código."
+    },
+    {
+        q: "¿Cómo funciona la IA de prospección?",
+        a: "Nuestra IA actúa como un asistente 24/7 que responde dudas, califica a los interesados y filtra a los curiosos, entregándote solo leads listos para comprar."
+    },
+    {
+        q: "¿Puedo conectar mis campañas de Meta Ads?",
+        a: "Sí. Contamos con una integración directa de analítica para que veas exactamente cuánto te cuesta cada lead y qué campaña es la más rentable."
+    },
+    {
+        q: "¿Incluye hosting para mis embudos?",
+        a: "Correcto. Todo el alojamiento, la seguridad y la infraestructura técnica están incluidos en tu suscripción. No pagas nada extra."
+    },
+    {
+        q: "¿Puedo usar mi propio dominio?",
+        a: "Sí, puedes vincular tus dominios personalizados fácilmente para mantener tu marca al 100% profesional."
+    },
+    {
+        q: "¿Hay soporte en español?",
+        a: "¡Claro! Nuestro equipo de expertos está listo para ayudarte en español a través de chat prioritario y nuestra comunidad exclusiva."
+    },
+    {
+        q: "¿Qué es la Academia Magic Funnel?",
+        a: "Es nuestra zona de entrenamiento donde aprenderás estrategias de tráfico, psicología de ventas y cómo escalar tu negocio al siguiente nivel."
+    },
+    {
+        q: "¿Puedo cancelar en cualquier momento?",
+        a: "Sin compromisos. Puedes cancelar tu suscripción cuando quieras directamente desde tu panel de control, sin preguntas incómodas."
+    },
+    {
+        q: "¿Es seguro mi pago?",
+        a: "Utilizamos Stripe, la pasarela de pagos más segura y robusta del mundo, para garantizar que tu información financiera esté siempre protegida."
+    }
+]
+
+const NOTIFICATIONS = [
+    { name: "Juan", country: "Colombia", action: "se acaba de unir" },
+    { name: "Marta", country: "España", action: "agendó una llamada" },
+    { name: "Carlos", country: "México", action: "activó su plan Pro" },
+    { name: "Lucía", country: "Perú", action: "completó su primer embudo" },
+    { name: "Andrés", country: "Chile", action: "se acaba de unir" },
+    { name: "Sofía", country: "Ecuador", action: "generó su primer lead" }
+]
 
 const COMPARISON = [
     { feature: "IA Prospectora Integrada", mf: true, others: false },
@@ -36,7 +88,7 @@ export function MainLanding() {
         {
             name: "Básico",
             priceMonthly: 27,
-            priceYearly: 24,
+            priceYearly: 21,
             description: "Para marketers que están empezando.",
             features: ["Dashboard personal", "Seguimiento de leads (50)", "1 embudo activo", "Academia básica", "Soporte por email"],
             color: "from-blue-500/20 to-cyan-500/20"
@@ -44,7 +96,7 @@ export function MainLanding() {
         {
             name: "Pro",
             priceMonthly: 47,
-            priceYearly: 42,
+            priceYearly: 37,
             description: "El estándar para escalar tu negocio.",
             features: ["Leads ilimitados", "3 embudos activos", "Pipeline CRM", "Analytics avanzado", "Integración WhatsApp", "Retos y gamificación"],
             popular: true,
@@ -53,15 +105,51 @@ export function MainLanding() {
         {
             name: "Elite",
             priceMonthly: 97,
-            priceYearly: 87,
+            priceYearly: 77,
             description: "Para líderes y agencias de alto nivel.",
             features: ["Equipo ilimitado", "Meta Ads dashboard", "Workflows automatizados", "Academia completa", "Soporte prioritario", "White-label (Logo personalizado)"],
             color: "from-cyan-600/20 to-blue-600/20"
         }
     ]
 
+    const [activeFaq, setActiveFaq] = useState<number | null>(null)
+    const [currentNotif, setCurrentNotif] = useState(0)
+    const [showNotif, setShowNotif] = useState(false)
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setShowNotif(true)
+            setTimeout(() => setShowNotif(false), 5000)
+            setCurrentNotif((p) => (p + 1) % NOTIFICATIONS.length)
+        }, 12000)
+        return () => clearInterval(interval)
+    }, [])
+
     return (
-        <div className="min-h-screen bg-[#05010d] text-white selection:bg-primary selection:text-white">
+        <div className="min-h-screen bg-[#05010d] text-white selection:bg-primary selection:text-white relative overflow-x-hidden">
+            {/* Background Animation */}
+            <div className="fixed inset-0 z-0 pointer-events-none opacity-30">
+                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(0,163,255,0.05),transparent_70%)] animate-pulse" />
+                <div className="absolute top-[20%] left-[10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full animate-float duration-[15s]" />
+                <div className="absolute bottom-[20%] right-[10%] w-[40%] h-[40%] bg-cyan-500/10 blur-[120px] rounded-full animate-float duration-[20s] delay-700" />
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150" />
+            </div>
+
+            {/* Social Proof Bubble */}
+            <div className={`fixed bottom-6 left-6 z-[200] transition-all duration-700 transform ${showNotif ? "translate-x-0 opacity-100 scale-100" : "-translate-x-full opacity-0 scale-90"}`}>
+                <div className="flex items-center gap-4 rounded-full border border-primary/20 bg-black/80 p-2 pr-6 shadow-[0_0_30px_rgba(0,163,255,0.1)] backdrop-blur-xl">
+                    <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-cyan-500 shadow-inner">
+                        <Sparkles className="h-5 w-5 text-white animate-pulse" />
+                        <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-green-500 border-2 border-black" />
+                    </div>
+                    <div className="flex flex-col">
+                        <p className="text-[11px] leading-tight text-white/90">
+                            <span className="font-black text-primary">{NOTIFICATIONS[currentNotif].name}</span> de <span className="font-bold">{NOTIFICATIONS[currentNotif].country}</span>
+                        </p>
+                        <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">{NOTIFICATIONS[currentNotif].action} ✨</p>
+                    </div>
+                </div>
+            </div>
             {/* Navigation */}
             <nav className="fixed top-0 left-0 right-0 z-[100] border-b border-white/5 bg-[#05010d]/80 backdrop-blur-xl">
                 <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
@@ -232,7 +320,7 @@ export function MainLanding() {
                                 onClick={() => setBillingCycle("yearly")}
                                 className={`text-xs font-black uppercase tracking-widest transition-colors ${billingCycle === "yearly" ? "text-white" : "text-white/30"}`}
                             >
-                                Anual <span className="ml-1 text-[10px] text-primary italic font-black">(-10% OFF)</span>
+                                Anual <span className="ml-1 text-[10px] text-primary italic font-black">(-20% OFF)</span>
                             </button>
                         </div>
                     </div>
@@ -312,6 +400,37 @@ export function MainLanding() {
                 </div>
             </section>
 
+            {/* FAQ Section */}
+            <section id="faq" className="py-24 border-t border-white/5">
+                <div className="mx-auto max-w-4xl px-6">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter mb-4 italic">Preguntas <span className="text-primary italic-none">Frecuentes</span></h2>
+                        <p className="text-white/40 font-bold uppercase tracking-[0.3em] text-[10px]">Todo lo que necesitas saber antes de empezar</p>
+                    </div>
+
+                    <div className="space-y-4">
+                        {FAQ.map((item, i) => (
+                            <div key={i} className="rounded-2xl border border-white/5 bg-white/[0.02] overflow-hidden transition-all duration-300 hover:border-white/10">
+                                <button
+                                    onClick={() => setActiveFaq(activeFaq === i ? null : i)}
+                                    className="w-full flex items-center justify-between p-6 text-left"
+                                >
+                                    <span className="text-sm font-bold uppercase tracking-widest text-white/80">{item.q}</span>
+                                    <div className={`h-6 w-6 flex items-center justify-center rounded-full border border-white/10 transition-transform duration-300 ${activeFaq === i ? "rotate-180 bg-primary/20 border-primary/30" : ""}`}>
+                                        <Plus className={`h-3 w-3 transition-colors ${activeFaq === i ? "text-primary" : "text-white/40"}`} />
+                                    </div>
+                                </button>
+                                <div className={`transition-all duration-500 ease-in-out ${activeFaq === i ? "max-h-48 opacity-100" : "max-h-0 opacity-0"}`}>
+                                    <div className="px-6 pb-6 text-sm text-white/50 leading-relaxed font-medium">
+                                        {item.a}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
             {/* Final CTA */}
             <section className="py-32 relative overflow-hidden">
                 <div className="absolute inset-0 bg-primary/5 blur-[150px] rounded-full translate-y-20 pointer-events-none" />
@@ -340,6 +459,26 @@ export function MainLanding() {
                     </div>
                 </div>
             </footer>
+
+            <style jsx global>{`
+                @keyframes float {
+                    0%, 100% { transform: translate(0, 0) scale(1); }
+                    33% { transform: translate(30px, -20px) scale(1.1); }
+                    66% { transform: translate(-20px, 30px) scale(0.9); }
+                }
+                .animate-float {
+                    animation: float linear infinite;
+                }
+            `}</style>
         </div>
+    )
+}
+
+function Plus({ className }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
     )
 }
