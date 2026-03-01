@@ -33,10 +33,10 @@ const STEP_NAMES: Record<Experience, string> = {
 // --- STABLE CONFIGS FOR FEED ---
 const RESET_SLIDES = [
   {
-    videoEmbed: "https://player.vimeo.com/video/1167997342?api=1&badge=0&autopause=0&player_id=0&app_id=58479&controls=0&title=0&byline=0&portrait=0&playsinline=1&keyboard=0&autoplay=1&muted=0",
+    videoSrc: "/videos/franquicia-reset.mov",
     overlayText: [],
     username: "reset.system",
-    caption: "El Arma",
+    caption: "El Arma Injusta",
     music: "Sonido original - reset.system",
     likes: "482.1 mil",
     commentCount: "2,847",
@@ -47,7 +47,7 @@ const RESET_SLIDES = [
     videoSrc: "/videos/tiktok-2.mov",
     overlayText: [],
     username: "reset.system",
-    caption: "El Sistema",
+    caption: "El Sistema Automático",
     music: "Sonido original - reset.system",
     likes: "321.4 mil",
     commentCount: "1,102",
@@ -55,10 +55,10 @@ const RESET_SLIDES = [
     shares: "55.2 mil",
   },
   {
-    videoEmbed: "https://player.vimeo.com/video/1167999493?api=1&badge=0&autopause=0&player_id=0&app_id=58479&controls=0&title=0&byline=0&portrait=0&playsinline=1&keyboard=0&autoplay=1&muted=0",
+    videoSrc: "/videos/tiktok-3-agenda.mp4",
     overlayText: [],
     username: "reset.system",
-    caption: "Agenda tu llamada",
+    caption: "Agenda tu llamada ahora",
     music: "Sonido original - reset.system",
     likes: "589.1 mil",
     commentCount: "3,421",

@@ -304,12 +304,21 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
   useEffect(() => {
     setSwipeHint(false)
     if (currentSlideHasVideo) {
-      if (videoFinished[activeSlide]) setSwipeHint(true)
+      if (videoFinished[activeSlide]) {
+        setSwipeHint(true)
+        // Auto-advance after 5 seconds if not swiped, unless it's the last slide
+        if (!isLast) {
+          const t = setTimeout(() => {
+            goNext()
+          }, 5000)
+          return () => clearTimeout(t)
+        }
+      }
     } else {
       const t = setTimeout(() => setSwipeHint(true), 6000)
       return () => clearTimeout(t)
     }
-  }, [activeSlide, currentSlideHasVideo, videoFinished])
+  }, [activeSlide, currentSlideHasVideo, videoFinished, isLast, goNext])
 
   // ── Go to next slide (programmatic, no scroll) ──
   const goNext = useCallback(() => {
@@ -362,7 +371,7 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
         console.warn("TikTokFeed: Universal safety fallback triggered for slide", slideIndex)
         setVideoFinished((prev) => ({ ...prev, [slideIndex]: true }))
       }
-    }, 180000)
+    }, 60000)
 
     return () => clearTimeout(finishFallback)
   }, [activeSlide, currentSlideHasVideo, videoFinished])
@@ -525,28 +534,28 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
               </button>
             )}
 
-            {/* When video ends, show finished overlay with notice */}
-            {videoFinished[i] && (
-              <div className="absolute inset-0 z-[30] flex flex-col items-center justify-center bg-black/85 backdrop-blur-md animate-in fade-in zoom-in duration-500">
+            {/* When video ends, show finished overlay with notice - ONLY ON LAST SLIDE */}
+            {videoFinished[i] && isLast && i === activeSlide && (
+              <div className="absolute inset-0 z-[50] flex flex-col items-center justify-center bg-black/90 backdrop-blur-xl animate-in fade-in zoom-in duration-500">
                 <div className="mb-6 flex animate-bounce flex-col items-center gap-2">
-                  <div className="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30 shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)]">
-                    <Rocket className="h-9 w-9 text-primary" />
+                  <div className="h-20 w-20 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30 shadow-[0_0_30px_rgba(var(--primary-rgb),0.5)]">
+                    <Rocket className="h-10 w-10 text-primary" />
                   </div>
                 </div>
-                <h3 className="text-2xl font-black text-white mb-2 tracking-tight">FASE COMPLETADA</h3>
-                <p className="text-sm text-white/70 text-center px-10 leading-relaxed max-w-[280px]">
-                  Has descubierto el sistema. Ahora es momento de entrar en acci&oacute;n.
+                <h3 className="text-3xl font-black text-white mb-2 tracking-tight">FASE COMPLETADA</h3>
+                <p className="text-base text-white/70 text-center px-10 leading-relaxed max-w-[320px]">
+                  Has descubierto el sistema. Ahora es momento de entrar en acción y escalar tu negocio.
                 </p>
 
-                <div className="mt-8 flex flex-col items-center gap-4">
+                <div className="mt-10 flex flex-col items-center gap-5">
                   <button
                     onClick={(e) => { e.stopPropagation(); onContinue() }}
-                    className="flex items-center gap-2 rounded-full bg-primary px-8 py-3.5 text-sm font-black text-white shadow-[0_0_20px_rgba(var(--primary-rgb),0.4)] transition-transform hover:scale-105 active:scale-95"
+                    className="flex items-center gap-3 rounded-full bg-primary px-10 py-4 text-base font-black text-white shadow-[0_0_30px_rgba(var(--primary-rgb),0.5)] transition-transform hover:scale-105 active:scale-95"
                   >
-                    AVANZAR A LA SIGUIENTE FASE
-                    <ChevronRight className="h-4 w-4" />
+                    ACCEDER A LA SOLUCIÓN
+                    <ChevronRight className="h-5 w-5" />
                   </button>
-                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">O desliza hacia arriba</p>
+                  <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em] animate-pulse">Tranquilidad absoluta garantizada</p>
                 </div>
               </div>
             )}
@@ -667,18 +676,23 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); goNext() }}
-                className="absolute inset-x-0 bottom-28 z-30 flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom-4 duration-500"
+                className="absolute inset-x-0 bottom-28 z-[40] flex flex-col items-center gap-4 animate-in fade-in slide-in-from-bottom-6 duration-700"
               >
                 <div className="flex animate-bounce flex-col items-center gap-1">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white/60 drop-shadow-lg">
-                    <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <div className="h-12 w-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white drop-shadow-lg">
+                      <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
                 </div>
-                <span
-                  className="rounded-full border border-white/10 bg-black/40 px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white/70 shadow-lg backdrop-blur-md"
-                >
-                  Desliza para continuar
-                </span>
+                <div className="flex flex-col items-center gap-1">
+                  <span
+                    className="rounded-full border border-white/20 bg-primary/80 px-6 py-2 text-xs font-black uppercase tracking-widest text-white shadow-xl backdrop-blur-md"
+                  >
+                    Desliza para continuar
+                  </span>
+                  <p className="text-[9px] font-bold text-white/40 uppercase tracking-tighter">Siguiente video disponible</p>
+                </div>
               </button>
             )}
 
