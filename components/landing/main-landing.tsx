@@ -48,7 +48,7 @@ export function MainLanding() {
             description: "El estándar para escalar tu negocio.",
             features: ["Leads ilimitados", "3 embudos activos", "Pipeline CRM", "Analytics avanzado", "Integración WhatsApp", "Retos y gamificación"],
             popular: true,
-            color: "from-primary/30 to-fuchsia-600/30"
+            color: "from-primary/30 to-cyan-500/30"
         },
         {
             name: "Elite",
@@ -56,7 +56,7 @@ export function MainLanding() {
             priceYearly: 87,
             description: "Para líderes y agencias de alto nivel.",
             features: ["Equipo ilimitado", "Meta Ads dashboard", "Workflows automatizados", "Academia completa", "Soporte prioritario", "White-label (Logo personalizado)"],
-            color: "from-fuchsia-600/20 to-pink-600/20"
+            color: "from-cyan-600/20 to-blue-600/20"
         }
     ]
 
@@ -85,7 +85,7 @@ export function MainLanding() {
             <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
                 {/* Ambient Glows */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 h-[500px] w-full max-w-4xl bg-primary/20 blur-[120px] rounded-full pointer-events-none" />
-                <div className="absolute bottom-0 right-0 h-[400px] w-[400px] bg-fuchsia-600/10 blur-[100px] rounded-full pointer-events-none" />
+                <div className="absolute bottom-0 right-0 h-[400px] w-[400px] bg-cyan-600/10 blur-[100px] rounded-full pointer-events-none" />
 
                 <div className="mx-auto max-w-7xl px-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
@@ -113,7 +113,7 @@ export function MainLanding() {
 
                         <div className="relative z-10 animate-fade-in">
                             <div className="relative rounded-[2.5rem] border border-white/10 bg-black/40 p-4 backdrop-blur-3xl glass-card-float">
-                                <div className="absolute -inset-1 rounded-[2.6rem] bg-gradient-to-br from-primary/30 to-fuchsia-600/30 blur opacity-20" />
+                                <div className="absolute -inset-1 rounded-[2.6rem] bg-gradient-to-br from-primary/30 to-cyan-400/30 blur opacity-20" />
                                 <img
                                     src="/magic_funnel_hero_concept.png"
                                     alt="Magic Funnel Dashboard"
@@ -186,8 +186,8 @@ export function MainLanding() {
                         </div>
 
                         <div className="p-10 rounded-[2.5rem] border border-white/5 bg-gradient-to-br from-white/[0.03] to-transparent hover:border-primary/20 transition-all">
-                            <div className="mb-6 h-14 w-14 rounded-2xl bg-fuchsia-600/10 flex items-center justify-center">
-                                <BarChart3 className="h-8 w-8 text-fuchsia-600" />
+                            <div className="mb-6 h-14 w-14 rounded-2xl bg-cyan-600/10 flex items-center justify-center">
+                                <BarChart3 className="h-8 w-8 text-cyan-400" />
                             </div>
                             <h3 className="text-2xl font-black italic uppercase tracking-tighter mb-4 text-white">Analítica Predictiva</h3>
                             <p className="text-white/50 text-sm leading-relaxed">

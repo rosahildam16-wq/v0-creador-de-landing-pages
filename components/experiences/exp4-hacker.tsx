@@ -82,9 +82,9 @@ export function HackerTerminal({ onContinue }: Props) {
             const item = sequence[lineIdx]
             return (
               <div key={lineIdx} className="animate-fade-in">
-                <span className="text-[#00FF41]/70">{">"} </span>
+                <span className="text-[#008F11]/70">{">"} </span>
                 <span
-                  className={`text-sm ${lineIdx === sequence.length - 1 ? "font-semibold text-[#00FF41]" : "text-foreground/80"}`}
+                  className={`text-sm ${lineIdx === sequence.length - 1 ? "font-semibold text-[#008F11]" : "text-foreground/80"}`}
                 >
                   {item.text}
                 </span>
@@ -95,8 +95,8 @@ export function HackerTerminal({ onContinue }: Props) {
           {/* Blinking cursor */}
           {!complete && (
             <div className="mt-2">
-              <span className="text-[#00FF41]/70">{">"} </span>
-              <span className="animate-blink text-[#00FF41]">_</span>
+              <span className="text-[#008F11]/70">{">"} </span>
+              <span className="animate-blink text-[#008F11]">_</span>
             </div>
           )}
         </div>
@@ -106,11 +106,11 @@ export function HackerTerminal({ onContinue }: Props) {
       <div className="mb-8">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-xs text-muted-foreground">PROGRESO</span>
-          <span className="text-xs text-[#00FF41]">{progress}%</span>
+          <span className="text-xs text-[#008F11]">{progress}%</span>
         </div>
         <div className="h-1 w-full overflow-hidden rounded-full bg-secondary">
           <div
-            className="h-full rounded-full bg-[#00FF41] shadow-[0_0_10px_#00FF41] transition-all duration-1000"
+            className="h-full rounded-full bg-[#008F11] shadow-[0_0_10px_#008F11] transition-all duration-1000"
             style={{ width: `${progress}%` }}
           />
         </div>

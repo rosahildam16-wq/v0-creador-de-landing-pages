@@ -413,8 +413,8 @@ export function PsychQuiz({ onContinue, onLeadCreated, embudoId = "nomada-vip" }
           <style dangerouslySetInnerHTML={{
             __html: `
           :root {
-            --primary: 142 100% 50%;
-            --primary-foreground: 0 0% 0%;
+            --primary: 127 100% 28%;
+            --primary-foreground: 0 0% 100%;
           }
         `}} />
         )

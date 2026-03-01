@@ -69,7 +69,7 @@ function ParticleField() {
 
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(0, 255, 65, ${p.alpha})`
+        ctx.fillStyle = `rgba(0, 143, 17, ${p.alpha})`
         ctx.fill()
       }
 
@@ -82,7 +82,7 @@ function ParticleField() {
             ctx.beginPath()
             ctx.moveTo(particles[i].x, particles[i].y)
             ctx.lineTo(particles[j].x, particles[j].y)
-            ctx.strokeStyle = `rgba(0, 255, 65, ${0.04 * (1 - dist / 150)})`
+            ctx.strokeStyle = `rgba(0, 143, 17, ${0.04 * (1 - dist / 150)})`
             ctx.lineWidth = 0.5
             ctx.stroke()
           }
@@ -177,7 +177,7 @@ function MetallicCodeCard() {
           <div className="mb-1 text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Código de Activación:</div>
           <div className="relative flex items-center justify-center overflow-hidden rounded-xl bg-black border border-white/5 p-4">
             {/* Scan Line */}
-            <div className={`absolute top-0 left-0 h-full w-[2px] bg-primary shadow-[0_0_15px_#00FF41] z-10 transition-all duration-1500 ease-in-out ${revealed ? "translate-x-[360px]" : "translate-x-[-10px]"}`} />
+            <div className={`absolute top-0 left-0 h-full w-[2px] bg-primary shadow-[0_0_15px_#008F11] z-10 transition-all duration-1500 ease-in-out ${revealed ? "translate-x-[360px]" : "translate-x-[-10px]"}`} />
 
             <div className={`flex gap-3 transition-all duration-1000 ${revealed ? "opacity-100 blur-0 scale-100" : "opacity-20 blur-md scale-95"}`}>
               <span className="text-2xl font-black italic tracking-wider text-white">XR-782-RESET</span>
@@ -349,7 +349,7 @@ export function ResetLanding({ leadId, onTrack, referrer }: Props) {
         <ParticleField />
         <div className="relative mb-12">
           <div className="absolute -inset-10 rounded-full bg-primary/30 blur-[60px] animate-pulse" />
-          <div className="relative flex h-28 w-28 items-center justify-center rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl shadow-[0_0_40px_rgba(var(--primary-rgb),0.3)]">
+          <div className="relative flex h-28 w-28 items-center justify-center rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl shadow-[0_0_40px_rgba(0, 143, 17, 0.3)]">
             <CheckCircle2 className="h-14 w-14 text-primary" />
           </div>
         </div>
@@ -364,7 +364,7 @@ export function ResetLanding({ leadId, onTrack, referrer }: Props) {
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="group relative flex w-full max-w-xs flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl bg-primary px-6 py-6 text-xl font-black text-black shadow-[0_20px_40px_rgba(var(--primary-rgb),0.4)] transition-all hover:scale-[1.05] active:scale-[0.98]"
+          className="group relative flex w-full max-w-xs flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl bg-primary px-6 py-6 text-xl font-black text-black shadow-[0_20px_40px_rgba(0, 143, 17, 0.4)] transition-all hover:scale-[1.05] active:scale-[0.98]"
         >
           <div className="absolute inset-0 bg-white/30 opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="flex items-center gap-3">
@@ -395,7 +395,7 @@ export function ResetLanding({ leadId, onTrack, referrer }: Props) {
       <div className="sticky top-0 z-[110] w-full bg-black/80 border-b border-white/5 backdrop-blur-md">
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-primary shadow-[0_0_10px_#00FF41]" />
+            <div className="h-2 w-2 rounded-full bg-primary shadow-[0_0_10px_#008F11]" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em] italic text-neutral-300">Reseteando sistema...</span>
           </div>
           <div className="flex items-center gap-2 font-mono text-sm font-black text-primary italic">
@@ -555,7 +555,7 @@ export function ResetLanding({ leadId, onTrack, referrer }: Props) {
           </h2>
           <Button
             onClick={() => setQuizOpen(true)}
-            className="group relative h-24 w-full overflow-hidden rounded-[2.5rem] bg-primary transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] shadow-[0_30px_60px_rgba(var(--primary-rgb),0.3)]"
+            className="group relative h-24 w-full overflow-hidden rounded-[2.5rem] bg-primary transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] shadow-[0_30px_60px_rgba(0, 143, 17, 0.3)]"
           >
             <div className="relative flex w-full items-center justify-between px-6 font-black italic text-black">
               <span className="text-[26px]">ENTRAR AL SISTEMA</span>
@@ -599,7 +599,7 @@ export function ResetLanding({ leadId, onTrack, referrer }: Props) {
         <div className="fixed bottom-0 left-0 right-0 z-[110] border-t border-white/10 bg-black/90 px-6 py-4 pb-8 backdrop-blur-xl animate-in slide-in-from-bottom duration-500">
           <Button
             onClick={() => setQuizOpen(true)}
-            className="w-full h-14 bg-primary text-black font-black uppercase italic rounded-2xl shadow-[0_10px_30px_rgba(var(--primary-rgb),0.3)] transition-transform active:scale-95"
+            className="w-full h-14 bg-primary text-black font-black uppercase italic rounded-2xl shadow-[0_10px_30px_rgba(0, 143, 17, 0.3)] transition-transform active:scale-95"
           >
             RESERVAR MI ACCESO
           </Button>
@@ -608,7 +608,7 @@ export function ResetLanding({ leadId, onTrack, referrer }: Props) {
 
       <style jsx global>{`
         :root {
-           --primary-rgb: 0, 255, 65;
+           --primary-rgb: 0, 143, 17;
         }
         @keyframes shine {
           0% { transform: translateX(-100%) skewX(-30deg); }

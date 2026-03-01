@@ -48,7 +48,7 @@ function ParticleField() {
 
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(0, 255, 65, ${p.alpha})`
+        ctx.fillStyle = `rgba(0, 143, 17, ${p.alpha})`
         ctx.fill()
       }
       animId = requestAnimationFrame(draw)
@@ -161,7 +161,7 @@ export function DecisionVideo({
       <div className="relative flex min-h-dvh flex-col items-center justify-center bg-black overflow-hidden">
         <ParticleField />
 
-        <div className="relative aspect-[9/16] w-full max-w-md overflow-hidden bg-black shadow-[0_0_80px_rgba(0,255,65,0.1)] border-x border-white/5">
+        <div className="relative aspect-[9/16] w-full max-w-md overflow-hidden bg-black shadow-[0_0_80px_rgba(0,143,17,0.1)] border-x border-white/5">
           {/* Click Shield - Blocks all interaction with the iframe */}
           {started && !videoEnded && (
             <div className="absolute inset-0 z-[5] bg-transparent cursor-default" />
@@ -231,7 +231,7 @@ export function DecisionVideo({
 
               <div className="flex w-full flex-col gap-4">
                 <button type="button" onClick={onContinue}
-                  className="group relative flex w-full items-center justify-between overflow-hidden rounded-2xl bg-primary px-6 py-5 text-lg font-black italic text-black shadow-[0_20px_40px_rgba(0,255,65,0.2)] transition-all hover:scale-[1.03] active:scale-95">
+                  className="group relative flex w-full items-center justify-between overflow-hidden rounded-2xl bg-primary px-6 py-5 text-lg font-black italic text-black shadow-[0_20px_40px_rgba(0,143,17,0.3)] transition-all hover:scale-[1.03] active:scale-95">
                   <span>ACEPTAR DESAFÍO</span>
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black/10">
                     <Zap className="h-5 w-5 fill-black" strokeWidth={3} />
@@ -311,7 +311,7 @@ export function DecisionVideo({
             </div>
             <div className="flex w-full flex-col gap-4">
               <button type="button" onClick={onContinue}
-                className="group relative flex w-full items-center justify-between overflow-hidden rounded-2xl bg-primary px-6 py-5 text-lg font-black italic text-black shadow-[0_20px_40px_rgba(0,255,65,0.2)] transition-all hover:scale-[1.03] active:scale-95">
+                className="group relative flex w-full items-center justify-between overflow-hidden rounded-2xl bg-primary px-6 py-5 text-lg font-black italic text-black shadow-[0_20px_40px_rgba(0,143,17,0.3)] transition-all hover:scale-[1.03] active:scale-95">
                 <span>ACEPTAR DESAFÍO</span>
                 <Zap className="h-5 w-5 fill-black" strokeWidth={3} />
               </button>
@@ -322,8 +322,8 @@ export function DecisionVideo({
       <style dangerouslySetInnerHTML={{
         __html: `
         :root {
-          --primary: 142 100% 50%;
-          --primary-foreground: 0 0% 0%;
+          --primary: 127 100% 28%;
+          --primary-foreground: 0 100% 100%;
         }
       `}} />
     </div>
