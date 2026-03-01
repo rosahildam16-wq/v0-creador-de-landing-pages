@@ -14,8 +14,11 @@ import {
     Check,
     Minus,
     Star,
-    Bot
+    Bot,
+    CheckCircle2
 } from "lucide-react"
+import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
+import { useState } from "react"
 
 const COMPARISON = [
     { feature: "IA Prospectora Integrada", mf: true, others: false },
@@ -27,19 +30,47 @@ const COMPARISON = [
 ]
 
 export function MainLanding() {
+    const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly")
+
+    const plans = [
+        {
+            name: "Básico",
+            priceMonthly: 27,
+            priceYearly: 24,
+            description: "Para marketers que están empezando.",
+            features: ["Dashboard personal", "Seguimiento de leads (50)", "1 embudo activo", "Academia básica", "Soporte por email"],
+            color: "from-blue-500/20 to-cyan-500/20"
+        },
+        {
+            name: "Pro",
+            priceMonthly: 47,
+            priceYearly: 42,
+            description: "El estándar para escalar tu negocio.",
+            features: ["Leads ilimitados", "3 embudos activos", "Pipeline CRM", "Analytics avanzado", "Integración WhatsApp", "Retos y gamificación"],
+            popular: true,
+            color: "from-primary/30 to-fuchsia-600/30"
+        },
+        {
+            name: "Elite",
+            priceMonthly: 97,
+            priceYearly: 87,
+            description: "Para líderes y agencias de alto nivel.",
+            features: ["Equipo ilimitado", "Meta Ads dashboard", "Workflows automatizados", "Academia completa", "Soporte prioritario", "White-label (Logo personalizado)"],
+            color: "from-fuchsia-600/20 to-pink-600/20"
+        }
+    ]
+
     return (
         <div className="min-h-screen bg-[#05010d] text-white selection:bg-primary selection:text-white">
             {/* Navigation */}
             <nav className="fixed top-0 left-0 right-0 z-[100] border-b border-white/5 bg-[#05010d]/80 backdrop-blur-xl">
                 <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-                    <div className="flex items-center gap-2">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-fuchsia-600 shadow-lg shadow-primary/20">
-                            <Sparkles className="h-6 w-6 text-white" />
-                        </div>
-                        <span className="text-xl font-black italic tracking-tighter uppercase">Magic Funnel</span>
-                    </div>
+                    <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                        <MagicFunnelLogo size="sm" showText={true} />
+                    </Link>
                     <div className="hidden items-center gap-8 md:flex">
                         <a href="#beneficios" className="text-sm font-bold uppercase tracking-widest text-white/60 hover:text-white transition-colors">Beneficios</a>
+                        <a href="#precios" className="text-sm font-bold uppercase tracking-widest text-white/60 hover:text-white transition-colors">Precios</a>
                         <a href="#comparativa" className="text-sm font-bold uppercase tracking-widest text-white/60 hover:text-white transition-colors">Comparativa</a>
                         <a href="#testimonios" className="text-sm font-bold uppercase tracking-widest text-white/60 hover:text-white transition-colors">Testimonios</a>
                     </div>
@@ -177,6 +208,77 @@ export function MainLanding() {
                 </div>
             </section>
 
+            {/* Pricing Section */}
+            <section id="precios" className="py-24 bg-gradient-to-b from-transparent via-primary/5 to-transparent">
+                <div className="mx-auto max-w-7xl px-6">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter mb-6">Planes que <span className="text-primary italic-none">hacen magia</span></h2>
+
+                        {/* Billing Toggle */}
+                        <div className="flex items-center justify-center gap-4 mb-8">
+                            <button
+                                onClick={() => setBillingCycle("monthly")}
+                                className={`text-xs font-black uppercase tracking-widest transition-colors ${billingCycle === "monthly" ? "text-white" : "text-white/30"}`}
+                            >
+                                Mensual
+                            </button>
+                            <button
+                                onClick={() => setBillingCycle(billingCycle === "monthly" ? "yearly" : "monthly")}
+                                className="relative h-6 w-12 rounded-full bg-white/10 p-1 transition-colors hover:bg-white/20"
+                            >
+                                <div className={`h-4 w-4 rounded-full bg-primary transition-transform duration-300 ${billingCycle === "yearly" ? "translate-x-6" : "translate-x-0"}`} />
+                            </button>
+                            <button
+                                onClick={() => setBillingCycle("yearly")}
+                                className={`text-xs font-black uppercase tracking-widest transition-colors ${billingCycle === "yearly" ? "text-white" : "text-white/30"}`}
+                            >
+                                Anual <span className="ml-1 text-[10px] text-primary italic font-black">(-10% OFF)</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {plans.map((plan, i) => (
+                            <div key={i} className={`relative flex flex-col p-8 rounded-[2.5rem] border ${plan.popular ? 'border-primary shadow-[0_0_40px_rgba(var(--primary-rgb),0.1)]' : 'border-white/10'} bg-black/40 backdrop-blur-xl transition-all hover:translate-y-[-8px]`}>
+                                {plan.popular && (
+                                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-[10px] font-black uppercase tracking-widest text-white italic">
+                                        Más Popular
+                                    </div>
+                                )}
+
+                                <h3 className="text-2xl font-black italic uppercase tracking-tighter mb-2">{plan.name}</h3>
+                                <p className="text-sm text-white/50 mb-8 font-medium">{plan.description}</p>
+
+                                <div className="mb-8 items-baseline flex gap-1">
+                                    <span className="text-5xl font-black tracking-tighter italic">
+                                        ${billingCycle === "monthly" ? plan.priceMonthly : plan.priceYearly}
+                                    </span>
+                                    <span className="text-white/40 font-bold uppercase text-[10px] tracking-widest">/mes</span>
+                                </div>
+
+                                <div className="space-y-4 mb-10 flex-1">
+                                    {plan.features.map((feature, j) => (
+                                        <div key={j} className="flex items-center gap-3">
+                                            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/20">
+                                                <Check className="h-3 w-3 text-primary" strokeWidth={4} />
+                                            </div>
+                                            <span className="text-xs font-medium text-white/80">{feature}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <Link
+                                    href="/login?mode=register"
+                                    className={`w-full py-4 rounded-2xl text-center text-xs font-black uppercase tracking-widest transition-all ${plan.popular ? 'bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105' : 'bg-white/5 text-white hover:bg-white/10'}`}
+                                >
+                                    Elegir Plan {plan.name}
+                                </Link>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
             {/* Testimonials */}
             <section id="testimonios" className="py-24 bg-primary/[0.01]">
                 <div className="mx-auto max-w-7xl px-6">
@@ -230,10 +332,7 @@ export function MainLanding() {
             {/* Footer */}
             <footer className="py-12 border-t border-white/5">
                 <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row items-center justify-between gap-8">
-                    <div className="flex items-center gap-2 grayscale brightness-200">
-                        <Sparkles className="h-5 w-5 text-white" />
-                        <span className="text-sm font-black italic tracking-tighter uppercase">Magic Funnel</span>
-                    </div>
+                    <MagicFunnelLogo size="xs" />
                     <div className="flex items-center gap-8 text-[10px] font-bold uppercase tracking-[0.4em] text-white/30">
                         <span>© 2026 MAGIC FUNNEL</span>
                         <a href="#" className="hover:text-white transition-colors">Privacidad</a>
