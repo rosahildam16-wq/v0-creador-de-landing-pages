@@ -140,9 +140,9 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
   const isLast = activeSlide === activeSlides.length - 1
   const canAdvance = videoFinished[activeSlide] || !currentSlideHasVideo
 
-  // Play restricted alert on mount
+  // Cleanup or other effects
   useEffect(() => {
-    playRestrictedAlert()
+    // playRestrictedAlert() // Removed to avoid confusion
   }, [])
 
   // Auto-play video (Vimeo or Local) when slide becomes active
@@ -300,6 +300,18 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
     }
   }, [activeSlide, currentSlideHasVideo, currentSlide?.videoEmbed])
 
+  // ── Go to next slide (programmatic, no scroll) ──
+  const goNext = useCallback(() => {
+    if (!canAdvance || transitioning) return
+    if (isLast) {
+      onContinue()
+      return
+    }
+    setTransitioning(true)
+    setActiveSlide((prev) => prev + 1)
+    setTimeout(() => setTransitioning(false), 400)
+  }, [canAdvance, transitioning, isLast, onContinue])
+
   // ── Show swipe hint when video ends ──
   useEffect(() => {
     setSwipeHint(false)
@@ -319,18 +331,6 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
       return () => clearTimeout(t)
     }
   }, [activeSlide, currentSlideHasVideo, videoFinished, isLast, goNext])
-
-  // ── Go to next slide (programmatic, no scroll) ──
-  const goNext = useCallback(() => {
-    if (!canAdvance || transitioning) return
-    if (isLast) {
-      onContinue()
-      return
-    }
-    setTransitioning(true)
-    setActiveSlide((prev) => prev + 1)
-    setTimeout(() => setTransitioning(false), 400)
-  }, [canAdvance, transitioning, isLast, onContinue])
 
   // ── Preload/Auto-advance ──
   useEffect(() => {

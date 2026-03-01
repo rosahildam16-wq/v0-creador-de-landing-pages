@@ -1,18 +1,23 @@
 "use client"
 
-import { usePathname } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 import { MagicSupportAI } from "./magic-support-ai"
 import { CookieConsent } from "@/components/legal/cookie-consent"
+import { Suspense } from "react"
 
-export function AppOverlays() {
+function OverlaysContent() {
     const pathname = usePathname()
+    const searchParams = useSearchParams()
 
-    // Routes where we DON'T want the support bot and cookie consent (high conversion funnels)
+    // Comprehensive check for funnel routes
     const isFunnelRoute =
         pathname?.startsWith("/r/") ||
         pathname?.startsWith("/s/") ||
         pathname === "/funnel" ||
-        pathname?.startsWith("/funnel/")
+        pathname?.startsWith("/funnel/") ||
+        searchParams?.has("embudo") ||
+        pathname?.includes("nomada") ||
+        pathname?.includes("reset")
 
     if (isFunnelRoute) return null
 
@@ -21,5 +26,13 @@ export function AppOverlays() {
             <CookieConsent />
             <MagicSupportAI />
         </>
+    )
+}
+
+export function AppOverlays() {
+    return (
+        <Suspense fallback={null}>
+            <OverlaysContent />
+        </Suspense>
     )
 }

@@ -152,11 +152,11 @@ export function WhatsAppHook({ onContinue, contactName = "Mejor amigo", customMe
       }, currentDelay)
       timers.push(msgTimer)
 
-      // Si el mensaje actual es audio, esperar 10 segundos extra antes del siguiente
+      // Si el mensaje actual es audio, esperar 3 segundos extra antes del siguiente
       if (msg.type === "audio") {
-        currentDelay += 10000
+        currentDelay += 3000
       } else {
-        currentDelay += 500
+        currentDelay += 300
       }
     })
 
@@ -271,21 +271,21 @@ export function WhatsAppHook({ onContinue, contactName = "Mejor amigo", customMe
                       top: 0,
                       ...(isSent
                         ? {
-                            right: -7,
-                            width: 0,
-                            height: 0,
-                            borderTop: "0 solid transparent",
-                            borderLeft: "8px solid #005c4b",
-                            borderBottom: "8px solid transparent",
-                          }
+                          right: -7,
+                          width: 0,
+                          height: 0,
+                          borderTop: "0 solid transparent",
+                          borderLeft: "8px solid #005c4b",
+                          borderBottom: "8px solid transparent",
+                        }
                         : {
-                            left: -7,
-                            width: 0,
-                            height: 0,
-                            borderTop: "0 solid transparent",
-                            borderRight: "8px solid #202c33",
-                            borderBottom: "8px solid transparent",
-                          }),
+                          left: -7,
+                          width: 0,
+                          height: 0,
+                          borderTop: "0 solid transparent",
+                          borderRight: "8px solid #202c33",
+                          borderBottom: "8px solid transparent",
+                        }),
                     }}
                   />
                 )}
