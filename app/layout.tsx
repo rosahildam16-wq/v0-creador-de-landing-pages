@@ -7,8 +7,7 @@ import { Toaster } from "sonner"
 
 import './globals.css'
 
-import { CookieConsent } from "@/components/legal/cookie-consent"
-import { MagicSupportAI } from "@/components/shared/magic-support-ai"
+import { AppOverlays } from "@/components/shared/app-overlays"
 
 const _inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const _jetbrains = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrains' })
@@ -42,8 +41,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             {children}
-            <CookieConsent />
-            <MagicSupportAI />
+            <AppOverlays />
             <Toaster position="bottom-right" richColors theme="dark" />
           </AuthProvider>
         </ThemeProvider>
