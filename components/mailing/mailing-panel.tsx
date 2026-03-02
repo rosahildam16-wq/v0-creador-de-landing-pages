@@ -36,6 +36,7 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
     const [communities, setCommunities] = useState<Community[]>([])
     const [loading, setLoading] = useState(true)
     const [isCreateOpen, setIsCreateOpen] = useState(false)
+    const [sendingNow, setSendingNow] = useState(false)
     const [activeTab, setActiveTab] = useState("all")
     const [leadSearch, setLeadSearch] = useState("")
     const [campaignSearch, setCampaignSearch] = useState("")
@@ -95,7 +96,7 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
         return result.slice(0, 10)
     }, [leads, leadSearch, mode, communityId, newCampana.community_id])
 
-    const handleCreate = async () => {
+    const handleCreate = async (sendImmediately: boolean = false) => {
         if (!newCampana.titulo || !newCampana.asunto || !newCampana.contenido_html) {
             toast.error("Por favor completa los campos obligatorios")
             return
@@ -111,25 +112,50 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
             return
         }
 
-        const res = await createCampanaEmail({
-            titulo: newCampana.titulo,
-            asunto: newCampana.asunto,
-            contenido_html: newCampana.contenido_html,
-            audiencia: newCampana.audiencia,
-            audience_filters: newCampana.audience_filters,
-            community_id: mode === "leader" ? communityId : newCampana.community_id,
-            programado_para: newCampana.programado_para || null,
-            estado: newCampana.programado_para ? "programada" : "borrador",
-            autor_id: "current-user",
-            autor_role: mode
-        })
+        if (sendImmediately) setSendingNow(true)
 
-        if (res) {
-            toast.success("Campaña creada satisfactoriamente")
-            setIsCreateOpen(false)
-            setShowBuilder(false)
-            loadData()
-            resetForm()
+        try {
+            const res = await createCampanaEmail({
+                titulo: newCampana.titulo,
+                asunto: newCampana.asunto,
+                contenido_html: newCampana.contenido_html,
+                audiencia: newCampana.audiencia,
+                audience_filters: newCampana.audience_filters,
+                community_id: mode === "leader" ? communityId : newCampana.community_id,
+                programado_para: sendImmediately ? null : (newCampana.programado_para || null),
+                estado: sendImmediately ? "borrador" : (newCampana.programado_para ? "programada" : "borrador"),
+                autor_id: "current-user",
+                autor_role: mode
+            })
+
+            if (res) {
+                if (sendImmediately && res.id) {
+                    // Immediately trigger the send
+                    toast.loading("Enviando campaña...")
+                    const sendRes = await fetch("/api/mailing/process-campaign", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ campaignId: res.id })
+                    })
+                    const sendData = await sendRes.json()
+                    toast.dismiss()
+                    if (sendData.success) {
+                        toast.success(`✅ Campaña enviada exitosamente a ${sendData.sent} personas.`)
+                    } else {
+                        toast.error(`Error al enviar: ${sendData.error || "Error desconocido"}`)
+                    }
+                } else {
+                    toast.success(newCampana.programado_para ? "Campaña programada exitosamente" : "Campaña guardada como borrador")
+                }
+                setIsCreateOpen(false)
+                setShowBuilder(false)
+                loadData()
+                resetForm()
+            }
+        } catch (err) {
+            toast.error("Error al crear la campaña")
+        } finally {
+            setSendingNow(false)
         }
     }
 
@@ -525,12 +551,19 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
                                 )}
                             </div>
 
-                            <DialogFooter className="gap-2">
-                                <Button variant="outline" onClick={() => { setIsCreateOpen(false); resetForm() }} className="border-zinc-700 hover:bg-zinc-900 h-11 px-8 rounded-xl font-bold uppercase tracking-widest text-[11px]">
+                            <DialogFooter className="gap-2 flex-wrap">
+                                <Button variant="outline" onClick={() => { setIsCreateOpen(false); resetForm() }} className="border-zinc-700 hover:bg-zinc-900 h-11 px-6 rounded-xl font-bold uppercase tracking-widest text-[11px]">
                                     Cancelar
                                 </Button>
-                                <Button onClick={handleCreate} className="h-11 px-8 rounded-xl font-bold uppercase tracking-widest text-[11px] bg-primary text-primary-foreground shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)]">
-                                    {newCampana.programado_para ? <><Calendar className="w-3.5 h-3.5 mr-2" /> Programar</> : <><Send className="w-3.5 h-3.5 mr-2" /> Guardar Borrador</>}
+                                <Button onClick={() => handleCreate(false)} className="h-11 px-6 rounded-xl font-bold uppercase tracking-widest text-[11px] bg-zinc-700 text-zinc-200 hover:bg-zinc-600">
+                                    {newCampana.programado_para ? <><Calendar className="w-3.5 h-3.5 mr-2" /> Programar</> : <><Clock className="w-3.5 h-3.5 mr-2" /> Guardar Borrador</>}
+                                </Button>
+                                <Button
+                                    onClick={() => handleCreate(true)}
+                                    disabled={sendingNow}
+                                    className="h-11 px-8 rounded-xl font-bold uppercase tracking-widest text-[11px] bg-emerald-600 text-white hover:bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                                >
+                                    {sendingNow ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" /> Enviando...</> : <><Send className="w-3.5 h-3.5 mr-2" /> Enviar Ahora</>}
                                 </Button>
                             </DialogFooter>
                         </DialogContent>
