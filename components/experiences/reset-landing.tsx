@@ -534,7 +534,7 @@ export function ResetLanding({ leadId, onTrack, referrer }: Props) {
 
           <div className="grid gap-16 text-left">
             {[
-              { title: "EL FILTRO MÁS DIFÍCIL", icon: Shield, desc: "Si crees en el dinero fácil sin estructura, cierra esta pestaña. RESET es para quien ya tiene momentum pero le falta el motor." },
+              { title: "EL FILTRO MÁS DIFÍCIL", icon: Shield, desc: "No necesitas experiencia previa en marketing para tener éxito. Lo único que pedimos es tu compromiso total para seguir nuestro paso a paso probado." },
               { title: "ESTRUCTURA DE ÉLITE", icon: Cpu, desc: "Recibes la misma tecnología que usamos nosotros para vender en automático. Sin excepciones, sin secretos." },
               { title: "RECHAZAMOS AL 80%", icon: Users, desc: "No buscamos clientes masivos. Buscamos 2 casos de éxito por semana que podamos documentar." }
             ].map((item, i) => (

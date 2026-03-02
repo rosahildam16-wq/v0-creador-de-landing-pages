@@ -14,26 +14,26 @@ interface DiagnosticQuizProps {
 const budgetOptions = [
   {
     id: "high",
-    label: "Inversión de Élite",
-    sublabel: "Tengo $500 USD o más disponibles",
+    label: "Inversión Decisiva",
+    sublabel: "Cuento con más de 500 USD",
     icon: <TrendingUp className="h-4 w-4" />,
   },
   {
     id: "mid",
     label: "Presupuesto Estándar",
-    sublabel: "Dispongo de $250 - $499 USD",
+    sublabel: "Dispongo de 250 - 500 USD",
     icon: <Zap className="h-4 w-4" />,
   },
   {
     id: "low",
-    label: "Presupuesto Inicial",
-    sublabel: "Puedo comenzar con $100 - $249 USD",
+    label: "Presupuesto de Arranque",
+    sublabel: "Mi presupuesto es de 100 - 250 USD",
     icon: <CheckCircle2 className="h-4 w-4" />,
   },
   {
     id: "none",
-    label: "Sin Fondos Inmediatos",
-    sublabel: "No cuento con capital ahora mismo",
+    label: "Evaluando Recursos",
+    sublabel: "Aún no tengo definido mi presupuesto",
     icon: <AlertCircle className="h-4 w-4" />,
   },
 ]
@@ -122,6 +122,7 @@ export function DiagnosticQuiz({ open, onClose, onComplete }: DiagnosticQuizProp
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/90 backdrop-blur-xl"
+        onClick={handleClose}
       />
 
       {/* Quiz card */}
@@ -152,10 +153,10 @@ export function DiagnosticQuiz({ open, onClose, onComplete }: DiagnosticQuizProp
                 </span>
               </div>
               <h3 className="mb-3 text-center text-2xl font-black italic leading-[1.1] text-white uppercase tracking-tighter text-balance">
-                {"¿Qué capital tienes para poner a rodar tu franquicia?"}
+                {"Si descubres que somos lo que buscas, ¿con cuánto dispones para invertir en este nuevo modelo de negocio?"}
               </h3>
               <p className="mb-8 text-center text-sm font-medium text-neutral-500">
-                {"Buscamos socios con capacidad de operativa inmediata. Dinos qué motor quieres instalar en tu sistema."}
+                {"La inversión es un componente clave. Dinos tu capacidad operativa para asignarte el plan adecuado."}
               </p>
 
               <div className="flex flex-col gap-3">
@@ -195,10 +196,10 @@ export function DiagnosticQuiz({ open, onClose, onComplete }: DiagnosticQuizProp
                 </span>
               </div>
               <h3 className="mb-3 text-center text-2xl font-black italic leading-[1.1] text-white uppercase tracking-tighter">
-                {"¿TIENES 30 MIN PARA TU AUDITORÍA?"}
+                {"¿Te comprometes a reservar 30 minutos de tu tiempo para hacerte una prueba de admisión?"}
               </h3>
               <p className="mb-8 text-center text-sm font-medium text-neutral-500">
-                {"Evaluaremos tu perfil personalmente. Si agendas y no asistes, el sistema bloqueará tu acceso permanentemente."}
+                {"Evaluaremos tu perfil de socio personalmente. Se puntual: el sistema asigna el cupo automáticamente."}
               </p>
 
               <div className="flex flex-col gap-3">
@@ -276,10 +277,11 @@ export function DiagnosticQuiz({ open, onClose, onComplete }: DiagnosticQuizProp
                 </div>
 
                 <h3 className="mb-3 text-3xl font-black italic uppercase text-white tracking-tighter leading-none">
-                  {"ADMISIÓN <br/> <span className='text-primary'>APROBADA</span>"}
+                  ¡Felicidades! <br /> <span className='text-primary'>CANDIDATO ÓPTIMO</span>
                 </h3>
+
                 <p className="mb-10 text-sm font-medium text-neutral-500 leading-relaxed">
-                  {"Tu perfil califica para operar la Franquicia. El último paso es validar tu acceso vía WhatsApp para agendar tu llamada."}
+                  {"Eres un candidato óptimo para entregarte la Franquicia Reset. Agenda una llamada de admisión en el siguiente link."}
                 </p>
 
                 <a
