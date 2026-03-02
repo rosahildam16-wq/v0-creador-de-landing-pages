@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useState, useCallback } from "react"
+import { useState, useCallback } from "react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,8 +11,8 @@ import { EMBUDOS } from "@/lib/embudos-config"
 import { ArrowLeft, Users, Target, DollarSign, TrendingUp, Megaphone, Leaf, Route, Check, Save } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export default function TeamMemberDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function TeamMemberDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params
   const member = getTeamMemberById(id)
 
   if (!member) return notFound()

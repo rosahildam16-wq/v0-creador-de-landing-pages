@@ -1,8 +1,8 @@
 import { isLessonCompleted, toggleLessonCompletion } from "@/lib/academy-progress"
 import { useAuth } from "@/lib/auth-context"
 
-export default function MemberCourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function MemberCourseDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params
   const { user } = useAuth()
   const course = getCourseById(id)
   const [expandedModules, setExpandedModules] = useState<string[]>(course?.modulos[0]?.id ? [course.modulos[0].id] : [])
@@ -83,26 +83,26 @@ export default function MemberCourseDetailPage({ params }: { params: Promise<{ i
       </div>
 
       <div className="flex items-center justify-between">
-         <div className="flex items-center gap-4">
-            {currentLesson && (
-              <button 
-                onClick={() => handleToggleComplete(currentLesson.id)}
-                className={cn(
-                  "flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-all active:scale-95",
-                  isLessonCompleted(currentLesson.id)
-                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                    : "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                )}
-              >
-                {isLessonCompleted(currentLesson.id) ? (
-                  <CheckCircle2 className="h-4.5 w-4.5" />
-                ) : (
-                  <Play className="h-4 w-4" />
-                )}
-                {isLessonCompleted(currentLesson.id) ? "Leccion completada" : "Marcar como terminado"}
-              </button>
-            )}
-         </div>
+        <div className="flex items-center gap-4">
+          {currentLesson && (
+            <button
+              onClick={() => handleToggleComplete(currentLesson.id)}
+              className={cn(
+                "flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-all active:scale-95",
+                isLessonCompleted(currentLesson.id)
+                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                  : "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+              )}
+            >
+              {isLessonCompleted(currentLesson.id) ? (
+                <CheckCircle2 className="h-4.5 w-4.5" />
+              ) : (
+                <Play className="h-4 w-4" />
+              )}
+              {isLessonCompleted(currentLesson.id) ? "Leccion completada" : "Marcar como terminado"}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Course info + curriculum side by side on larger screens */}
@@ -224,7 +224,7 @@ export default function MemberCourseDetailPage({ params }: { params: Promise<{ i
                               {leccion.titulo}
                             </span>
                             <div className="flex items-center gap-2">
-                               <span className="text-[9px] text-muted-foreground/50 font-mono">
+                              <span className="text-[9px] text-muted-foreground/50 font-mono">
                                 {leccion.duracion}
                               </span>
                               {isCompleted && (

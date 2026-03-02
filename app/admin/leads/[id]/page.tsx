@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, use } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -46,8 +46,8 @@ import useSWR from "swr"
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
-export default function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function LeadDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params
   const { data: lead, isLoading, mutate } = useSWR<Lead>(`/api/admin/leads?id=${id}`, fetcher)
 
   const [nuevaNota, setNuevaNota] = useState("")
