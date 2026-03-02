@@ -2,20 +2,16 @@ import { NextRequest, NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 
 /**
- * DELETE /api/admin/cleanup?member=sensei&confirm=yes
- * Complete cleanup: removes leads, notes, activities, and insights for a member.
+ * GET /api/admin/cleanup?confirm=yes
+ * Removes ALL leads and related data from the database.
+ * Requires confirm=yes to prevent accidental deletion.
  */
-export async function DELETE(req: NextRequest) {
-    const member = req.nextUrl.searchParams.get("member")
+export async function GET(req: NextRequest) {
     const confirm = req.nextUrl.searchParams.get("confirm")
-
-    if (!member) {
-        return NextResponse.json({ error: "Parámetro 'member' requerido" }, { status: 400 })
-    }
 
     if (confirm !== "yes") {
         return NextResponse.json({
-            warning: `Esto eliminará TODOS los leads y datos relacionados de '${member}'. Agrega &confirm=yes para confirmar.`,
+            warning: "Esto eliminará TODOS los leads de la base de datos. Agrega ?confirm=yes a la URL para confirmar.",
         })
     }
 
@@ -27,73 +23,65 @@ export async function DELETE(req: NextRequest) {
 
         const results: Record<string, any> = {}
 
-        // 1. Get all lead IDs for this member first
-        const { data: leads } = await supabase
+        // 1. Count leads before deletion
+        const { count: totalLeads } = await supabase
             .from("leads")
-            .select("id")
-            .eq("asignado_a", member)
+            .select("*", { count: "exact", head: true })
+        results.leads_before = totalLeads || 0
 
-        const leadIds = leads?.map((l: any) => l.id) || []
-        results.leads_found = leadIds.length
+        // 2. Delete all related data first (foreign keys)
+        // Notes
+        const { error: notasErr } = await supabase
+            .from("notas")
+            .delete()
+            .neq("id", "00000000-0000-0000-0000-000000000000") // Delete all
+        results.notas = notasErr ? `Error: ${notasErr.message}` : "✅ Eliminadas"
 
-        if (leadIds.length > 0) {
-            // 2. Delete related notes
-            const { error: notasError } = await supabase
-                .from("notas")
+        // Activities
+        const { error: actErr } = await supabase
+            .from("eventos_actividad")
+            .delete()
+            .neq("id", "00000000-0000-0000-0000-000000000000")
+        results.actividades = actErr ? `Error: ${actErr.message}` : "✅ Eliminadas"
+
+        // Lead insights
+        try {
+            await supabase
+                .from("lead_insights")
                 .delete()
-                .in("lead_id", leadIds)
-            results.notas = notasError ? `Error: ${notasError.message}` : "✅ Limpias"
-
-            // 3. Delete related activities
-            const { error: actividadError } = await supabase
-                .from("eventos_actividad")
-                .delete()
-                .in("lead_id", leadIds)
-            results.actividades = actividadError ? `Error: ${actividadError.message}` : "✅ Limpias"
-
-            // 4. Delete lead insights
-            try {
-                const { error: insightsError } = await supabase
-                    .from("lead_insights")
-                    .delete()
-                    .in("lead_id", leadIds)
-                results.insights = insightsError ? `Error: ${insightsError.message}` : "✅ Limpios"
-            } catch {
-                results.insights = "Tabla no existe (ok)"
-            }
-
-            // 5. Delete sequence enrollments
-            try {
-                const { error: enrollError } = await supabase
-                    .from("sequence_enrollments")
-                    .delete()
-                    .in("lead_id", leadIds)
-                results.enrollments = enrollError ? `Error: ${enrollError.message}` : "✅ Limpios"
-            } catch {
-                results.enrollments = "Tabla no existe (ok)"
-            }
+                .neq("id", "00000000-0000-0000-0000-000000000000")
+            results.insights = "✅ Eliminados"
+        } catch {
+            results.insights = "Tabla no existe (ok)"
         }
 
-        // 6. Finally delete the leads themselves
-        const { error: leadsError } = await supabase
+        // Sequence enrollments
+        try {
+            await supabase
+                .from("sequence_enrollments")
+                .delete()
+                .neq("id", "00000000-0000-0000-0000-000000000000")
+            results.enrollments = "✅ Eliminados"
+        } catch {
+            results.enrollments = "Tabla no existe (ok)"
+        }
+
+        // 3. Delete ALL leads
+        const { error: leadsErr } = await supabase
             .from("leads")
             .delete()
-            .eq("asignado_a", member)
-        results.leads = leadsError ? `Error: ${leadsError.message}` : "✅ Eliminados"
+            .neq("id", "00000000-0000-0000-0000-000000000000") // Delete all
+        results.leads = leadsErr ? `Error: ${leadsErr.message}` : "✅ Eliminados"
 
-        // 7. Also clean "Sin asignar" test leads if requested
-        if (member === "sensei") {
-            // Count Sin asignar leads too
-            const { count: sinAsignar } = await supabase
-                .from("leads")
-                .select("*", { count: "exact", head: true })
-                .eq("asignado_a", "Sin asignar")
-            results.sin_asignar_count = sinAsignar || 0
-        }
+        // 4. Verify
+        const { count: remaining } = await supabase
+            .from("leads")
+            .select("*", { count: "exact", head: true })
+        results.leads_remaining = remaining || 0
 
         return NextResponse.json({
             success: true,
-            message: `✅ Limpieza completa para '${member}'. ${leadIds.length} leads eliminados con todos sus datos relacionados.`,
+            message: `✅ Limpieza completa. ${totalLeads || 0} leads eliminados. Base de datos limpia y lista para producción.`,
             details: results,
         })
     } catch (err: any) {
