@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { Resend } from "resend"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const getResend = () => new Resend(process.env.RESEND_API_KEY || "re_placeholder")
 
 /**
  * POST /api/mailing/process-sequences
@@ -91,7 +91,7 @@ async function processSequences() {
 
             try {
                 // Send the email
-                const { error: sendErr } = await resend.emails.send({
+                const { error: sendErr } = await getResend().emails.send({
                     from: process.env.EMAIL_FROM || "noreply@magicfunnel.io",
                     to: enrollment.lead_email,
                     subject: step.asunto || "Mensaje de la secuencia",
