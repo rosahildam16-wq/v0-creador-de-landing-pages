@@ -254,7 +254,7 @@ export async function createLead(leadData: {
     const supabase = createAdminClient()
     if (!supabase) return null
 
-    // Use common columns that we know exist
+    // Use columns that exist in the leads table
     const insertData: any = {
       nombre: leadData.nombre,
       email: leadData.email.trim().toLowerCase(),
@@ -264,28 +264,25 @@ export async function createLead(leadData: {
       asignado_a: leadData.asignado_a || "Sin asignar",
       pais: leadData.pais || null,
       trafico: leadData.trafico || "Organico",
+      embudo_id: leadData.embudo_id || "nomada-vip",
     }
 
-    // Only add these if we're sure or they might fail the insert
-    // Maybe try a dynamic schema check or just catching the error
     try {
       const { data, error } = await supabase
         .from("leads")
-        .insert({
-          ...insertData,
-          embudo_id: leadData.embudo_id || "nomada-vip",
-          community_id: leadData.community_id || "general",
-        })
+        .insert(insertData)
         .select()
         .single()
 
       if (!error && data) return mapLeadRow(data)
 
-      // Fallback: try without 'community_id' and 'embudo_id' if error was column not found
-      if (error && (error.code === '42703' || error.message.includes('column'))) {
+      // Fallback: try without embudo_id if column doesn't exist
+      if (error && (error.code === 'PGRST204' || error.code === '42703' || error.message?.includes('column'))) {
+        console.warn("Column error, retrying without embudo_id:", error.message)
+        const { embudo_id, ...basicData } = insertData
         const { data: data2, error: error2 } = await supabase
           .from("leads")
-          .insert(insertData)
+          .insert(basicData)
           .select()
           .single()
         if (error2) {
@@ -297,13 +294,14 @@ export async function createLead(leadData: {
 
       if (error) {
         console.error("Error creating lead:", error)
-        return { id: 'error', error: error.message } as any
+        return null
       }
       return null
     } catch (e: any) {
       console.error("Fatal error creating lead:", e)
-      return { id: 'error', error: e.message } as any
+      return null
     }
+
   }
 
   // Fallback: in-memory

@@ -37,7 +37,6 @@ export async function GET() {
                 fuente: "Organico",
                 asignado_a: "sensei",
                 embudo_id: "franquicia-reset",
-                community_id: "general",
                 pais: "Test",
                 trafico: "Organico",
             })
