@@ -7,10 +7,13 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 /**
  * POST /api/mailing/process-sequences
  * Processes all pending sequence enrollments and sends due emails.
- * Should be called by a cron job every 15-30 minutes,
- * or triggered manually from the admin panel.
+ * Can be triggered manually from the admin panel.
  */
 export async function POST(req: NextRequest) {
+    return processSequences()
+}
+
+async function processSequences() {
     try {
         const supabase = createAdminClient()
         if (!supabase) return NextResponse.json({ error: "No DB" }, { status: 500 })
@@ -143,8 +146,31 @@ export async function POST(req: NextRequest) {
     }
 }
 
-// GET - Get enrollment stats
+/**
+ * GET /api/mailing/process-sequences
+ * Called by Vercel Cron every 15 min.
+ * Also returns enrollment stats if called with ?stats=true
+ */
 export async function GET(req: NextRequest) {
+    // If ?stats=true, return stats only
+    if (req.nextUrl.searchParams.get("stats") === "true") {
+        return getStats()
+    }
+
+    // Verify Vercel Cron secret (optional security)
+    const authHeader = req.headers.get("authorization")
+    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+        // Allow without secret in dev, but log warning
+        if (process.env.NODE_ENV === "production" && process.env.CRON_SECRET) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+    }
+
+    // Process sequences (same logic as POST)
+    return processSequences()
+}
+
+async function getStats() {
     try {
         const supabase = createAdminClient()
         if (!supabase) return NextResponse.json({ stats: {} })
@@ -170,3 +196,4 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: err.message }, { status: 500 })
     }
 }
+
