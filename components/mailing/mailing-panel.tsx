@@ -64,17 +64,54 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
 
     const loadData = async () => {
         setLoading(true)
-        const [campanasData, leadsData] = await Promise.all([
-            getCampanasEmail(),
-            getLeads()
-        ])
 
+        // Load campaigns
+        const campanasData = await getCampanasEmail()
         const filteredCampanas = mode === "leader"
             ? campanasData.filter(c => c.community_id === communityId)
             : campanasData
-
         setCampanas(filteredCampanas)
-        setLeads(leadsData)
+
+        // Load leads differently based on mode
+        if (mode === "admin") {
+            // Admin: load ALL leads from the global data function
+            const leadsData = await getLeads()
+            setLeads(leadsData)
+        } else {
+            // Member/Leader: load leads from API (which filters by their email/team)
+            try {
+                // Get user email from localStorage or auth context
+                const storedUser = localStorage.getItem("mf_user")
+                const userEmail = storedUser ? JSON.parse(storedUser).email : ""
+
+                if (userEmail) {
+                    const res = await fetch(`/api/member/leads?email=${encodeURIComponent(userEmail)}`)
+                    if (res.ok) {
+                        const leadsData = await res.json()
+                        setLeads(Array.isArray(leadsData) ? leadsData : [])
+                    }
+                }
+
+                // Also try loading from global leads as fallback
+                if (leads.length === 0) {
+                    const globalLeads = await getLeads()
+                    // Filter to only show leads that belong to this member's community
+                    const memberLeads = communityId
+                        ? globalLeads.filter(l => l.community_id === communityId)
+                        : globalLeads
+                    setLeads(memberLeads)
+                }
+            } catch (err) {
+                console.error("Error loading member leads:", err)
+                // Fallback to all leads filtered by community
+                const allLeads = await getLeads()
+                const memberLeads = communityId
+                    ? allLeads.filter(l => l.community_id === communityId)
+                    : allLeads
+                setLeads(memberLeads)
+            }
+        }
+
         setCommunities(getAllCommunities())
         setLoading(false)
     }
