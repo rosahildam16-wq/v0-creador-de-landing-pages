@@ -28,12 +28,15 @@ import { es } from "date-fns/locale"
 import { EmailTemplateBuilder } from "./email-template-builder"
 import { SequenceBuilder, type EmailSequence as SequenceBuilderType } from "./sequence-builder"
 
+import { useAuth } from "@/lib/auth-context"
+
 interface MailingPanelProps {
     mode: "admin" | "leader"
     communityId?: string
 }
 
 export function MailingPanel({ mode, communityId }: MailingPanelProps) {
+    const { user } = useAuth()
     const [campanas, setCampanas] = useState<CampanaEmail[]>([])
     const [leads, setLeads] = useState<Lead[]>([])
     const [communities, setCommunities] = useState<Community[]>([])
@@ -71,7 +74,7 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
     useEffect(() => {
         loadData()
         loadSequences()
-    }, [])
+    }, [user, communityId]) // Reload if user or communityId changes
 
     const loadSequences = async () => {
         setSequencesLoading(true)
@@ -92,8 +95,7 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
     const handleSaveSequence = async (seqData: SequenceBuilderType) => {
         try {
             const isEdit = !!seqData.id
-            const storedUser = typeof window !== "undefined" ? localStorage.getItem("mf_user") : null
-            const userId = storedUser ? JSON.parse(storedUser).id : "admin"
+            const userId = user?.memberId || user?.username || "admin"
 
             const payload = {
                 ...seqData,
@@ -171,51 +173,55 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
     const loadData = async () => {
         setLoading(true)
 
-        // Load campaigns
-        const campanasData = await getCampanasEmail()
-        const filteredCampanas = mode === "leader"
-            ? campanasData.filter(c => c.community_id === communityId)
-            : campanasData
-        setCampanas(filteredCampanas)
+        try {
+            // Load campaigns
+            const campanasData = await getCampanasEmail()
+            const filteredCampanas = mode === "leader"
+                ? campanasData.filter(c => c.community_id === communityId)
+                : campanasData
+            setCampanas(filteredCampanas)
 
-        // Load leads differently based on mode
-        if (mode === "admin") {
-            // Admin: load ALL leads from the global data function
-            const leadsData = await getLeads()
-            setLeads(leadsData)
-        } else {
-            // Member/Leader: load leads from API (which filters by their email/team)
-            try {
-                // Get user email from localStorage or auth context
-                const storedUser = localStorage.getItem("mf_user")
-                const userEmail = storedUser ? JSON.parse(storedUser).email : ""
+            // Load leads differently based on mode
+            if (mode === "admin") {
+                // Admin: load ALL leads from the global data function
+                const leadsData = await getLeads()
+                setLeads(leadsData)
+            } else {
+                // Member/Leader: load leads from API (which filters by their email/team)
+                const userEmail = user?.email || ""
 
                 if (userEmail) {
                     const res = await fetch(`/api/member/leads?email=${encodeURIComponent(userEmail)}`)
                     if (res.ok) {
                         const leadsData = await res.json()
-                        setLeads(Array.isArray(leadsData) ? leadsData : [])
-                    }
-                }
+                        const finalLeads = Array.isArray(leadsData) ? leadsData : []
 
-                // Also try loading from global leads as fallback
-                if (leads.length === 0) {
+                        // If no assigned leads, fallback to community leads
+                        if (finalLeads.length === 0) {
+                            const globalLeads = await getLeads()
+                            const communityLeads = communityId
+                                ? globalLeads.filter(l => l.community_id === communityId)
+                                : globalLeads
+                            setLeads(communityLeads)
+                        } else {
+                            setLeads(finalLeads)
+                        }
+                    } else {
+                        // Fallback on API failure
+                        const globalLeads = await getLeads()
+                        const communityLeads = communityId
+                            ? globalLeads.filter(l => l.community_id === communityId)
+                            : globalLeads
+                        setLeads(communityLeads)
+                    }
+                } else {
+                    // Last fallback if no user email
                     const globalLeads = await getLeads()
-                    // Filter to only show leads that belong to this member's community
-                    const memberLeads = communityId
-                        ? globalLeads.filter(l => l.community_id === communityId)
-                        : globalLeads
-                    setLeads(memberLeads)
+                    setLeads(globalLeads)
                 }
-            } catch (err) {
-                console.error("Error loading member leads:", err)
-                // Fallback to all leads filtered by community
-                const allLeads = await getLeads()
-                const memberLeads = communityId
-                    ? allLeads.filter(l => l.community_id === communityId)
-                    : allLeads
-                setLeads(memberLeads)
             }
+        } catch (err) {
+            console.error("Error leading data in MailingPanel:", err)
         }
 
         setCommunities(getAllCommunities())
@@ -224,7 +230,9 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
 
     const filteredLeadsForSearch = useMemo(() => {
         let result = leads
-        if (mode === "leader") {
+
+        // Filter by community ONLY if we are in admin mode with a filter or if communityId is explicitly set
+        if (mode === "leader" && communityId) {
             result = result.filter(l => l.community_id === communityId)
         } else if (newCampana.community_id && newCampana.community_id !== "todas" && newCampana.community_id !== "all") {
             result = result.filter(l => l.community_id === newCampana.community_id)
@@ -232,8 +240,8 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
 
         if (leadSearch) {
             result = result.filter(l =>
-                l.nombre.toLowerCase().includes(leadSearch.toLowerCase()) ||
-                l.email.toLowerCase().includes(leadSearch.toLowerCase())
+                l.nombre?.toLowerCase().includes(leadSearch.toLowerCase()) ||
+                l.email?.toLowerCase().includes(leadSearch.toLowerCase())
             )
         }
         return result.slice(0, 50)
@@ -1000,7 +1008,7 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
                                     >
                                         {/* Status indicator */}
                                         <div className={`absolute top-4 right-4 h-2 w-2 rounded-full ${seq.estado === "activa" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" :
-                                                seq.estado === "pausada" ? "bg-amber-500" : "bg-zinc-600"
+                                            seq.estado === "pausada" ? "bg-amber-500" : "bg-zinc-600"
                                             }`} />
 
                                         {/* Trigger icon */}
@@ -1015,8 +1023,8 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
                                                 <Badge
                                                     variant="outline"
                                                     className={`text-[9px] font-black border h-5 ${seq.estado === "activa" ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/5" :
-                                                            seq.estado === "pausada" ? "border-amber-500/30 text-amber-400 bg-amber-500/5" :
-                                                                "border-zinc-700 text-zinc-500"
+                                                        seq.estado === "pausada" ? "border-amber-500/30 text-amber-400 bg-amber-500/5" :
+                                                            "border-zinc-700 text-zinc-500"
                                                         }`}
                                                 >
                                                     {seq.estado === "activa" ? "🟢 ACTIVA" : seq.estado === "pausada" ? "⏸ PAUSADA" : "📝 BORRADOR"}
@@ -1078,8 +1086,8 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
                                                 size="sm"
                                                 onClick={() => handleToggleSequenceStatus(seq)}
                                                 className={`h-8 text-[10px] font-bold uppercase tracking-widest gap-1.5 border rounded-lg ${seq.estado === "activa"
-                                                        ? "border-amber-500/30 bg-amber-500/5 text-amber-400 hover:bg-amber-500/10"
-                                                        : "border-emerald-500/30 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/10"
+                                                    ? "border-amber-500/30 bg-amber-500/5 text-amber-400 hover:bg-amber-500/10"
+                                                    : "border-emerald-500/30 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/10"
                                                     }`}
                                             >
                                                 {seq.estado === "activa" ? <><Pause className="h-3 w-3" /> Pausar</> : <><Play className="h-3 w-3" /> Activar</>}

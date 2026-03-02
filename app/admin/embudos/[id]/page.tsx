@@ -38,8 +38,8 @@ import { PixelConfigBlock } from "@/components/admin/pixel-config-block"
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
-export default function EmbudoDetallePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function EmbudoDetallePage({ params }: { params: { id: string } }) {
+  const { id } = params
   const embudo = EMBUDOS.find((e) => e.id === id)
   const [previewStage, setPreviewStage] = useState<number | null>(null)
 
@@ -245,8 +245,8 @@ export default function EmbudoDetallePage({ params }: { params: Promise<{ id: st
                       type="button"
                       onClick={() => setPreviewStage(stage.id)}
                       className={`group flex w-full items-center gap-3 rounded-lg p-3 text-left transition-all ${previewStage === stage.id
-                          ? "bg-primary/10 ring-1 ring-primary/30"
-                          : "hover:bg-secondary/50"
+                        ? "bg-primary/10 ring-1 ring-primary/30"
+                        : "hover:bg-secondary/50"
                         }`}
                     >
                       <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${previewStage === stage.id ? "bg-primary/20" : "bg-secondary"
