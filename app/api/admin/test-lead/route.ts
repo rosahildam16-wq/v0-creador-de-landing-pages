@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 
 /**
  * GET /api/admin/test-lead
- * Creates a test lead to verify the database is working.
+ * Diagnoses exactly which columns work in the leads table.
  */
 export async function GET() {
     try {
@@ -12,57 +12,71 @@ export async function GET() {
             return NextResponse.json({ error: "No Supabase client" }, { status: 500 })
         }
 
-        // 1. Check if leads table is accessible
-        const { data: existing, error: readErr } = await supabase
-            .from("leads")
-            .select("id")
-            .limit(1)
+        const results: Record<string, any> = {}
 
-        if (readErr) {
-            return NextResponse.json({
-                step: "READ",
-                error: readErr.message,
-                code: readErr.code,
-            })
+        // Test 1: Minimal insert (only basic columns)
+        const minimalData = {
+            nombre: "TEST-MIN",
+            email: "min@test.com",
+            telefono: "+0000000000",
+            whatsapp: "+0000000000",
+            fuente: "Organico",
+            asignado_a: "sensei",
         }
 
-        // 2. Try to insert a test lead
-        const { data: newLead, error: insertErr } = await supabase
+        const { data: d1, error: e1 } = await supabase
             .from("leads")
-            .insert({
-                nombre: "TEST-DIAGNOSTICO",
-                email: "test@diagnostico.com",
-                telefono: "+0000000000",
-                whatsapp: "+0000000000",
-                fuente: "Organico",
-                asignado_a: "sensei",
-                embudo_id: "franquicia-reset",
-                pais: "Test",
-                trafico: "Organico",
-            })
+            .insert(minimalData)
             .select()
             .single()
 
-        if (insertErr) {
-            return NextResponse.json({
-                step: "INSERT",
-                error: insertErr.message,
-                code: insertErr.code,
-                hint: insertErr.hint,
-                details: insertErr.details,
-            })
+        if (e1) {
+            results.minimal = { error: e1.message, code: e1.code }
+        } else {
+            results.minimal = { success: true, columns: Object.keys(d1 || {}) }
+            // Clean up
+            if (d1?.id) await supabase.from("leads").delete().eq("id", d1.id)
         }
 
-        // 3. Clean up test lead
-        if (newLead?.id) {
-            await supabase.from("leads").delete().eq("id", newLead.id)
-        }
+        // Test 2: With pais
+        const { error: e2 } = await supabase
+            .from("leads")
+            .insert({ ...minimalData, email: "t2@test.com", pais: "Colombia" })
+            .select()
+            .single()
+            .then(r => {
+                if (r.data?.id) supabase.from("leads").delete().eq("id", r.data.id)
+                return r
+            })
+        results.with_pais = e2 ? { error: e2.message } : "✅ OK"
+
+        // Test 3: With trafico
+        const { error: e3 } = await supabase
+            .from("leads")
+            .insert({ ...minimalData, email: "t3@test.com", trafico: "Organico" })
+            .select()
+            .single()
+            .then(r => {
+                if (r.data?.id) supabase.from("leads").delete().eq("id", r.data.id)
+                return r
+            })
+        results.with_trafico = e3 ? { error: e3.message } : "✅ OK"
+
+        // Test 4: With embudo_id
+        const { error: e4 } = await supabase
+            .from("leads")
+            .insert({ ...minimalData, email: "t4@test.com", embudo_id: "franquicia-reset" })
+            .select()
+            .single()
+            .then(r => {
+                if (r.data?.id) supabase.from("leads").delete().eq("id", r.data.id)
+                return r
+            })
+        results.with_embudo_id = e4 ? { error: e4.message } : "✅ OK"
 
         return NextResponse.json({
-            success: true,
-            message: "✅ La tabla leads funciona correctamente. Lectura e inserción OK.",
-            test_lead_created: !!newLead,
-            existing_count: existing?.length || 0,
+            message: "Diagnóstico de columnas de la tabla leads",
+            results,
         })
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 })
