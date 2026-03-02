@@ -1,11 +1,3 @@
 {
-  "buildCommand": "npm run build",
-  "installCommand": "npm install --legacy-peer-deps",
-  "framework": "nextjs",
-  "crons": [
-    {
-      "path": "/api/mailing/process-sequences",
-      "schedule": "*/15 * * * *"
-    }
-  ]
-} 
+  "framework": "nextjs"
+}
