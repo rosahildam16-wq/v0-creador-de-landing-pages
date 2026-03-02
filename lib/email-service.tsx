@@ -12,7 +12,7 @@ export async function sendWelcomeEmail({
     communityCode: string
 }) {
     try {
-        const resend = getResend();
+        const resend = await getResend();
         const isSkalia = communityCode?.toUpperCase() === "DIAMANTECELION"
         const EmailComponent = isSkalia ? SkaliaWelcomeEmail : WelcomeEmail
 
@@ -61,7 +61,7 @@ export async function sendCampaignEmail({
     contentHtml: string
 }) {
     try {
-        const resend = getResend();
+        const resend = await getResend();
 
         // Personalize content
         let html = contentHtml

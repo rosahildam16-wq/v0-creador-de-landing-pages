@@ -1,6 +1,6 @@
 let _resend: any = null;
 
-export async function getResendClient() {
+export async function getResend() {
     if (_resend) return _resend;
 
     const apiKey = process.env.RESEND_API_KEY;
