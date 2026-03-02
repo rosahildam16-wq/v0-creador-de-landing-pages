@@ -232,6 +232,37 @@ export async function POST(request: Request) {
       integrations: results,
     })
 
+      // ─── EMAIL SEQUENCE TRIGGERS (Background, non-blocking) ───
+      ; (async () => {
+        try {
+          const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+          const triggerPayload = {
+            lead_id: lead.id,
+            lead_email: emailNormalized,
+            lead_nombre: body.nombre,
+            community_id: communityId,
+          }
+
+          // Trigger 1: lead_created (any new registration)
+          await fetch(`${baseUrl}/api/mailing/trigger-sequence`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...triggerPayload, trigger_type: "lead_created", trigger_value: "" })
+          }).catch(() => { })
+
+          // Trigger 2: funnel_entry (if lead came from a specific funnel)
+          if (embudoId) {
+            await fetch(`${baseUrl}/api/mailing/trigger-sequence`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ...triggerPayload, trigger_type: "funnel_entry", trigger_value: embudoId })
+            }).catch(() => { })
+          }
+        } catch (err) {
+          console.warn("Sequence trigger failed (non-fatal):", err)
+        }
+      })()
+
     // ─── AI PROSPECTOR (Background Analysis) ───
     if (body.quiz_respuestas && Object.keys(body.quiz_respuestas).length > 0) {
       // We do this non-blocking to return response faster

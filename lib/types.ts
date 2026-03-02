@@ -87,6 +87,7 @@ export interface Lead {
   community_id: string
   pais?: string
   trafico?: "Organico" | "Pauta"
+  tags?: string[]
   insight?: {
     qualification_score: number
     summary: string
@@ -122,5 +123,56 @@ export interface CampanaEmail {
   autor_role: "admin" | "leader"
   leads_alcanzados: number
   enviado_en: string | null
+  created_at: string
+}
+
+export type SequenceTrigger = "manual" | "funnel_entry" | "tag_added" | "lead_created" | "form_submit"
+export type SequenceEstado = "borrador" | "activa" | "pausada"
+export type EnrollmentEstado = "activo" | "completado" | "cancelado" | "pausado"
+
+export interface EmailSequenceStep {
+  id: string
+  sequence_id: string
+  step_order: number
+  asunto: string
+  contenido_html: string
+  delay_days: number
+  delay_hours: number
+  condition_type: "none" | "opened_previous" | "clicked_previous" | "has_tag"
+  condition_value: string
+  activo: boolean
+  created_at?: string
+}
+
+export interface EmailSequence {
+  id: string
+  nombre: string
+  descripcion: string
+  trigger_type: SequenceTrigger
+  trigger_value: string
+  estado: SequenceEstado
+  community_id: string
+  autor_id: string
+  autor_role: string
+  created_at: string
+  updated_at?: string
+  email_sequence_steps?: { count: number }[]
+  steps?: EmailSequenceStep[]
+  // Stats
+  total_enrolled?: number
+  total_completed?: number
+}
+
+export interface SequenceEnrollment {
+  id: string
+  sequence_id: string
+  lead_id: string
+  lead_email: string
+  lead_nombre: string
+  estado: EnrollmentEstado
+  current_step: number
+  next_send_at: string | null
+  started_at: string
+  completed_at: string | null
   created_at: string
 }

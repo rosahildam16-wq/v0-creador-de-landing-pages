@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
-import { LayoutDashboard, Users, UsersRound, BarChart3, ChevronLeft, ChevronRight, Plug, Zap, LogOut, CreditCard, PanelTop, MessagesSquare, Settings, Globe, Route, Kanban, Megaphone, Trophy, GraduationCap, KeyRound, Mail } from "lucide-react"
+import { LayoutDashboard, Users, UsersRound, BarChart3, ChevronLeft, ChevronRight, Plug, Zap, LogOut, CreditCard, PanelTop, MessagesSquare, Settings, Globe, Route, Kanban, Megaphone, Trophy, GraduationCap, KeyRound, Mail, Activity } from "lucide-react"
 import { useState } from "react"
 
 const NAV_ITEMS = [
@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { href: "/admin/retos", label: "Retos", icon: Trophy },
   { href: "/admin/academia", label: "Academia", icon: GraduationCap },
   { href: "/admin/meta-ads", label: "Meta Ads", icon: Megaphone },
+  { href: "/admin/atribucion", label: "Atribución", icon: Activity },
   { href: "/admin/mailing", label: "Email Marketing", icon: Mail },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/integraciones", label: "Integraciones", icon: Plug },
