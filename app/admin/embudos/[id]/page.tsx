@@ -34,6 +34,7 @@ import Link from "next/link"
 import useSWR from "swr"
 import { EMBUDOS, type EmbudoGHLConfig } from "@/lib/embudos-config"
 import { EmbudoGHLBlock } from "@/components/admin/embudo-ghl-block"
+import { PixelConfigBlock } from "@/components/admin/pixel-config-block"
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
@@ -182,6 +183,9 @@ export default function EmbudoDetallePage({ params }: { params: Promise<{ id: st
       {/* GoHighLevel Integration Block */}
       <EmbudoGHLBlock embudoId={id} embudoNombre={embudo.nombre} ghlConfig={embudo.ghl} />
 
+      {/* Meta Pixel Config Block (like Hotmart) */}
+      <PixelConfigBlock embudoId={id} embudoNombre={embudo.nombre} />
+
       {/* Main Content: Phone Preview + Stage List */}
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Phone Preview */}
@@ -236,19 +240,17 @@ export default function EmbudoDetallePage({ params }: { params: Promise<{ id: st
                 const StageIcon = ICON_MAP[stage.icon] || Play
 
                 return (
-                    <div key={stage.id}>
+                  <div key={stage.id}>
                     <button
                       type="button"
                       onClick={() => setPreviewStage(stage.id)}
-                      className={`group flex w-full items-center gap-3 rounded-lg p-3 text-left transition-all ${
-                        previewStage === stage.id
+                      className={`group flex w-full items-center gap-3 rounded-lg p-3 text-left transition-all ${previewStage === stage.id
                           ? "bg-primary/10 ring-1 ring-primary/30"
                           : "hover:bg-secondary/50"
-                      }`}
+                        }`}
                     >
-                      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
-                        previewStage === stage.id ? "bg-primary/20" : "bg-secondary"
-                      }`}>
+                      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${previewStage === stage.id ? "bg-primary/20" : "bg-secondary"
+                        }`}>
                         <StageIcon className={`h-4 w-4 ${previewStage === stage.id ? "text-primary" : "text-muted-foreground"}`} />
                       </div>
 

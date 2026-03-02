@@ -14,6 +14,12 @@ export interface EmbudoGHLConfig {
   workflowTriggerTag?: string
 }
 
+export interface EmbudoPixelConfig {
+  pixel_id: string
+  pixel_token?: string
+  enabled: boolean
+}
+
 export interface Embudo {
   id: string
   nombre: string
@@ -24,6 +30,7 @@ export interface Embudo {
   color: string
   etapas: EtapaEmbudo[]
   ghl?: EmbudoGHLConfig
+  pixel?: EmbudoPixelConfig
   persuasiveText?: string
 }
 

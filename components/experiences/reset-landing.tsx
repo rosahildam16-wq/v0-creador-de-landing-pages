@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { DiagnosticQuiz } from "./diagnostic-quiz"
 import { getMemberBySlug } from "@/lib/team-data"
+import { pixelTrackCompleteRegistration, pixelTrackContact } from "@/components/shared/meta-pixel"
 
 // ─── Particle canvas background (Enhanced) ───
 function ParticleField() {
@@ -364,6 +365,7 @@ export function ResetLanding({ leadId, onTrack, referrer }: Props) {
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => pixelTrackContact("franquicia-reset")}
           className="group relative flex w-full max-w-xs flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl bg-primary px-6 py-6 text-xl font-black text-black shadow-[0_20px_40px_rgba(0, 143, 17, 0.4)] transition-all hover:scale-[1.05] active:scale-[0.98]"
         >
           <div className="absolute inset-0 bg-white/30 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -586,6 +588,8 @@ export function ResetLanding({ leadId, onTrack, referrer }: Props) {
         onClose={() => setQuizOpen(false)}
         onComplete={async () => {
           setQuizOpen(false)
+          // 🎯 Fire Meta Pixel event: CompleteRegistration
+          pixelTrackCompleteRegistration("franquicia-reset")
           if (leadId) {
             try {
               await fetch("/api/tracking", {

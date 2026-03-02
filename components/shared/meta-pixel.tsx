@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import Script from "next/script"
 
 declare global {
@@ -12,21 +12,41 @@ declare global {
 
 interface MetaPixelProps {
     pixelId?: string
+    embudoId?: string
 }
 
 /**
- * Meta Pixel component.
- * Injects Facebook/Meta pixel script into the page.
- * Similar to how Hotmart handles pixel integration.
- * 
- * Usage:
- *   <MetaPixel pixelId="123456789" />
- * 
- * To track events:
- *   window.fbq?.('track', 'Lead', { content_name: 'funnel-xyz' })
+ * Meta Pixel component — loads pixel per-funnel (like Hotmart).
+ * Priority: 1) embudoId-specific config from DB  2) pixelId prop  3) env var
  */
-export function MetaPixel({ pixelId }: MetaPixelProps) {
-    if (!pixelId) return null
+export function MetaPixel({ pixelId, embudoId }: MetaPixelProps) {
+    const [resolvedPixelId, setResolvedPixelId] = useState(pixelId || "")
+
+    useEffect(() => {
+        if (pixelId) {
+            setResolvedPixelId(pixelId)
+            return
+        }
+
+        // Auto-load from API based on embudoId
+        const fetchPixel = async () => {
+            try {
+                const query = embudoId ? `embudo_id=${embudoId}` : "embudo_id=global"
+                const res = await fetch(`/api/pixel/config?${query}`)
+                const data = await res.json()
+                if (data.pixel_id && data.enabled) {
+                    setResolvedPixelId(data.pixel_id)
+                }
+            } catch {
+                // Fallback to env
+                const envPixel = process.env.NEXT_PUBLIC_META_PIXEL_ID
+                if (envPixel) setResolvedPixelId(envPixel)
+            }
+        }
+        fetchPixel()
+    }, [pixelId, embudoId])
+
+    if (!resolvedPixelId) return null
 
     return (
         <>
@@ -43,7 +63,7 @@ export function MetaPixel({ pixelId }: MetaPixelProps) {
                         t.src=v;s=b.getElementsByTagName(e)[0];
                         s.parentNode.insertBefore(t,s)}(window, document,'script',
                         'https://connect.facebook.net/en_US/fbevents.js');
-                        fbq('init', '${pixelId}');
+                        fbq('init', '${resolvedPixelId}');
                         fbq('track', 'PageView');
                     `.trim()
                 }}
@@ -53,7 +73,7 @@ export function MetaPixel({ pixelId }: MetaPixelProps) {
                     height="1"
                     width="1"
                     style={{ display: "none" }}
-                    src={`https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1`}
+                    src={`https://www.facebook.com/tr?id=${resolvedPixelId}&ev=PageView&noscript=1`}
                     alt=""
                 />
             </noscript>
@@ -61,12 +81,68 @@ export function MetaPixel({ pixelId }: MetaPixelProps) {
     )
 }
 
+// ─── Pixel Event Helpers (call from anywhere) ───
+
 /**
- * Helper function to fire Meta Pixel events from anywhere.
- * Call this after a lead registers to track conversions.
+ * Track standard event. Use after lead registration.
  */
 export function trackMetaEvent(eventName: string, params?: Record<string, any>) {
     if (typeof window !== "undefined" && window.fbq) {
         window.fbq("track", eventName, params)
     }
+}
+
+/**
+ * Track custom event. For funnel-specific events.
+ */
+export function trackMetaCustomEvent(eventName: string, params?: Record<string, any>) {
+    if (typeof window !== "undefined" && window.fbq) {
+        window.fbq("trackCustom", eventName, params)
+    }
+}
+
+// ─── Pre-built Funnel Events (like Hotmart) ───
+
+/**
+ * Fire when someone registers as a lead in the quiz.
+ * Standard "Lead" event — Meta optimizes for this.
+ */
+export function pixelTrackLead(embudoId: string) {
+    trackMetaEvent("Lead", {
+        content_name: embudoId,
+        content_category: "funnel_registration",
+    })
+}
+
+/**
+ * Fire when someone completes the quiz/diagnostic.
+ * Standard "CompleteRegistration" event.
+ */
+export function pixelTrackCompleteRegistration(embudoId: string) {
+    trackMetaEvent("CompleteRegistration", {
+        content_name: embudoId,
+        content_category: "funnel_diagnostic",
+    })
+}
+
+/**
+ * Fire when someone clicks the WhatsApp CTA (final conversion).
+ * Standard "Contact" event — Meta counts this as a conversion.
+ */
+export function pixelTrackContact(embudoId: string) {
+    trackMetaEvent("Contact", {
+        content_name: embudoId,
+        content_category: "whatsapp_cta",
+    })
+}
+
+/**
+ * Fire when someone reaches the sales page.
+ * Standard "ViewContent" event.
+ */
+export function pixelTrackViewContent(embudoId: string, stepName: string) {
+    trackMetaEvent("ViewContent", {
+        content_name: embudoId,
+        content_category: stepName,
+    })
 }
