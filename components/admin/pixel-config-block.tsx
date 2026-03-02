@@ -66,7 +66,7 @@ export function PixelConfigBlock({ embudoId, embudoNombre, memberId = "admin" }:
                 setIsConnected(true)
                 setShowConfig(false)
                 alert("✅ Pixel configurado correctamente. Los eventos se dispararán automáticamente en tus enlaces personales.")
-            } else if (result.error?.includes("schema cache") || result.error?.includes("pixel_config")) {
+            } else if (result.error?.includes("schema cache") || result.error?.includes("PGRST205")) {
                 // Table exists but schema cache not refreshed — try setup endpoint
                 await fetch("/api/pixel/setup").catch(() => { })
                 // Wait a bit for schema to refresh, then retry once
