@@ -12,7 +12,7 @@ function envFallback(embudoId: string) {
 
 /**
  * GET /api/pixel/config?embudo_id=franquicia-reset&member_id=username
- * Uses RPC function to bypass PostgREST schema cache issues.
+ * Returns pixel config with cascading fallback: member → admin → global → env.
  */
 export async function GET(req: NextRequest) {
     const embudoId = req.nextUrl.searchParams.get("embudo_id") || "global"
@@ -22,27 +22,69 @@ export async function GET(req: NextRequest) {
         const supabase = createAdminClient()
         if (!supabase) return envFallback(embudoId)
 
-        // Use RPC function (bypasses schema cache)
-        const { data, error } = await supabase.rpc("get_pixel_config", {
-            p_embudo_id: embudoId,
-            p_member_id: memberId,
-        })
+        // 1. Try specific member + embudo config
+        const { data: memberData, error } = await supabase
+            .from("pixel_configs")
+            .select("*")
+            .eq("embudo_id", embudoId)
+            .eq("member_id", memberId)
+            .maybeSingle()
 
         if (error) {
-            console.error("Pixel config RPC error:", error.message)
+            console.error("Pixel GET error:", error.message)
             return envFallback(embudoId)
         }
 
-        if (data && data.pixel_id) {
+        if (memberData && memberData.enabled) {
             return NextResponse.json({
-                pixel_id: data.pixel_id,
-                pixel_token: data.pixel_token || "",
-                enabled: data.enabled,
-                embudo_id: data.embudo_id,
-                member_id: data.member_id,
+                pixel_id: memberData.pixel_id,
+                pixel_token: memberData.pixel_token || "",
+                enabled: memberData.enabled,
+                embudo_id: memberData.embudo_id,
+                member_id: memberData.member_id,
             })
         }
 
+        // 2. Fallback to admin's config for this funnel
+        if (memberId !== "admin") {
+            const { data: adminConfig } = await supabase
+                .from("pixel_configs")
+                .select("*")
+                .eq("embudo_id", embudoId)
+                .eq("member_id", "admin")
+                .maybeSingle()
+
+            if (adminConfig && adminConfig.enabled) {
+                return NextResponse.json({
+                    pixel_id: adminConfig.pixel_id,
+                    pixel_token: adminConfig.pixel_token || "",
+                    enabled: adminConfig.enabled,
+                    embudo_id: embudoId,
+                    member_id: "admin",
+                })
+            }
+        }
+
+        // 3. Fallback to global app config
+        if (embudoId !== "global") {
+            const { data: globalConfig } = await supabase
+                .from("pixel_configs")
+                .select("*")
+                .eq("embudo_id", "global")
+                .eq("member_id", "admin")
+                .maybeSingle()
+
+            if (globalConfig && globalConfig.enabled) {
+                return NextResponse.json({
+                    pixel_id: globalConfig.pixel_id,
+                    pixel_token: globalConfig.pixel_token || "",
+                    enabled: globalConfig.enabled,
+                    embudo_id: "global",
+                })
+            }
+        }
+
+        // 4. Final fallback: env variables
         return envFallback(embudoId)
     } catch {
         return envFallback(embudoId)
@@ -51,7 +93,7 @@ export async function GET(req: NextRequest) {
 
 /**
  * POST /api/pixel/config
- * Save pixel config using RPC function (bypasses schema cache).
+ * Save pixel config for a specific funnel or member.
  */
 export async function POST(req: NextRequest) {
     try {
@@ -63,17 +105,24 @@ export async function POST(req: NextRequest) {
 
         if (!pixel_id) return NextResponse.json({ error: "pixel_id is required" }, { status: 400 })
 
-        // Use RPC function (bypasses schema cache)
-        const { data, error } = await supabase.rpc("upsert_pixel_config", {
-            p_embudo_id: embudo_id,
-            p_member_id: member_id,
-            p_pixel_id: pixel_id,
-            p_pixel_token: pixel_token || "",
-            p_enabled: enabled,
-        })
+        const { data, error } = await supabase
+            .from("pixel_configs")
+            .upsert(
+                {
+                    embudo_id,
+                    member_id,
+                    pixel_id,
+                    pixel_token: pixel_token || "",
+                    enabled,
+                    updated_at: new Date().toISOString(),
+                },
+                { onConflict: "embudo_id,member_id" }
+            )
+            .select()
+            .single()
 
         if (error) {
-            console.error("Pixel config upsert RPC error:", error.message)
+            console.error("Pixel POST error:", error.message)
             return NextResponse.json({ error: error.message }, { status: 500 })
         }
 
@@ -85,21 +134,20 @@ export async function POST(req: NextRequest) {
 
 /**
  * PUT /api/pixel/config
- * List all pixel configs — uses direct query with fallback.
+ * List all pixel configs.
  */
 export async function PUT(req: NextRequest) {
     try {
         const supabase = createAdminClient()
         if (!supabase) return NextResponse.json({ configs: [] })
 
-        // Try direct query first
         const { data, error } = await supabase
-            .from("pixel_config")
+            .from("pixel_configs")
             .select("*")
             .order("created_at", { ascending: false })
 
         if (error) {
-            console.error("Pixel config list error:", error.message)
+            console.error("Pixel PUT error:", error.message)
             return NextResponse.json({ configs: [] })
         }
 
