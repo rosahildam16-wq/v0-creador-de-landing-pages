@@ -33,6 +33,8 @@ const ETAPA_ICONS: Record<string, string> = {
   Users: "👥",
 }
 
+import { PixelConfigBlock } from "@/components/admin/pixel-config-block"
+
 export default function MemberEmbudoPage() {
   const { user } = useAuth()
   const member = getMemberData(user)
@@ -169,6 +171,13 @@ export default function MemberEmbudoPage() {
             </div>
           </div>
 
+          {/* Meta Pixel Config (HOTMART STYLE) */}
+          <PixelConfigBlock
+            embudoId={activeEmbudo.id}
+            embudoNombre={activeEmbudo.nombre}
+            memberId={user?.username || finalMember.id}
+          />
+
           {/* Link personal */}
           <Card className="border-primary/20 bg-primary/5">
             <CardContent className="p-4">
@@ -183,6 +192,7 @@ export default function MemberEmbudoPage() {
                 <code className="flex-1 overflow-x-auto rounded-lg bg-background/60 px-3 py-2.5 text-xs text-foreground font-mono">
                   {typeof window !== "undefined" ? window.location.origin : ""}/r/{user?.username || finalMember.id}/{activeEmbudo.id}
                 </code>
+
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleCopy(activeEmbudo.id)}

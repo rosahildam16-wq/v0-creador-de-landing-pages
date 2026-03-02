@@ -13,13 +13,14 @@ declare global {
 interface MetaPixelProps {
     pixelId?: string
     embudoId?: string
+    memberId?: string
 }
 
 /**
  * Meta Pixel component — loads pixel per-funnel (like Hotmart).
- * Priority: 1) embudoId-specific config from DB  2) pixelId prop  3) env var
+ * Priority: 1) member+embudo config from DB 2) admin+embudo config 3) pixelId prop 4) env var
  */
-export function MetaPixel({ pixelId, embudoId }: MetaPixelProps) {
+export function MetaPixel({ pixelId, embudoId, memberId }: MetaPixelProps) {
     const [resolvedPixelId, setResolvedPixelId] = useState(pixelId || "")
 
     useEffect(() => {
@@ -28,11 +29,14 @@ export function MetaPixel({ pixelId, embudoId }: MetaPixelProps) {
             return
         }
 
-        // Auto-load from API based on embudoId
+        // Auto-load from API based on embudoId and memberId
         const fetchPixel = async () => {
             try {
-                const query = embudoId ? `embudo_id=${embudoId}` : "embudo_id=global"
-                const res = await fetch(`/api/pixel/config?${query}`)
+                const query = new URLSearchParams({
+                    embudo_id: embudoId || "global",
+                    member_id: memberId || "admin"
+                })
+                const res = await fetch(`/api/pixel/config?${query.toString()}`)
                 const data = await res.json()
                 if (data.pixel_id && data.enabled) {
                     setResolvedPixelId(data.pixel_id)
@@ -44,7 +48,7 @@ export function MetaPixel({ pixelId, embudoId }: MetaPixelProps) {
             }
         }
         fetchPixel()
-    }, [pixelId, embudoId])
+    }, [pixelId, embudoId, memberId])
 
     if (!resolvedPixelId) return null
 

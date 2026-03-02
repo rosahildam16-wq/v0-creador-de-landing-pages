@@ -3,6 +3,7 @@
 import { use } from "react"
 import { Suspense } from "react"
 import { FunnelController } from "@/components/funnel-controller"
+import { MetaPixel } from "@/components/shared/meta-pixel"
 
 function ReferralFunnel({ memberSlug, funnelId }: { memberSlug: string; funnelId: string }) {
   // Store referrer info in sessionStorage so leads get attributed
@@ -13,7 +14,12 @@ function ReferralFunnel({ memberSlug, funnelId }: { memberSlug: string; funnelId
     } catch { /* noop */ }
   }
 
-  return <FunnelController embudoId={funnelId} referrer={memberSlug} />
+  return (
+    <>
+      <MetaPixel embudoId={funnelId} memberId={memberSlug} />
+      <FunnelController embudoId={funnelId} referrer={memberSlug} />
+    </>
+  )
 }
 
 export default function ReferralPage({ params }: { params: Promise<{ member: string; funnel: string }> }) {

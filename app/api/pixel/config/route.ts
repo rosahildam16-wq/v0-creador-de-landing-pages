@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 
 /**
- * GET /api/pixel/config?embudo_id=franquicia-reset
- * Returns pixel config for a specific funnel, with global fallback.
- * Like Hotmart: each product/funnel can have its own pixel.
+ * GET /api/pixel/config?embudo_id=franquicia-reset&member_id=username
+ * Returns pixel config for a specific funnel and member, with global fallback.
+ * Like Hotmart: each product/funnel/member can have its own pixel.
  */
 export async function GET(req: NextRequest) {
     const embudoId = req.nextUrl.searchParams.get("embudo_id") || "global"
+    const memberId = req.nextUrl.searchParams.get("member_id") || "admin"
 
     try {
         const supabase = createAdminClient()
@@ -19,11 +20,12 @@ export async function GET(req: NextRequest) {
             })
         }
 
-        // Try specific embudo first
-        const { data, error } = await supabase
+        // 1. Try specific member + embudo config
+        const { data: memberData, error } = await supabase
             .from("pixel_config")
             .select("*")
             .eq("embudo_id", embudoId)
+            .eq("member_id", memberId)
             .maybeSingle()
 
         if (error && error.code === "42P01") {
@@ -35,34 +37,56 @@ export async function GET(req: NextRequest) {
             })
         }
 
-        if (data && data.enabled) {
+        if (memberData && memberData.enabled) {
             return NextResponse.json({
-                pixel_id: data.pixel_id,
-                pixel_token: data.pixel_token || "",
-                enabled: data.enabled,
-                embudo_id: data.embudo_id,
+                pixel_id: memberData.pixel_id,
+                pixel_token: memberData.pixel_token || "",
+                enabled: memberData.enabled,
+                embudo_id: memberData.embudo_id,
+                member_id: memberData.member_id,
             })
         }
 
-        // Fallback to global config
+        // 2. Fallback to global embudo config (admin's pixel for this funnel)
+        if (memberId !== "admin") {
+            const { data: adminConfig } = await supabase
+                .from("pixel_config")
+                .select("*")
+                .eq("embudo_id", embudoId)
+                .eq("member_id", "admin")
+                .maybeSingle()
+
+            if (adminConfig && adminConfig.enabled) {
+                return NextResponse.json({
+                    pixel_id: adminConfig.pixel_id,
+                    pixel_token: adminConfig.pixel_token || "",
+                    enabled: adminConfig.enabled,
+                    embudo_id: embudoId,
+                    member_id: "admin",
+                })
+            }
+        }
+
+        // 3. Fallback to global app config
         if (embudoId !== "global") {
-            const { data: globalData } = await supabase
+            const { data: globalAppConfig } = await supabase
                 .from("pixel_config")
                 .select("*")
                 .eq("embudo_id", "global")
+                .eq("member_id", "admin")
                 .maybeSingle()
 
-            if (globalData && globalData.enabled) {
+            if (globalAppConfig && globalAppConfig.enabled) {
                 return NextResponse.json({
-                    pixel_id: globalData.pixel_id,
-                    pixel_token: globalData.pixel_token || "",
-                    enabled: globalData.enabled,
+                    pixel_id: globalAppConfig.pixel_id,
+                    pixel_token: globalAppConfig.pixel_token || "",
+                    enabled: globalAppConfig.enabled,
                     embudo_id: "global",
                 })
             }
         }
 
-        // Final fallback: env variables
+        // 4. Final fallback: env variables
         return NextResponse.json({
             pixel_id: process.env.META_PIXEL_ID || process.env.NEXT_PUBLIC_META_PIXEL_ID || "",
             enabled: !!(process.env.META_PIXEL_ID || process.env.NEXT_PUBLIC_META_PIXEL_ID),
@@ -78,8 +102,8 @@ export async function GET(req: NextRequest) {
 
 /**
  * POST /api/pixel/config
- * Save pixel config for a specific funnel or global.
- * Body: { embudo_id, pixel_id, pixel_token?, enabled? }
+ * Save pixel config for a specific funnel or member.
+ * Body: { embudo_id, member_id?, pixel_id, pixel_token?, enabled? }
  */
 export async function POST(req: NextRequest) {
     try {
@@ -87,7 +111,7 @@ export async function POST(req: NextRequest) {
         if (!supabase) return NextResponse.json({ error: "No DB" }, { status: 500 })
 
         const body = await req.json()
-        const { embudo_id = "global", pixel_id, pixel_token, enabled = true } = body
+        const { embudo_id = "global", member_id = "admin", pixel_id, pixel_token, enabled = true } = body
 
         if (!pixel_id) return NextResponse.json({ error: "pixel_id is required" }, { status: 400 })
 
@@ -96,12 +120,13 @@ export async function POST(req: NextRequest) {
             .upsert(
                 {
                     embudo_id,
+                    member_id,
                     pixel_id,
                     pixel_token: pixel_token || "",
                     enabled,
                     updated_at: new Date().toISOString(),
                 },
-                { onConflict: "embudo_id" }
+                { onConflict: "embudo_id,member_id" }
             )
             .select()
             .single()
@@ -112,12 +137,14 @@ export async function POST(req: NextRequest) {
                     error: "Table pixel_config not found",
                     sql: `CREATE TABLE IF NOT EXISTS pixel_config (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  embudo_id TEXT NOT NULL UNIQUE DEFAULT 'global',
+  embudo_id TEXT NOT NULL DEFAULT 'global',
+  member_id TEXT NOT NULL DEFAULT 'admin',
   pixel_id TEXT NOT NULL DEFAULT '',
   pixel_token TEXT DEFAULT '',
   enabled BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(embudo_id, member_id)
 );
 ALTER TABLE pixel_config ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "allow_all_pixel" ON pixel_config FOR ALL USING (true) WITH CHECK (true);`
@@ -133,8 +160,8 @@ CREATE POLICY "allow_all_pixel" ON pixel_config FOR ALL USING (true) WITH CHECK 
 }
 
 /**
- * GET /api/pixel/config?all=true
- * List all pixel configs (for admin)
+ * PUT /api/pixel/config
+ * List all pixel configs
  */
 export async function PUT(req: NextRequest) {
     try {
@@ -154,3 +181,4 @@ export async function PUT(req: NextRequest) {
         return NextResponse.json({ error: err.message, configs: [] })
     }
 }
+
