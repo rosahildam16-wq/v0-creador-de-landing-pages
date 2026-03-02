@@ -1,64 +1,55 @@
 import { NextResponse } from "next/server"
-import { createAdminClient } from "@/lib/supabase/admin"
+import { Pool } from "pg"
 
 /**
  * GET /api/pixel/test
- * Quick diagnostic — tests if pixel_configs table is accessible.
+ * Tests direct PostgreSQL connection to pixel_configs table.
  */
 export async function GET() {
+    const connectionString =
+        process.env.POSTGRES_URL_NON_POOLING ||
+        process.env.POSTGRES_PRISMA_URL ||
+        process.env.DATABASE_URL ||
+        ""
+
+    if (!connectionString) {
+        return NextResponse.json({
+            success: false,
+            error: "No POSTGRES_URL_NON_POOLING or DATABASE_URL found",
+        })
+    }
+
+    const pool = new Pool({
+        connectionString,
+        max: 1,
+        ssl: { rejectUnauthorized: false },
+    })
+
     try {
-        const supabase = createAdminClient()
-        if (!supabase) {
-            return NextResponse.json({ error: "No Supabase client" }, { status: 500 })
-        }
+        // Test 1: Read
+        const { rows } = await pool.query(`SELECT * FROM pixel_configs LIMIT 5`)
 
-        // Test: read from pixel_configs
-        const { data, error } = await supabase
-            .from("pixel_configs")
-            .select("*")
-            .limit(5)
-
-        if (error) {
-            return NextResponse.json({
-                success: false,
-                error: error.message,
-                code: error.code,
-            })
-        }
-
-        // Test: write to pixel_configs
-        const { data: writeData, error: writeError } = await supabase
-            .from("pixel_configs")
-            .upsert(
-                {
-                    embudo_id: "_test_",
-                    member_id: "_test_",
-                    pixel_id: "000",
-                    enabled: false,
-                    updated_at: new Date().toISOString(),
-                },
-                { onConflict: "embudo_id,member_id" }
-            )
-            .select()
-            .single()
-
-        // Clean up
-        await supabase.from("pixel_configs").delete().eq("embudo_id", "_test_").eq("member_id", "_test_")
-
-        if (writeError) {
-            return NextResponse.json({
-                success: false,
-                read: "✅ OK",
-                write: `❌ ${writeError.message}`,
-            })
-        }
+        // Test 2: Write
+        await pool.query(
+            `INSERT INTO pixel_configs (embudo_id, member_id, pixel_id, enabled)
+             VALUES ('_test_', '_test_', '000', false)
+             ON CONFLICT (embudo_id, member_id) DO UPDATE SET pixel_id = '000'`
+        )
+        await pool.query(`DELETE FROM pixel_configs WHERE embudo_id = '_test_'`)
 
         return NextResponse.json({
             success: true,
-            message: "✅ TODO FUNCIONA — pixel_configs está lista para leer y escribir.",
-            rows: data?.length || 0,
+            message: "✅ TODO FUNCIONA — conexión directa a PostgreSQL operativa.",
+            rows: rows.length,
+            connection: "direct-pg",
         })
     } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 })
+        return NextResponse.json({
+            success: false,
+            error: err.message,
+            connection: "direct-pg",
+        })
+    } finally {
+        await pool.end()
     }
 }

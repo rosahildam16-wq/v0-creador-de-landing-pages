@@ -1,5 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createAdminClient } from "@/lib/supabase/admin"
+import { Pool } from "pg"
+
+/** Create a connection pool using existing Vercel Postgres env vars */
+function getPool() {
+    const connectionString =
+        process.env.POSTGRES_URL_NON_POOLING ||
+        process.env.POSTGRES_PRISMA_URL ||
+        process.env.DATABASE_URL ||
+        ""
+
+    if (!connectionString) return null
+
+    return new Pool({
+        connectionString,
+        max: 1,
+        ssl: { rejectUnauthorized: false },
+    })
+}
 
 /** Env-based fallback response */
 function envFallback(embudoId: string) {
@@ -12,123 +29,105 @@ function envFallback(embudoId: string) {
 
 /**
  * GET /api/pixel/config?embudo_id=franquicia-reset&member_id=username
- * Returns pixel config with cascading fallback: member → admin → global → env.
+ * Direct PostgreSQL connection — bypasses PostgREST completely.
  */
 export async function GET(req: NextRequest) {
     const embudoId = req.nextUrl.searchParams.get("embudo_id") || "global"
     const memberId = req.nextUrl.searchParams.get("member_id") || "admin"
 
+    const pool = getPool()
+    if (!pool) return envFallback(embudoId)
+
     try {
-        const supabase = createAdminClient()
-        if (!supabase) return envFallback(embudoId)
+        // 1. Try specific member + embudo
+        const { rows } = await pool.query(
+            `SELECT * FROM pixel_configs WHERE embudo_id = $1 AND member_id = $2 AND enabled = true LIMIT 1`,
+            [embudoId, memberId]
+        )
 
-        // 1. Try specific member + embudo config
-        const { data: memberData, error } = await supabase
-            .from("pixel_configs")
-            .select("*")
-            .eq("embudo_id", embudoId)
-            .eq("member_id", memberId)
-            .maybeSingle()
-
-        if (error) {
-            console.error("Pixel GET error:", error.message)
-            return envFallback(embudoId)
-        }
-
-        if (memberData && memberData.enabled) {
+        if (rows[0]) {
             return NextResponse.json({
-                pixel_id: memberData.pixel_id,
-                pixel_token: memberData.pixel_token || "",
-                enabled: memberData.enabled,
-                embudo_id: memberData.embudo_id,
-                member_id: memberData.member_id,
+                pixel_id: rows[0].pixel_id,
+                pixel_token: rows[0].pixel_token || "",
+                enabled: rows[0].enabled,
+                embudo_id: rows[0].embudo_id,
+                member_id: rows[0].member_id,
             })
         }
 
-        // 2. Fallback to admin's config for this funnel
+        // 2. Fallback to admin
         if (memberId !== "admin") {
-            const { data: adminConfig } = await supabase
-                .from("pixel_configs")
-                .select("*")
-                .eq("embudo_id", embudoId)
-                .eq("member_id", "admin")
-                .maybeSingle()
-
-            if (adminConfig && adminConfig.enabled) {
+            const admin = await pool.query(
+                `SELECT * FROM pixel_configs WHERE embudo_id = $1 AND member_id = 'admin' AND enabled = true LIMIT 1`,
+                [embudoId]
+            )
+            if (admin.rows[0]) {
                 return NextResponse.json({
-                    pixel_id: adminConfig.pixel_id,
-                    pixel_token: adminConfig.pixel_token || "",
-                    enabled: adminConfig.enabled,
+                    pixel_id: admin.rows[0].pixel_id,
+                    pixel_token: admin.rows[0].pixel_token || "",
+                    enabled: true,
                     embudo_id: embudoId,
                     member_id: "admin",
                 })
             }
         }
 
-        // 3. Fallback to global app config
+        // 3. Fallback to global
         if (embudoId !== "global") {
-            const { data: globalConfig } = await supabase
-                .from("pixel_configs")
-                .select("*")
-                .eq("embudo_id", "global")
-                .eq("member_id", "admin")
-                .maybeSingle()
-
-            if (globalConfig && globalConfig.enabled) {
+            const global = await pool.query(
+                `SELECT * FROM pixel_configs WHERE embudo_id = 'global' AND member_id = 'admin' AND enabled = true LIMIT 1`
+            )
+            if (global.rows[0]) {
                 return NextResponse.json({
-                    pixel_id: globalConfig.pixel_id,
-                    pixel_token: globalConfig.pixel_token || "",
-                    enabled: globalConfig.enabled,
+                    pixel_id: global.rows[0].pixel_id,
+                    pixel_token: global.rows[0].pixel_token || "",
+                    enabled: true,
                     embudo_id: "global",
                 })
             }
         }
 
-        // 4. Final fallback: env variables
         return envFallback(embudoId)
-    } catch {
+    } catch (err: any) {
+        console.error("Pixel GET error:", err.message)
         return envFallback(embudoId)
+    } finally {
+        await pool.end()
     }
 }
 
 /**
  * POST /api/pixel/config
- * Save pixel config for a specific funnel or member.
+ * Save pixel config using direct PostgreSQL.
  */
 export async function POST(req: NextRequest) {
-    try {
-        const supabase = createAdminClient()
-        if (!supabase) return NextResponse.json({ error: "No DB" }, { status: 500 })
+    const pool = getPool()
+    if (!pool) return NextResponse.json({ error: "No database connection" }, { status: 500 })
 
+    try {
         const body = await req.json()
         const { embudo_id = "global", member_id = "admin", pixel_id, pixel_token, enabled = true } = body
 
         if (!pixel_id) return NextResponse.json({ error: "pixel_id is required" }, { status: 400 })
 
-        const { data, error } = await supabase
-            .from("pixel_configs")
-            .upsert(
-                {
-                    embudo_id,
-                    member_id,
-                    pixel_id,
-                    pixel_token: pixel_token || "",
-                    enabled,
-                    updated_at: new Date().toISOString(),
-                },
-                { onConflict: "embudo_id,member_id" }
-            )
-            .select()
-            .single()
+        const { rows } = await pool.query(
+            `INSERT INTO pixel_configs (embudo_id, member_id, pixel_id, pixel_token, enabled, updated_at)
+             VALUES ($1, $2, $3, $4, $5, now())
+             ON CONFLICT (embudo_id, member_id) DO UPDATE SET
+                pixel_id = EXCLUDED.pixel_id,
+                pixel_token = EXCLUDED.pixel_token,
+                enabled = EXCLUDED.enabled,
+                updated_at = now()
+             RETURNING *`,
+            [embudo_id, member_id, pixel_id, pixel_token || "", enabled]
+        )
 
-        if (error) {
-            console.error("Pixel POST error:", error.message)
-            return NextResponse.json({ error: error.message }, { status: 500 })
-        }
-
-        return NextResponse.json({ success: true, data })
+        return NextResponse.json({ success: true, data: rows[0] })
     } catch (err: any) {
+        console.error("Pixel POST error:", err.message)
         return NextResponse.json({ error: err.message }, { status: 500 })
+    } finally {
+        await pool.end()
     }
 }
 
@@ -137,22 +136,18 @@ export async function POST(req: NextRequest) {
  * List all pixel configs.
  */
 export async function PUT(req: NextRequest) {
+    const pool = getPool()
+    if (!pool) return NextResponse.json({ configs: [] })
+
     try {
-        const supabase = createAdminClient()
-        if (!supabase) return NextResponse.json({ configs: [] })
-
-        const { data, error } = await supabase
-            .from("pixel_configs")
-            .select("*")
-            .order("created_at", { ascending: false })
-
-        if (error) {
-            console.error("Pixel PUT error:", error.message)
-            return NextResponse.json({ configs: [] })
-        }
-
-        return NextResponse.json({ configs: data || [] })
+        const { rows } = await pool.query(
+            `SELECT * FROM pixel_configs ORDER BY created_at DESC`
+        )
+        return NextResponse.json({ configs: rows })
     } catch (err: any) {
-        return NextResponse.json({ error: err.message, configs: [] })
+        console.error("Pixel PUT error:", err.message)
+        return NextResponse.json({ configs: [] })
+    } finally {
+        await pool.end()
     }
 }
