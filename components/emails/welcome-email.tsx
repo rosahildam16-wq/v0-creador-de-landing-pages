@@ -25,49 +25,43 @@ export const WelcomeEmail = ({
 }: WelcomeEmailProps) => (
     <Html>
         <Head />
-        <Preview>Bienvenido a la Élite de Skalia: Tu Revolución Digital Comienza Ahora</Preview>
+        <Preview>¡Bienvenido a la Magia del Marketing! Tu cuenta está lista 🚀</Preview>
         <Body style={main}>
             <Container style={container}>
                 <Section style={header}>
                     <div style={glow} />
                     <Heading style={heading}>BIENVENIDO AL FUTURO,<br /><span style={highlight}>{name.toUpperCase()}</span></Heading>
-                    <Text style={badge}>SKALIA VIP CLUB • MIEMBRO ACTIVO</Text>
+                    <Text style={badge}>MAGIC FUNNEL • MIEMBRO ACTIVO</Text>
                 </Section>
 
                 <Section style={content}>
                     <Text style={paragraph}>
-                        Has sido seleccionado para formar parte de una comunidad <strong>disruptiva e innovadora</strong>.
-                        En Skalia VIP Club, no solo hacemos marketing; estamos hackeando el sistema tradicional para
-                        llevar tu crecimiento a niveles nunca antes vistos.
+                        Has dado el primer paso para revolucionar tu prospección digital. <strong>Magic Funnel</strong> es el motor de crecimiento que transformará tu negocio con embudos de alta conversión e Inteligencia Artificial.
                     </Text>
 
                     <div style={featureBox}>
                         <Text style={featureTitle}>TODO LO QUE NECESITAS YA ES TUYO:</Text>
                         <ul style={featureList}>
-                            <li style={featureItem}>🚀 <strong>Embudos de Alta Conversión:</strong> Listos para duplicar tus resultados.</li>
-                            <li style={featureItem}>🤖 <strong>IA Predictiva:</strong> Tu asistente 24/7 para cerrar prospectos.</li>
-                            <li style={featureItem}>🤝 <strong>Red Global:</strong> Una estructura sólida diseñada para escalar.</li>
+                            <li style={featureItem}>🚀 <strong>Embudos de Elite:</strong> Listos para prospectar por ti 24/7.</li>
+                            <li style={featureItem}>🤖 <strong>Poder IA:</strong> Automatiza tus respuestas y cierra más ventas.</li>
+                            <li style={featureItem}>🤝 <strong>Comunidad Global:</strong> Acceso a estrategias probadas de marketing digital.</li>
                         </ul>
                     </div>
 
                     <Section style={codeBox}>
-                        <Text style={codeLabel}>TU IDENTIDAD DIGITAL (CÓDIGO):</Text>
+                        <Text style={codeLabel}>TU CÓDIGO DE ACCESO:</Text>
                         <Text style={codeText}>{communityCode}</Text>
-                        <Text style={codeSubText}>Úsalo para atraer nuevos socios y ver cómo tu red explota en tiempo real.</Text>
+                        <Text style={codeSubText}>Úsalo para activar tus herramientas y compartir con tu equipo.</Text>
                     </Section>
 
                     <Link href={dashboardUrl} style={button}>
-                        ACTIVAR MI PLATAFORMA AHORA
+                        ACCERDER A MI PANEL AHORA
                     </Link>
-
-                    <Text style={paragraph}>
-                        Estamos aquí para romper moldes. Tu éxito ahora es parte de nuestra arquitectura.
-                    </Text>
 
                     <Hr style={hr} />
                     <Section style={footer}>
                         <Text style={footerText}>
-                            <strong>SKALIA VIP CLUB</strong><br />
+                            <strong>MAGIC FUNNEL</strong><br />
                             LA TECNOLOGÍA AL SERVICIO DE LA LIBERTAD.
                         </Text>
                     </Section>

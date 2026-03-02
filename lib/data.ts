@@ -16,7 +16,7 @@ import {
   getConversionEmbudo as getMockConversionEmbudo,
   getDistribucionTemperatura as getMockDistribucionTemperatura,
 } from "./mock-data"
-import type { Lead, Nota, EventoActividad, EtapaPipeline, FuenteTrafico, TipoEmbudo } from "./types"
+import type { Lead, Nota, EventoActividad, EtapaPipeline, FuenteTrafico, TipoEmbudo, CampanaEmail } from "./types"
 import { FUNNEL_STEPS } from "./types"
 import { calcularTemperatura } from "./lead-scoring"
 
@@ -45,6 +45,8 @@ const actividad: EventoActividad[] = SEED_ACTIVIDAD.map((a) => ({
   ...a,
   created_at: a.fecha,
 }))
+
+const campanasEmail: CampanaEmail[] = []
 
 // ─── Helper to detect if Supabase is available ───
 
@@ -348,6 +350,7 @@ export async function updateLeadFunnelProgress(
   if (isSupabaseConfigured()) {
     const { createAdminClient } = await import("@/lib/supabase/admin")
     const supabase = createAdminClient()
+    if (!supabase) return false
 
     const update: any = {
       etapa_maxima_alcanzada: step,
@@ -506,4 +509,61 @@ function mapLeadRow(row: Record<string, unknown>, notas: Nota[] = []): Lead {
     pais: row.pais as string,
     trafico: row.trafico as "Organico" | "Pauta",
   }
+}
+
+// ─── EMAIL CAMPAIGNS ───
+
+export async function getCampanasEmail(): Promise<CampanaEmail[]> {
+  if (isSupabaseConfigured()) {
+    const { createAdminClient } = await import("@/lib/supabase/admin")
+    const supabase = createAdminClient()
+    if (!supabase) return []
+    const { data, error } = await supabase
+      .from("campanas_email")
+      .select("*")
+      .order("created_at", { ascending: false })
+    if (!error && data) return data
+  }
+  return [...campanasEmail]
+}
+
+export async function createCampanaEmail(campana: Omit<CampanaEmail, "id" | "created_at" | "leads_alcanzados" | "enviado_en">): Promise<CampanaEmail | null> {
+  const newCampana: CampanaEmail = {
+    ...campana,
+    id: `camp-${Date.now()}`,
+    created_at: new Date().toISOString(),
+    leads_alcanzados: 0,
+    enviado_en: null
+  }
+
+  if (isSupabaseConfigured()) {
+    const { createAdminClient } = await import("@/lib/supabase/admin")
+    const supabase = createAdminClient()
+    if (!supabase) return null
+    try {
+      const { data, error } = await supabase.from("campanas_email").insert(newCampana).select().single()
+      if (!error && data) return data
+    } catch { /* Fallback if table doesn't exist */ }
+  }
+
+  campanasEmail.unshift(newCampana)
+  return newCampana
+}
+
+export async function updateCampanaEmail(id: string, updates: Partial<CampanaEmail>): Promise<boolean> {
+  if (isSupabaseConfigured()) {
+    const { createAdminClient } = await import("@/lib/supabase/admin")
+    const supabase = createAdminClient()
+    if (supabase) {
+      const { error } = await supabase.from("campanas_email").update(updates).eq("id", id)
+      if (!error) return true
+    }
+  }
+
+  const idx = campanasEmail.findIndex(c => c.id === id)
+  if (idx > -1) {
+    campanasEmail[idx] = { ...campanasEmail[idx], ...updates }
+    return true
+  }
+  return false
 }

@@ -471,7 +471,19 @@ export default function LeadsPage() {
                       {/* País / Tráfico */}
                       <TableCell className="py-3">
                         <div className="flex flex-col gap-1">
-                          <span className="text-xs font-medium text-foreground">{lead.pais || "N/A"}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] grayscale brightness-125">
+                              {lead.pais === "Mexico" ? "🇲🇽" :
+                                lead.pais === "Colombia" ? "🇨🇴" :
+                                  lead.pais === "Ecuador" ? "🇪🇨" :
+                                    lead.pais === "Peru" ? "🇵🇪" :
+                                      lead.pais === "Argentina" ? "🇦🇷" :
+                                        lead.pais === "España" ? "🇪🇸" :
+                                          lead.pais === "Chile" ? "🇨🇱" :
+                                            "🌍"}
+                            </span>
+                            <span className="text-xs font-medium text-foreground">{lead.pais || "Sin país"}</span>
+                          </div>
                           <Badge
                             variant="secondary"
                             className={cn(

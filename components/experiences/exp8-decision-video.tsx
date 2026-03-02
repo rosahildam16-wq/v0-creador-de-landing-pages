@@ -191,7 +191,7 @@ export function DecisionVideo({
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm">
               <div className="mb-8 text-center animate-in fade-in slide-in-from-bottom duration-1000">
                 <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary block mb-3">Protocolo Fase 08</span>
-                <h2 className="text-3xl font-black italic uppercase text-white leading-none">ÚLTIMA <br /> DECISIÓN</h2>
+                <h2 className="text-3xl font-black italic uppercase text-white leading-none">EL MODELO <br /> <span className="text-primary italic-none">REPLICABLE</span></h2>
               </div>
               <button type="button" onClick={handleStart}
                 className="group relative flex h-24 w-24 items-center justify-center rounded-3xl border border-primary/20 bg-primary/5 transition-all hover:scale-110 active:scale-95"
@@ -225,14 +225,14 @@ export function DecisionVideo({
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-xl px-10 text-center animate-in fade-in zoom-in duration-700">
               <div className="mb-10">
                 <div className="mx-auto mb-6 h-1 w-10 bg-primary" />
-                <h3 className="text-4xl font-black italic uppercase text-white leading-[0.85] tracking-tighter">EL MOMENTO <br /> <span className="text-primary italic-none">ES AHORA</span></h3>
-                <p className="mt-6 text-sm font-medium text-neutral-400">¿Estás listo para resetear tu realidad o prefieres seguir en el sistema tradicional?</p>
+                <h3 className="text-4xl font-black italic uppercase text-white leading-[0.85] tracking-tighter">EL MODELO <br /> <span className="text-primary italic-none">90% AUTOMATIZADO</span></h3>
+                <p className="mt-6 text-sm font-medium text-neutral-400">¿Estás listo para resetear tu realidad con una Franquicia 100% Replicable?</p>
               </div>
 
               <div className="flex w-full flex-col gap-4">
                 <button type="button" onClick={onContinue}
-                  className="group relative flex w-full items-center justify-between overflow-hidden rounded-2xl bg-primary px-6 py-5 text-lg font-black italic text-black shadow-[0_20px_40px_rgba(0,143,17,0.3)] transition-all hover:scale-[1.03] active:scale-95">
-                  <span>ACEPTAR DESAFÍO</span>
+                  className="group relative flex w-full items-center justify-between overflow-hidden rounded-2xl bg-primary px-6 py-5 text-lg font-black italic text-black shadow-[0_20px_40px_rgba(0,143,17,0.3)] transition-all hover:scale-[1.03] active:scale-[0.98]">
+                  <span>VER MI FRANQUICIA</span>
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black/10">
                     <Zap className="h-5 w-5 fill-black" strokeWidth={3} />
                   </div>

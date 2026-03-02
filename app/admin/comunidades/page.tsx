@@ -36,6 +36,7 @@ interface DBCommunity {
     calendar_enabled: boolean
     whatsapp_reminders_enabled: boolean
     agenda_enabled: boolean
+    mailing_enabled: boolean
   }
 }
 
@@ -97,7 +98,8 @@ export default function AdminComunidadesPage() {
       zoom_enabled: false,
       calendar_enabled: false,
       whatsapp_reminders_enabled: false,
-      agenda_enabled: false
+      agenda_enabled: false,
+      mailing_enabled: false
     }
     const newSettings = { ...currentSettings, [field]: value }
     try {
@@ -400,16 +402,16 @@ export default function AdminComunidadesPage() {
 
                     <div className="flex items-center justify-between rounded-xl border border-border/30 bg-card/50 p-4 transition-all hover:border-primary/30">
                       <div className="flex flex-col gap-1">
-                        <span className="text-xs font-bold text-foreground">Agenda Configurable</span>
-                        <span className="text-[10px] text-muted-foreground font-medium">Permitir gestionar citas</span>
+                        <span className="text-xs font-bold text-foreground font-mono uppercase tracking-wider">Mailing Tool</span>
+                        <span className="text-[10px] text-muted-foreground font-medium uppercase">Envío masivo de correos</span>
                       </div>
                       <Button
                         size="sm"
-                        variant={selected.settings?.agenda_enabled ? "default" : "outline"}
-                        className={cn("h-8 px-4 rounded-lg text-[11px] font-bold", selected.settings?.agenda_enabled && "bg-emerald-500 hover:bg-emerald-600")}
-                        onClick={() => handleUpdateSettings("agenda_enabled", !selected.settings?.agenda_enabled)}
+                        variant={selected.settings?.mailing_enabled ? "default" : "outline"}
+                        className={cn("h-8 px-4 rounded-lg text-[11px] font-bold border-primary/20", selected.settings?.mailing_enabled && "bg-primary text-primary-foreground hover:bg-primary/90")}
+                        onClick={() => handleUpdateSettings("mailing_enabled", !selected.settings?.mailing_enabled)}
                       >
-                        {selected.settings?.agenda_enabled ? "ON" : "OFF"}
+                        {selected.settings?.mailing_enabled ? "HABILITADO" : "DESHABILITADO"}
                       </Button>
                     </div>
                   </div>

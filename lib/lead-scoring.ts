@@ -71,16 +71,16 @@ function getAccionesRecomendadas(temp: Temperatura, lead: Lead): string[] {
 
 export function getTemperaturaColor(temp: Temperatura): string {
   switch (temp) {
-    case "FRIO": return "hsl(210, 70%, 50%)"
-    case "TIBIO": return "hsl(45, 90%, 55%)"
-    case "CALIENTE": return "hsl(0, 72%, 51%)"
+    case "FRIO": return "hsl(200, 80%, 55%)" // Light Blue
+    case "TIBIO": return "hsl(35, 90%, 55%)" // Orange/Yellow
+    case "CALIENTE": return "hsl(0, 84%, 60%)" // Red
   }
 }
 
 export function getTemperaturaBgClass(temp: Temperatura): string {
   switch (temp) {
-    case "FRIO": return "bg-blue-500/15 text-blue-400 border-blue-500/30"
-    case "TIBIO": return "bg-amber-500/15 text-amber-400 border-amber-500/30"
-    case "CALIENTE": return "bg-red-500/15 text-red-400 border-red-500/30"
+    case "FRIO": return "bg-sky-500/15 text-sky-400 border-sky-500/30"
+    case "TIBIO": return "bg-orange-500/15 text-orange-400 border-orange-500/30"
+    case "CALIENTE": return "bg-red-500/15 text-red-500 border-red-500/30"
   }
 }

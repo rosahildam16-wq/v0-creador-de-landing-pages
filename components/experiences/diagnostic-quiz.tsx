@@ -127,16 +127,16 @@ export function DiagnosticQuiz({ open, onClose, onComplete }: DiagnosticQuizProp
       {/* Quiz card */}
       <div
         className={`relative z-10 w-full max-w-sm overflow-hidden rounded-[2.5rem] border border-white/10 bg-[#0a0a0a] shadow-2xl transition-all duration-500 ${animatingOut ? "translate-y-8 scale-95 opacity-0" : "translate-y-0 scale-100 opacity-100"}`}
-        style={{ boxShadow: "0 0 60px rgba(0, 143, 17, 0.1), 0 25px 50px rgba(0, 0, 0, 0.8)" }}
+        style={{ boxShadow: "0 0 60px rgba(var(--primary-rgb), 0.1), 0 25px 50px rgba(0, 0, 0, 0.8)" }}
       >
 
         {/* Progress bar */}
         <div className="relative h-1.5 w-full bg-white/5">
           <div
-            className={`h-full transition-all duration-700 ease-out ${progressPulse ? "shadow-[0_0_15px_#008F11]" : ""}`}
+            className={`h-full transition-all duration-700 ease-out ${progressPulse ? "shadow-[0_0_15px_rgba(var(--primary-rgb),0.8)]" : ""}`}
             style={{
               width: progressWidth,
-              background: "linear-gradient(90deg, #008F11, #003B00)",
+              background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--muted)))",
             }}
           />
         </div>
@@ -151,11 +151,11 @@ export function DiagnosticQuiz({ open, onClose, onComplete }: DiagnosticQuizProp
                   Diagnóstico 01/02
                 </span>
               </div>
-              <h3 className="mb-3 text-center text-2xl font-black italic leading-[1.1] text-white uppercase tracking-tighter">
-                {"¿Cuál es tu alcance de inversión actual?"}
+              <h3 className="mb-3 text-center text-2xl font-black italic leading-[1.1] text-white uppercase tracking-tighter text-balance">
+                {"¿Qué capital tienes para poner a rodar tu franquicia?"}
               </h3>
               <p className="mb-8 text-center text-sm font-medium text-neutral-500">
-                {"El sistema requiere combustible. Necesitamos saber qué motor vamos a instalar en tu cuenta."}
+                {"Buscamos socios con capacidad de operativa inmediata. Dinos qué motor quieres instalar en tu sistema."}
               </p>
 
               <div className="flex flex-col gap-3">
@@ -165,7 +165,7 @@ export function DiagnosticQuiz({ open, onClose, onComplete }: DiagnosticQuizProp
                     type="button"
                     onClick={() => handleBudgetSelect(opt.id)}
                     className={`group relative flex items-center gap-4 rounded-2xl border px-5 py-4 text-left transition-all duration-300 ${selectedBudget === opt.id
-                      ? "border-primary bg-primary/10 shadow-[0_0_20px_rgba(0, 143, 17, 0.1)]"
+                      ? "border-primary bg-primary/10 shadow-[0_0_20px_rgba(var(--primary-rgb),0.1)]"
                       : "border-white/5 bg-white/5 hover:border-white/20 hover:bg-white/10"
                       }`}
                     style={{
@@ -195,7 +195,7 @@ export function DiagnosticQuiz({ open, onClose, onComplete }: DiagnosticQuizProp
                 </span>
               </div>
               <h3 className="mb-3 text-center text-2xl font-black italic leading-[1.1] text-white uppercase tracking-tighter">
-                {"¿Dispones de 30 minutos para la llamada?"}
+                {"¿TIENES 30 MIN PARA TU AUDITORÍA?"}
               </h3>
               <p className="mb-8 text-center text-sm font-medium text-neutral-500">
                 {"Evaluaremos tu perfil personalmente. Si agendas y no asistes, el sistema bloqueará tu acceso permanentemente."}
@@ -248,10 +248,10 @@ export function DiagnosticQuiz({ open, onClose, onComplete }: DiagnosticQuizProp
                   <AlertCircle className="h-10 w-10 text-neutral-700" />
                 </div>
                 <h3 className="mb-3 text-2xl font-black italic uppercase text-white tracking-tighter">
-                  {"PERFIL NO COMPATIBLE"}
+                  {"SOCIO NO COMPATIBLE"}
                 </h3>
                 <p className="mb-8 text-sm font-medium text-neutral-500 leading-relaxed">
-                  {"RESET requiere un nivel de compromiso y recursos que no coinciden con tu perfil actual. Gracias por tu interés."}
+                  {"La Franquicia requiere un nivel de compromiso y recursos que no coinciden con tu perfil actual. Gracias por tu interés."}
                 </p>
                 <button
                   type="button"
@@ -276,10 +276,10 @@ export function DiagnosticQuiz({ open, onClose, onComplete }: DiagnosticQuizProp
                 </div>
 
                 <h3 className="mb-3 text-3xl font-black italic uppercase text-white tracking-tighter leading-none">
-                  {"PERFIL <br/> <span className='text-primary'>APROBADO</span>"}
+                  {"ADMISIÓN <br/> <span className='text-primary'>APROBADA</span>"}
                 </h3>
                 <p className="mb-10 text-sm font-medium text-neutral-500 leading-relaxed">
-                  {"Has demostrado interés real. El último paso es agendar tu llamada por WhatsApp para validar tu acceso al sistema."}
+                  {"Tu perfil califica para operar la Franquicia. El último paso es validar tu acceso vía WhatsApp para agendar tu llamada."}
                 </p>
 
                 <a
@@ -292,7 +292,7 @@ export function DiagnosticQuiz({ open, onClose, onComplete }: DiagnosticQuizProp
                   }}
                 >
                   <MessageCircle className="h-6 w-6 fill-black" strokeWidth={3} />
-                  SOLICITAR WHATSAPP
+                  VALIDAR POR WHATSAPP
                 </a>
 
                 <p className="mt-5 text-[9px] font-bold uppercase tracking-[0.4em] text-neutral-700 italic">

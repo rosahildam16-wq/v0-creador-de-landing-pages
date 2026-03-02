@@ -16,23 +16,24 @@
     --card-foreground: 220 15% 92%;
     --popover: 240 18% 8%;
     --popover-foreground: 220 15% 92%;
-    --primary: 190 90% 50%;
+    --primary: 262 83% 58%;
     --primary-foreground: 0 0% 100%;
+    --primary-rgb: 139, 92, 246;
     --secondary: 220 15% 10%;
     --secondary-foreground: 220 15% 92%;
     --muted: 220 15% 10%;
     --muted-foreground: 220 10% 50%;
-    --accent: 200 90% 60%;
+    --accent: 316 70% 50%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 220 15% 15%;
     --input: 220 15% 15%;
-    --ring: 190 90% 50%;
-    --chart-1: 190 90% 50%;
-    --chart-2: 200 80% 60%;
-    --chart-3: 210 70% 65%;
-    --chart-4: 180 80% 55%;
+    --ring: 262 83% 58%;
+    --chart-1: 262 83% 58%;
+    --chart-2: 316 70% 50%;
+    --chart-3: 190 90% 50%;
+    --chart-4: 200 80% 60%;
     --chart-5: 220 70% 60%;
     --radius: 0.75rem;
   }
@@ -331,7 +332,7 @@
 }
 
 .mf-gradient-text {
-  background: linear-gradient(135deg, #00A3FF 0%, #00FFD1 50%, #2563eb 100%);
+  background: linear-gradient(135deg, #a855f7 0%, #d946ef 50%, #8b5cf6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -360,7 +361,7 @@
 
 /* Premium gradient text (violet-purple for login hero) */
 .premium-gradient-text {
-  background: linear-gradient(135deg, #0ea5e9 0%, #22d3ee 30%, #00FFD1 60%, #0ea5e9 100%);
+  background: linear-gradient(135deg, #818cf8 0%, #a78bfa 35%, #d946ef 70%, #818cf8 100%);
   background-size: 300% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -382,7 +383,7 @@
 
 /* Premium submit button */
 .premium-submit-btn {
-  background: linear-gradient(135deg, #0369a1 0%, #0ea5e9 25%, #00A3FF 50%, #0ea5e9 75%, #0369a1 100%);
+  background: linear-gradient(135deg, #6d28d9 0%, #8b5cf6 25%, #d946ef 50%, #8b5cf6 75%, #6d28d9 100%);
   background-size: 200% auto;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -401,7 +402,7 @@
 }
 
 .login-submit-btn {
-  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 30%, #0ea5e9 60%, #2563eb 100%);
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 30%, #8b5cf6 60%, #4f46e5 100%);
   background-size: 200% auto;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -445,7 +446,7 @@
 }
 
 .mf-shimmer-btn {
-  background: linear-gradient(135deg, #0ea5e9 0%, #00A3FF 25%, #00FFD1 50%, #00A3FF 75%, #0ea5e9 100%);
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 25%, #d946ef 50%, #9333ea 75%, #7c3aed 100%);
   background-size: 200% auto;
   transition: all 0.4s ease;
 }
@@ -687,30 +688,56 @@
   box-shadow: inset 0 0 12px hsl(260 70% 52% / 0.06);
 }
 
+.theme-reset {
+  --background: 160 20% 3%;
+  --foreground: 160 15% 92%;
+  --card: 160 18% 5%;
+  --card-foreground: 160 15% 92%;
+  --popover: 160 18% 5%;
+  --popover-foreground: 160 15% 92%;
+  --primary: 160 84% 39%;
+  --primary-foreground: 0 0% 100%;
+  --primary-rgb: 5, 150, 105;
+  --secondary: 160 15% 10%;
+  --secondary-foreground: 160 15% 92%;
+  --muted: 160 15% 10%;
+  --muted-foreground: 160 10% 50%;
+  --accent: 142 70% 45%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 160 15% 12%;
+  --input: 160 15% 12%;
+  --ring: 160 84% 39%;
+  --chart-1: 160 84% 39%;
+  --chart-2: 142 70% 45%;
+  --radius: 0.75rem;
+}
+
 /* ========== RESET LANDING – Futuristic Sci-Fi ========== */
 
 .bg-reset-black {
-  background-color: #050510;
+  background-color: #030806;
 }
 
 .bg-reset-surface {
-  background-color: #0a0a1a;
+  background-color: #06100c;
 }
 
 .border-reset-border {
-  border-color: rgba(99, 102, 241, 0.12);
+  border-color: rgba(16, 185, 129, 0.12);
 }
 
 .text-reset-cyan {
-  color: #818cf8;
+  color: #10b981;
 }
 
 .text-reset-muted {
-  color: #6b7294;
+  color: #5d7c6d;
 }
 
 .reset-gradient-text {
-  background: linear-gradient(135deg, #6366f1 0%, #818cf8 30%, #a78bfa 60%, #c084fc 100%);
+  background: linear-gradient(135deg, #059669 0%, #10b981 30%, #34d399 60%, #6ee7b7 100%);
   background-size: 300% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -731,7 +758,7 @@
 }
 
 .reset-text-glow {
-  text-shadow: 0 0 8px rgba(99, 102, 241, 0.4), 0 0 20px rgba(99, 102, 241, 0.15);
+  text-shadow: 0 0 8px rgba(16, 185, 129, 0.4), 0 0 20px rgba(16, 185, 129, 0.15);
 }
 
 .reset-fade-in {
@@ -759,24 +786,24 @@
 
   0%,
   100% {
-    box-shadow: 0 0 8px rgba(99, 102, 241, 0.15), 0 0 24px rgba(99, 102, 241, 0.05);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.15), 0 0 24px rgba(16, 185, 129, 0.05);
   }
 
   50% {
-    box-shadow: 0 0 16px rgba(99, 102, 241, 0.3), 0 0 48px rgba(99, 102, 241, 0.1);
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.3), 0 0 48px rgba(16, 185, 129, 0.1);
   }
 }
 
 .reset-cta-btn {
-  background: linear-gradient(135deg, #4338ca 0%, #6366f1 40%, #7c3aed 100%);
+  background: linear-gradient(135deg, #065f46 0%, #059669 40%, #10b981 100%);
   background-size: 200% auto;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.2), 0 4px 16px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.2), 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .reset-cta-btn:hover {
   background-position: right center;
-  box-shadow: 0 0 32px rgba(99, 102, 241, 0.35), 0 0 64px rgba(99, 102, 241, 0.12), 0 4px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 32px rgba(16, 185, 129, 0.35), 0 0 64px rgba(16, 185, 129, 0.12), 0 4px 24px rgba(0, 0, 0, 0.5);
   transform: translateY(-2px);
 }
 
@@ -789,13 +816,13 @@
 }
 
 .reset-feature-card:hover {
-  border-color: rgba(99, 102, 241, 0.25);
-  box-shadow: 0 0 24px rgba(99, 102, 241, 0.08);
+  border-color: rgba(16, 185, 129, 0.25);
+  box-shadow: 0 0 24px rgba(16, 185, 129, 0.08);
   transform: translateY(-2px);
 }
 
 .reset-mockup-glow {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, transparent 50%, rgba(124, 58, 237, 0.06) 100%);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, transparent 50%, rgba(5, 150, 105, 0.06) 100%);
 }
 
 .reset-scroll-line {

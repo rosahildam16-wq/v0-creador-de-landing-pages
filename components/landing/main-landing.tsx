@@ -91,7 +91,7 @@ export function MainLanding() {
             priceYearly: 21,
             description: "Para marketers que están empezando.",
             features: ["Dashboard personal", "Seguimiento de leads (50)", "1 embudo activo", "Academia básica", "Soporte por email"],
-            color: "from-blue-500/20 to-cyan-500/20"
+            color: "from-violet-500/20 to-fuchsia-500/20"
         },
         {
             name: "Pro",
@@ -100,7 +100,7 @@ export function MainLanding() {
             description: "El estándar para escalar tu negocio.",
             features: ["Leads ilimitados", "3 embudos activos", "Pipeline CRM", "Analytics avanzado", "Integración WhatsApp", "Retos y gamificación"],
             popular: true,
-            color: "from-primary/30 to-cyan-500/30"
+            color: "from-primary/30 to-fuchsia-500/30"
         },
         {
             name: "Elite",
@@ -108,7 +108,7 @@ export function MainLanding() {
             priceYearly: 77,
             description: "Para líderes y agencias de alto nivel.",
             features: ["Equipo ilimitado", "Meta Ads dashboard", "Workflows automatizados", "Academia completa", "Soporte prioritario", "White-label (Logo personalizado)"],
-            color: "from-cyan-600/20 to-blue-600/20"
+            color: "from-fuchsia-600/20 to-violet-600/20"
         }
     ]
 
@@ -129,17 +129,17 @@ export function MainLanding() {
         <div className="min-h-screen bg-[#05010d] text-white selection:bg-primary selection:text-white relative overflow-x-hidden">
             {/* Background Animation */}
             <div className="fixed inset-0 z-0 pointer-events-none opacity-30">
-                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(0,163,255,0.05),transparent_70%)] animate-pulse" />
+                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(168,85,247,0.05),transparent_70%)] animate-pulse" />
                 <div className="absolute top-[20%] left-[10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full animate-float duration-[15s]" />
-                <div className="absolute bottom-[20%] right-[10%] w-[40%] h-[40%] bg-cyan-500/10 blur-[120px] rounded-full animate-float duration-[20s] delay-700" />
+                <div className="absolute bottom-[20%] right-[10%] w-[40%] h-[40%] bg-fuchsia-500/10 blur-[120px] rounded-full animate-float duration-[20s] delay-700" />
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150" />
             </div>
 
             {/* Social Proof Bubble */}
             <div className={`fixed bottom-6 left-6 z-[200] transition-all duration-700 transform ${showNotif ? "translate-x-0 opacity-100 scale-100" : "-translate-x-full opacity-0 scale-90"}`}>
-                <div className="flex items-center gap-4 rounded-full border border-primary/20 bg-black/80 p-2 pr-6 shadow-[0_0_30px_rgba(0,163,255,0.1)] backdrop-blur-xl">
-                    <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-cyan-500 shadow-inner">
-                        <Sparkles className="h-5 w-5 text-white animate-pulse" />
+                <div className="flex items-center gap-4 rounded-full border border-primary/20 bg-black/80 p-2 pr-6 shadow-[0_0_30px_rgba(168,85,247,0.1)] backdrop-blur-xl">
+                    <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-fuchsia-500 shadow-inner">
+                        <Users className="h-5 w-5 text-white animate-pulse" />
                         <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-green-500 border-2 border-black" />
                     </div>
                     <div className="flex flex-col">
@@ -173,7 +173,7 @@ export function MainLanding() {
             <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
                 {/* Ambient Glows */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 h-[500px] w-full max-w-4xl bg-primary/20 blur-[120px] rounded-full pointer-events-none" />
-                <div className="absolute bottom-0 right-0 h-[400px] w-[400px] bg-cyan-600/10 blur-[100px] rounded-full pointer-events-none" />
+                <div className="absolute bottom-0 right-0 h-[400px] w-[400px] bg-fuchsia-600/10 blur-[100px] rounded-full pointer-events-none" />
 
                 <div className="mx-auto max-w-7xl px-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
@@ -201,7 +201,7 @@ export function MainLanding() {
 
                         <div className="relative z-10 animate-fade-in">
                             <div className="relative rounded-[2.5rem] border border-white/10 bg-black/40 p-4 backdrop-blur-3xl glass-card-float">
-                                <div className="absolute -inset-1 rounded-[2.6rem] bg-gradient-to-br from-primary/30 to-cyan-400/30 blur opacity-20" />
+                                <div className="absolute -inset-1 rounded-[2.6rem] bg-gradient-to-br from-primary/30 to-fuchsia-400/30 blur opacity-20" />
                                 <img
                                     src="/magic_funnel_hero_concept.png"
                                     alt="Magic Funnel Dashboard"
@@ -274,8 +274,8 @@ export function MainLanding() {
                         </div>
 
                         <div className="p-10 rounded-[2.5rem] border border-white/5 bg-gradient-to-br from-white/[0.03] to-transparent hover:border-primary/20 transition-all">
-                            <div className="mb-6 h-14 w-14 rounded-2xl bg-cyan-600/10 flex items-center justify-center">
-                                <BarChart3 className="h-8 w-8 text-cyan-400" />
+                            <div className="mb-6 h-14 w-14 rounded-2xl bg-fuchsia-600/10 flex items-center justify-center">
+                                <BarChart3 className="h-8 w-8 text-fuchsia-400" />
                             </div>
                             <h3 className="text-2xl font-black italic uppercase tracking-tighter mb-4 text-white">Analítica Predictiva</h3>
                             <p className="text-white/50 text-sm leading-relaxed">
@@ -451,7 +451,7 @@ export function MainLanding() {
             {/* Footer */}
             <footer className="py-12 border-t border-white/5">
                 <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row items-center justify-between gap-8">
-                    <MagicFunnelLogo size="xs" />
+                    <MagicFunnelLogo size="sm" />
                     <div className="flex items-center gap-8 text-[10px] font-bold uppercase tracking-[0.4em] text-white/30">
                         <span>© 2026 MAGIC FUNNEL</span>
                         <a href="#" className="hover:text-white transition-colors">Privacidad</a>

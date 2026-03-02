@@ -103,3 +103,24 @@ export interface EventoActividad {
   descripcion: string
   created_at: string
 }
+export type EstadoCampana = "borrador" | "programada" | "enviada" | "cancelada"
+
+export interface CampanaEmail {
+  id: string
+  titulo: string
+  asunto: string
+  contenido_html: string
+  audiencia: "todos" | "comunidad" | "miembros_activos" | "persona_especifica" | "leads_por_embudo"
+  audience_filters?: {
+    funnel_id?: string
+    lead_ids?: string[]
+  }
+  community_id?: string
+  programado_para: string | null // ISO date string
+  estado: EstadoCampana
+  autor_id: string
+  autor_role: "admin" | "leader"
+  leads_alcanzados: number
+  enviado_en: string | null
+  created_at: string
+}

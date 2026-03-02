@@ -63,7 +63,7 @@ function ParticleField() {
 
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(37, 244, 238, ${p.alpha})`
+        ctx.fillStyle = `rgba(168, 85, 247, ${p.alpha})`
         ctx.fill()
       }
       animId = requestAnimationFrame(draw)
@@ -222,7 +222,7 @@ export function SalesPage({ leadId, onTrack, referrer }: SalesPageProps) {
           <div className="relative h-16 w-16 flex items-center justify-center rounded-2xl border border-primary/20 bg-primary/5">
             <Sparkles className="h-8 w-8 text-primary animate-pulse" />
           </div>
-          <Typewriter lines={["SISTEMA RESET v2.5", "VALIDANDO CREDENCIALES", "ACCESO PRIORITARIO CONCEDIDO"]} />
+          <Typewriter lines={["SISTEMA MAGIC v2.5", "VALIDANDO CREDENCIALES", "ACCESO PRIORITARIO CONCEDIDO"]} />
         </div>
       </div>
     )
@@ -234,7 +234,7 @@ export function SalesPage({ leadId, onTrack, referrer }: SalesPageProps) {
         <ParticleField />
         <div className="relative mb-12">
           <div className="absolute -inset-10 rounded-full bg-primary/30 blur-[60px] animate-pulse" />
-          <div className="relative flex h-28 w-28 items-center justify-center rounded-[2.5rem] border border-white/10 bg-black/40 backdrop-blur-xl shadow-[0_0_40px_rgba(37,244,238,0.3)]">
+          <div className="relative flex h-28 w-28 items-center justify-center rounded-[2.5rem] border border-white/10 bg-black/40 backdrop-blur-xl shadow-[0_0_40px_rgba(168,85,247,0.3)]">
             <CheckCircle2 className="h-14 w-14 text-primary" />
           </div>
         </div>
@@ -249,7 +249,7 @@ export function SalesPage({ leadId, onTrack, referrer }: SalesPageProps) {
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="group relative flex w-full max-w-xs flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl bg-primary px-6 py-6 text-xl font-black italic text-black shadow-[0_20px_40px_rgba(37,244,238,0.4)] transition-all hover:scale-[1.05] active:scale-[0.98]"
+          className="group relative flex w-full max-w-xs flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl bg-primary px-6 py-6 text-xl font-black italic text-black shadow-[0_20px_40px_rgba(168,85,247,0.4)] transition-all hover:scale-[1.05] active:scale-[0.98]"
         >
           <div className="absolute inset-0 bg-white/30 opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="flex items-center gap-3">
@@ -279,8 +279,8 @@ export function SalesPage({ leadId, onTrack, referrer }: SalesPageProps) {
       <div className="sticky top-0 z-[100] w-full bg-black/80 border-b border-white/5 backdrop-blur-md">
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-primary shadow-[0_0_10px_#25F4EE]" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] italic text-neutral-400">RESET v2.5 Active</span>
+            <div className="h-2 w-2 rounded-full bg-primary shadow-[0_0_10px_#8b5cf6]" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] italic text-neutral-400">MAGIC v2.5 Active</span>
           </div>
           <div className="flex items-center gap-2 font-mono text-sm font-black text-primary italic">
             <Clock className="h-3.5 w-3.5" />
@@ -298,10 +298,10 @@ export function SalesPage({ leadId, onTrack, referrer }: SalesPageProps) {
           <div className="mb-12 flex flex-col items-center text-center">
             <div className="mb-6 h-1 w-10 bg-primary" />
             <h1 className="text-[48px] font-black leading-[0.85] tracking-[-0.05em] uppercase italic text-white">
-              BIENVENIDO <br /> <span className="text-primary italic-none">AL 1%</span>
+              TU NEGOCIO <br /> <span className="text-primary italic-none">90% AUTOMATIZADO</span>
             </h1>
             <p className="mt-8 text-lg font-medium text-neutral-400 text-balance">
-              Filtro completado. Has demostrado que tienes lo necesario. Tu **admisión prioritaria** ha sido autorizada.
+              Acceso concedido al sistema de **Franquicia Replicable**. Todo lo que necesitas para escalar está aquí dentro.
             </p>
           </div>
 
@@ -316,7 +316,7 @@ export function SalesPage({ leadId, onTrack, referrer }: SalesPageProps) {
 
               <div className="flex items-center justify-between">
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">RESET PRIVILEGE</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">MAGIC PRIVILEGE</span>
                   <span className="text-[8px] font-bold text-neutral-600">EDICIÓN 2026</span>
                 </div>
                 <div className="h-8 w-12 rounded-xl bg-gradient-to-br from-[#ffd700]/30 to-[#b8860b]/10 border border-[#ffd700]/20 flex items-center justify-center">
@@ -327,10 +327,10 @@ export function SalesPage({ leadId, onTrack, referrer }: SalesPageProps) {
               <div className="relative">
                 <p className="mb-2 text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Token de Invitación:</p>
                 <div className="relative flex items-center justify-between overflow-hidden rounded-2xl bg-black border border-white/5 p-4 backdrop-blur-sm">
-                  <div className={`absolute top-0 left-0 h-full w-[2px] bg-primary shadow-[0_0_15px_#25F4EE] z-10 transition-all duration-1500 ease-in-out ${codeRevealed ? "translate-x-[400px]" : "translate-x-[-10px]"}`} />
+                  <div className={`absolute top-0 left-0 h-full w-[2px] bg-primary shadow-[0_0_15px_#8b5cf6] z-10 transition-all duration-1500 ease-in-out ${codeRevealed ? "translate-x-[400px]" : "translate-x-[-10px]"}`} />
 
                   <div className={`flex gap-3 transition-all duration-1000 ${codeRevealed ? "opacity-100 blur-0" : "opacity-30 blur-md grayscale"}`}>
-                    <span className="text-xl font-black italic tracking-widest text-white">VIP-R3SET-2026</span>
+                    <span className="text-xl font-black italic tracking-widest text-white">VIP-MAGIC-2026</span>
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -393,30 +393,40 @@ export function SalesPage({ leadId, onTrack, referrer }: SalesPageProps) {
             </h2>
           </div>
 
-          <div className="grid gap-20">
+          <div className="grid gap-12">
             {[
               {
-                title: "Reset OS Central",
-                desc: "Tu propio comando central donde controlas cada campaña y cada venta. Instalado y configurado en 24 horas.",
+                title: "Franquicia de Embudos",
+                desc: "Recibes el sistema exacto de embudos de alta conversión que nosotros usamos. 100% replicable y listo para captar clientes desde el minuto uno.",
+                icon: <Zap className="h-6 w-6 text-primary" />,
               },
               {
-                title: "TikTok Engine",
-                desc: "La misma estructura de videos que acabas de ver, clonada para tu negocio. El arma de tráfico definitiva.",
+                title: "Ads & TikTok Factory",
+                desc: "Te entregamos los anuncios y la estructura de videos TikTok que están dominando el mercado. No tienes que adivinar qué funciona.",
+                icon: <Smartphone className="h-6 w-6 text-primary" />,
+              },
+              {
+                title: "Masterclass IA & Escala",
+                desc: "Entrenamiento de élite en Inteligencia Artificial y estrategias de escalado para transformar tu negocio en una máquina de libertad.",
+                icon: <TrendingUp className="h-6 w-6 text-primary" />,
+              },
+              {
+                title: "Comunidad de Élite",
+                desc: "Acceso exclusivo a nuestro círculo privado de líderes. Networking real y soporte constante para asegurar tu éxito.",
+                icon: <ShieldCheck className="h-6 w-6 text-primary" />,
               }
             ].map((block, i) => (
               <div key={i} className="group">
-                <div className="relative mb-8 h-[220px] w-full rounded-[2rem] bg-[#0c0c0c] p-6 shadow-2xl overflow-hidden border border-black/5 group-hover:border-primary/20 transition-colors">
-                  <div className="h-full w-full bg-neutral-900/50 rounded-xl border border-white/5 p-4 flex flex-col gap-4">
-                    <div className="flex justify-between items-center opacity-40">
-                      <div className="h-3 w-24 bg-primary rounded-full" />
-                      <div className="h-2 w-8 bg-white/10 rounded" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="h-16 bg-primary/10 rounded-lg flex items-center justify-center border border-primary/20">
-                        <TrendingUp className="h-6 w-6 text-primary" />
+                <div className="relative mb-8 h-[180px] w-full rounded-[2rem] bg-[#0c0c0c] p-6 shadow-2xl overflow-hidden border border-black/5 group-hover:border-primary/20 transition-colors">
+                  <div className="h-full w-full bg-neutral-900/50 rounded-xl border border-white/5 p-4 flex flex-col justify-center gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 border border-primary/20">
+                        {block.icon}
                       </div>
-                      <div className="h-16 bg-white/5 rounded-lg" />
-                      <div className="h-14 col-span-2 bg-gradient-to-r from-neutral-800 to-black rounded-lg" />
+                      <div className="h-3 w-24 bg-primary/40 rounded-full" />
+                    </div>
+                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-full bg-primary/20 w-3/4" />
                     </div>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
@@ -434,7 +444,7 @@ export function SalesPage({ leadId, onTrack, referrer }: SalesPageProps) {
         <div className="mx-auto max-w-md">
           <div className="mb-16">
             <h2 className="text-[34px] font-black uppercase italic leading-none mb-4">Reglas del Sistema</h2>
-            <p className="text-neutral-400 font-medium leading-relaxed">No buscamos clientes masivos. Buscamos 2 casos de éxito por semana que podamos certificar.</p>
+            <p className="text-neutral-400 font-medium leading-relaxed">No buscamos clientes masivos. Buscamos resultados sostenibles impulsados por herramientas inteligentes.</p>
           </div>
 
           <div className="grid gap-4">
@@ -461,19 +471,19 @@ export function SalesPage({ leadId, onTrack, referrer }: SalesPageProps) {
       <section className="py-28 px-6 bg-gradient-to-b from-[#030303] to-[#0a1a1a]">
         <div className="mx-auto max-w-md text-center">
           <h2 className="text-[44px] font-black uppercase italic mb-10 leading-[0.9]">
-            Tu evolución <br /> no es <span className="text-primary italic-none">opcional</span>
+            TU SISTEMA <br /> <span className="text-primary italic-none">100% REPLICABLE</span>
           </h2>
           <Button
             onClick={() => setQuizOpen(true)}
-            className="group relative h-24 w-full overflow-hidden rounded-[2rem] bg-primary transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] shadow-[0_20px_60px_rgba(37,244,238,0.3)]"
+            className="group relative h-24 w-full overflow-hidden rounded-[2rem] bg-primary transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] shadow-[0_20px_60px_rgba(168,85,247,0.3)]"
           >
             <div className="relative flex w-full items-center justify-between px-6 font-black italic text-black">
-              <span className="text-[24px]">VALIDAR ME ACCESO</span>
+              <span className="text-[24px]">VALIDAR MI ACCESO</span>
               <Zap className="h-7 w-7 fill-black" strokeWidth={3} />
             </div>
           </Button>
           <p className="mt-10 text-neutral-600 text-[10px] font-black uppercase tracking-[0.5em] animate-pulse italic">
-            protocolo privado reset — v2.5
+            protocolo privado — v2.5
           </p>
         </div>
       </section>
@@ -481,7 +491,7 @@ export function SalesPage({ leadId, onTrack, referrer }: SalesPageProps) {
       {/* ── FOOTER ── */}
       <footer className="py-12 px-6 border-t border-white/5 text-center">
         <p className="text-[9px] font-bold text-neutral-800 uppercase tracking-[0.5em]">
-          RESET SYSTEM © — PROHIBIDA SU REPRODUCCIÓN
+          MAGIC SYSTEM © — PROHIBIDA SU REPRODUCCIÓN
         </p>
       </footer>
 
@@ -525,7 +535,7 @@ export function SalesPage({ leadId, onTrack, referrer }: SalesPageProps) {
         <div className="fixed bottom-0 left-0 right-0 z-[110] border-t border-white/10 bg-black/90 px-6 py-4 pb-8 backdrop-blur-xl animate-in slide-in-from-bottom duration-500">
           <Button
             onClick={() => setQuizOpen(true)}
-            className="w-full h-14 bg-primary text-black font-black uppercase italic rounded-2xl shadow-[0_10px_30px_rgba(37,244,238,0.3)] transition-transform active:scale-95"
+            className="w-full h-14 bg-primary text-black font-black uppercase italic rounded-2xl shadow-[0_10px_30px_rgba(168,85,247,0.3)] transition-transform active:scale-95"
           >
             SOLICITAR MI ADMISIÓN
           </Button>
@@ -534,7 +544,7 @@ export function SalesPage({ leadId, onTrack, referrer }: SalesPageProps) {
 
       <style jsx global>{`
         :root {
-           --primary-rgb: 37, 244, 238;
+           --primary-rgb: 139, 92, 246;
         }
         @keyframes shine {
           0% { transform: translateX(-100%) skewX(-30deg); }

@@ -59,15 +59,15 @@ function getConfig(temperatura: Temperatura) {
     case "TIBIO":
       return {
         activeBars: 2,
-        activeColor: "bg-amber-500",
-        textColor: "text-amber-400",
+        activeColor: "bg-orange-500",
+        textColor: "text-orange-400",
         label: "TIBIO",
       }
     case "CALIENTE":
       return {
         activeBars: 3,
-        activeColor: "bg-emerald-500",
-        textColor: "text-emerald-400",
+        activeColor: "bg-red-500",
+        textColor: "text-red-500",
         label: "CALIENTE",
       }
   }

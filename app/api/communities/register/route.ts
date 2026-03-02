@@ -185,12 +185,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Send Welcome Email (non-blocking)
-    const welcomeCode = code || normalizedUsername.toUpperCase()
+    const isSkalia = code === "DIAMANTECELION"
     sendWelcomeEmail({
       email: normalizedEmail,
       name: trimmedName,
-      communityCode: welcomeCode || "GENERAL",
+      communityCode: isSkalia ? "DIAMANTECELION" : (code || normalizedUsername.toUpperCase()),
     }).catch(e => console.error("Async email error:", e))
+
+    const welcomeCode = isSkalia ? "DIAMANTECELION" : (code || normalizedUsername.toUpperCase())
 
     return NextResponse.json({
       success: true,

@@ -130,6 +130,7 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
   const [showPlayIcon, setShowPlayIcon] = useState<Record<number, boolean>>({})
   const [swipeHint, setSwipeHint] = useState(false)
   const [transitioning, setTransitioning] = useState(false)
+  const [hasStarted, setHasStarted] = useState(false)
   const lastTapRef = useRef(0)
   const touchStartYRef = useRef(0)
   const playIconTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -500,9 +501,37 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
               <img
                 src={slide.image || "/placeholder.svg"}
                 alt=""
-                className="absolute inset-0 h-full w-full object-cover"
                 draggable={false}
               />
+            )}
+
+            {/* Click to start overlay for the very first video */}
+            {i === 0 && !hasStarted && (
+              <div
+                className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setHasStarted(true)
+                  if (!videoPlaying[0]) togglePlay(0)
+                }}
+              >
+                <div className="relative group">
+                  <div className="absolute -inset-4 rounded-full bg-primary/30 blur-xl animate-pulse group-hover:bg-primary/50 transition-all" />
+                  <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-primary border-4 border-white/20 shadow-2xl transition-transform active:scale-90 group-hover:scale-110">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="white">
+                      <path d="M8 5.14v14.72a1 1 0 0 0 1.5.86l11.5-7.36a1 1 0 0 0 0-1.72L9.5 4.28a1 1 0 0 0-1.5.86z" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="mt-8 flex flex-col items-center gap-2">
+                  <h3 className="text-2xl font-black text-white italic tracking-tighter uppercase">Tap para Iniciar</h3>
+                  <div className="flex items-center gap-2 text-white/50 animate-pulse">
+                    <span className="h-1 w-1 rounded-full bg-white/50" />
+                    <p className="text-[10px] font-bold uppercase tracking-widest">Activar sonido y video</p>
+                    <span className="h-1 w-1 rounded-full bg-white/50" />
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Custom play/pause overlay button */}
@@ -606,6 +635,7 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
                 onClick={(e) => { e.stopPropagation(); toggleLike(i) }}
               >
                 <Heart
+                  size="sm"
                   className={`h-6 w-6 ${likedSlides[i] ? "fill-red-500 text-red-500" : "text-white"}`}
                   style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.6))" }}
                 />

@@ -15,6 +15,7 @@ export interface Community {
   leaderEmail: string | null // email del lider de la comunidad
   leaderName: string | null
   cuota_miembro: number // cuanto pagan los miembros mensualmente (USD)
+  mailing_enabled: boolean
   createdAt: string
 }
 
@@ -39,6 +40,7 @@ const DEFAULT_COMMUNITIES: Community[] = [
     leaderEmail: "iajorgeleon21@gmail.com",
     leaderName: "Jorge Leon",
     cuota_miembro: 10,
+    mailing_enabled: true,
     createdAt: "2026-01-15T00:00:00Z",
   },
   {
@@ -52,6 +54,7 @@ const DEFAULT_COMMUNITIES: Community[] = [
     leaderEmail: null,
     leaderName: null,
     cuota_miembro: 0,
+    mailing_enabled: false,
     createdAt: "2026-01-01T00:00:00Z",
   },
 ]
@@ -147,7 +150,7 @@ export function getAllCommunityMembers(): CommunityMember[] {
 
 export function getMemberCommunity(memberId: string): Community | undefined {
   if (!memberId) return undefined
-  
+
   const mid = memberId.toLowerCase()
   if (mid === "super-admin" || mid.includes("sensei")) {
     return getCommunityById("skalia-vip")

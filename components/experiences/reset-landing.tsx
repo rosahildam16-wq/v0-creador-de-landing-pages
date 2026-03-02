@@ -233,8 +233,8 @@ function SocialProof() {
   return (
     <div className={`fixed bottom-6 left-6 z-[100] transition-all duration-700 transform ${show ? "translate-x-0 opacity-100 scale-100" : "-translate-x-full opacity-0 scale-90"}`}>
       <div className="flex items-center gap-4 rounded-3xl border border-white/10 bg-black/60 p-2 pr-8 shadow-2xl backdrop-blur-xl">
-        <div className="h-10 w-10 flex items-center justify-center rounded-2xl bg-primary text-black font-black italic text-base shadow-lg">
-          {notifications[current].name[0]}
+        <div className="h-10 w-10 flex items-center justify-center rounded-2xl bg-primary/20 text-primary border border-primary/30 shadow-lg">
+          <Users className="h-5 w-5" />
         </div>
         <div className="flex flex-col">
           <p className="text-[11px] text-white leading-tight">
@@ -411,10 +411,10 @@ export function ResetLanding({ leadId, onTrack, referrer }: Props) {
           <div className="mb-10 flex flex-col items-center">
             <div className="mb-6 h-1 w-12 bg-primary rounded-full" />
             <h1 className="text-[42px] md:text-[72px] font-black leading-[0.85] tracking-[-0.05em] uppercase italic text-white flex flex-col">
-              HAS PASADO <br /> <span className="text-primary italic-none">EL FILTRO</span>
+              FRANQUICIA <br /> <span className="text-primary italic-none">REPLICABLE</span>
             </h1>
             <p className="mt-8 max-w-md text-lg md:text-xl font-medium text-neutral-400 text-balance">
-              Y completaste tu primer acceso para la Franquicia Reset.
+              Acceso total al motor que genera ventas en automático. Sistema **90% automatizado** e infraestructura lista para usar.
             </p>
           </div>
 
@@ -428,8 +428,8 @@ export function ResetLanding({ leadId, onTrack, referrer }: Props) {
               <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="relative flex w-full items-center justify-between px-4">
                 <div className="text-left pl-4 font-black italic text-black">
-                  <span className="block text-[10px] uppercase tracking-[0.2em] opacity-40 mb-1">Último Paso</span>
-                  <span className="text-[24px] leading-none">COBRAR MI ACCESO</span>
+                  <span className="block text-[10px] uppercase tracking-[0.2em] opacity-40 mb-1">Admisión Prioritaria</span>
+                  <span className="text-[24px] leading-none">RESERVAR MI ACCESO</span>
                 </div>
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-black shadow-lg">
                   <ArrowRight className="h-7 w-7 text-white" />
@@ -469,13 +469,18 @@ export function ResetLanding({ leadId, onTrack, referrer }: Props) {
           <div className="grid gap-24">
             {[
               {
-                title: "Reset OS: Digital Engine",
-                desc: "Un sistema operativo personalizado donde controlas cada métrica de tu negocio. Desde el tráfico hasta el ROI de cada campaña, con inteligencia artificial integrada.",
+                title: "Embudos & Ads Pro",
+                desc: "Te entregamos los embudos exactos y los anuncios que ya están validados. Sin configuración compleja. Listos para replicar y captar prospectos de inmediato.",
                 visual: "dashboard"
               },
               {
-                title: "TikTok Factory",
-                desc: "Copiamos exactamente la estructura de videos y ganchos que acabas de ver. Videos desarrollados bajo psicología de consumo masivo listos para subir.",
+                title: "IA & TikTok Factory",
+                desc: "Recibes nuestra estructura de videos virales y acceso a clases de IA aplicadas a ventas. Tu contenido se crea bajo psicología de consumo masivo.",
+                visual: "phone"
+              },
+              {
+                title: "Escala & Comunidad",
+                desc: "Clases magistrales de cómo escalar de 0 a 10k y acceso directo al círculo privado de líderes. Networking real con los que ya tienen resultados.",
                 visual: "phone"
               }
             ].map((block, i) => (
@@ -558,7 +563,7 @@ export function ResetLanding({ leadId, onTrack, referrer }: Props) {
             className="group relative h-24 w-full overflow-hidden rounded-[2.5rem] bg-primary transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] shadow-[0_30px_60px_rgba(0, 143, 17, 0.3)]"
           >
             <div className="relative flex w-full items-center justify-between px-6 font-black italic text-black">
-              <span className="text-[26px]">ENTRAR AL SISTEMA</span>
+              <span className="text-[26px]">RESERVAR MI ACCESO</span>
               <Zap className="h-7 w-7 fill-black" strokeWidth={3} />
             </div>
           </Button>

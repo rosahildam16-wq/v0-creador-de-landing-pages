@@ -33,7 +33,7 @@ const STEP_NAMES: Record<Experience, string> = {
 // --- STABLE CONFIGS FOR FEED ---
 const RESET_SLIDES = [
   {
-    videoSrc: "/videos/tiktok-1.mp4",
+    videoSrc: "/videos/lia-vsl.mp4",
     overlayText: [],
     username: "reset.system",
     caption: "El Arma Injusta",
@@ -154,14 +154,14 @@ export function FunnelController({ embudoId = "nomada-vip", startAt, referrer }:
   // RESET landing is full-width (no max-w-md container)
   if (currentExp === 9 && embudoId === "franquicia-reset") {
     return (
-      <main className="relative min-h-dvh w-full overflow-x-hidden">
+      <main className="relative min-h-dvh w-full overflow-x-hidden theme-reset">
         <ResetLanding leadId={leadIdRef.current} onTrack={() => trackStep(9)} referrer={referrer} />
       </main>
     )
   }
 
   return (
-    <main className="relative min-h-dvh w-full overflow-x-hidden bg-background">
+    <main className={`relative min-h-dvh w-full overflow-x-hidden bg-background ${embudoId === "franquicia-reset" ? "theme-reset" : ""}`}>
       <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col">
         {currentExp === 1 && (
           <VideoPlayer
