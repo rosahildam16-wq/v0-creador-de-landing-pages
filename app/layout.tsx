@@ -49,3 +49,4 @@ export default function RootLayout({
     </html>
   )
 }
+// Vercel Trigger: lunes,  2 de marzo de 2026, 10:46:47 -05
