@@ -1,8 +1,6 @@
-import { Resend } from 'resend';
+let _resend: any = null;
 
-let _resend: Resend | null = null;
-
-export function getResend() {
+export async function getResendClient() {
     if (_resend) return _resend;
 
     const apiKey = process.env.RESEND_API_KEY;
@@ -13,9 +11,10 @@ export function getResend() {
             emails: {
                 send: async () => ({ data: null, error: new Error("Missing Key") })
             }
-        } as unknown as Resend;
+        };
     }
 
+    const { Resend } = await import('resend');
     _resend = new Resend(apiKey);
     return _resend;
 }
