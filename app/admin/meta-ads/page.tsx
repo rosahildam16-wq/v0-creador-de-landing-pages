@@ -1,152 +1,111 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { useState, useEffect } from "react"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import {
   DollarSign,
   Users,
+  Target,
   MousePointerClick,
   Eye,
-  TrendingDown,
-  TrendingUp,
+  Zap,
   RefreshCw,
+  TrendingUp,
+  TrendingDown,
+  ArrowDownRight,
+  ArrowUpRight,
   Wifi,
   WifiOff,
-  Target,
-  Zap,
-  BarChart3,
-  ArrowUpRight,
-  ArrowDownRight,
   Settings,
+  ChevronRight,
+  Calendar,
+  Loader2,
+  Activity,
 } from "lucide-react"
 import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Line,
   LineChart,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
+  Line,
   XAxis,
   YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
 } from "recharts"
 
-interface Resumen {
-  gasto_total: number
-  leads_totales: number
-  cpl_promedio: number
-  clics_totales: number
-  impresiones_totales: number
-  ctr_promedio: number
+// Mock colors
+const COLORS = ["#008F11", "#00B215", "#10B981", "#34D399", "#6EE7B7"]
+const CAMPAIGN_COLORS = ["#008F11", "#3B82F6", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"]
+
+function formatMoney(amount: number) {
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "USD",
+  }).format(amount)
 }
 
-interface Campana {
-  id: string
-  nombre: string
-  gasto: number
-  impresiones: number
-  clics: number
-  leads: number
-  cpl: number
-  cpc: number
-  cpm: number
-  ctr: number
-  fecha_inicio: string
-  fecha_fin: string
-}
-
-interface DatosDiarios {
-  fecha: string
-  gasto: number
-  impresiones: number
-  clics: number
-  leads: number
-}
-
-interface MetaAdsData {
-  resumen: Resumen
-  campanas: Campana[]
-  diario: DatosDiarios[]
-}
-
-interface ApiResponse {
-  mode: "live" | "demo" | "error"
-  message: string
-  data: MetaAdsData
-}
-
-const CAMPAIGN_COLORS = [
-  "hsl(0, 72%, 51%)",
-  "hsl(145, 65%, 42%)",
-  "hsl(43, 74%, 66%)",
-  "hsl(197, 60%, 50%)",
-  "hsl(27, 87%, 67%)",
-]
-
-function formatMoney(value: number) {
-  return `$${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
-
-function formatNumber(value: number) {
-  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
-  if (value >= 1000) return `${(value / 1000).toFixed(1)}K`
-  return value.toLocaleString()
+function formatNumber(num: number) {
+  return new Intl.NumberFormat("es-MX").format(num)
 }
 
 function formatDate(dateStr: string) {
-  const d = new Date(dateStr + "T00:00:00")
-  return `${d.getDate()}/${d.getMonth() + 1}`
+  const date = new Date(dateStr)
+  return date.toLocaleDateString("es-MX", { day: "2-digit", month: "short" })
 }
 
 export default function MetaAdsPage() {
-  const [data, setData] = useState<MetaAdsData | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [data, setData] = useState<any>(null)
   const [mode, setMode] = useState<"live" | "demo" | "error">("demo")
-  const [loading, setLoading] = useState(true)
-  const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
   const [showConfig, setShowConfig] = useState(false)
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
 
   const fetchData = async () => {
     setLoading(true)
     try {
-      const res = await fetch("/api/meta-ads?date_preset=last_30d")
-      const json: ApiResponse = await res.json()
-      setData(json.data)
-      setMode(json.mode)
-      setLastRefresh(new Date())
-    } catch {
+      const res = await fetch("/api/meta/insights")
+      const result = await res.json()
+      if (res.ok) {
+        setData(result.data)
+        setMode(result.mode)
+        setLastRefresh(new Date())
+      } else {
+        setMode("error")
+      }
+    } catch (e) {
       setMode("error")
-    } finally {
-      setLoading(false)
     }
+    setLoading(false)
   }
 
   useEffect(() => {
     fetchData()
-    // Auto-refresh every 5 minutes
-    const interval = setInterval(fetchData, 5 * 60 * 1000)
-    return () => clearInterval(interval)
   }, [])
 
   if (loading && !data) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <RefreshCw className="h-6 w-6 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Conectando con Meta Ads...</p>
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+        <div className="relative h-20 w-20">
+          <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+          <div className="relative flex h-full w-full items-center justify-center rounded-full bg-black border border-primary/40 shadow-[0_0_30px_rgba(0,143,17,0.3)]">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        </div>
+        <div className="text-center">
+          <p className="text-sm font-bold uppercase tracking-widest text-primary">Sincronizando con Meta</p>
+          <p className="text-xs text-muted-foreground mt-1">Obteniendo métricas de tus campañas...</p>
         </div>
       </div>
     )
@@ -155,26 +114,24 @@ export default function MetaAdsPage() {
   if (!data) return null
 
   // Compute CPL per day for the chart
-  const cplDiario = data.diario.map((d) => ({
+  const cplDiario = data.diario.map((d: any) => ({
     ...d,
     cpl: d.leads > 0 ? Math.round((d.gasto / d.leads) * 100) / 100 : 0,
     fechaLabel: formatDate(d.fecha),
   }))
 
-  // Pie chart data for spend by campaign
-  const gastoPorCampana = data.campanas.map((c, i) => ({
+  const gastoPorCampana = data.campanas.map((c: any, i: number) => ({
     nombre: c.nombre.replace("Nomada VIP - ", ""),
     gasto: c.gasto,
     fill: CAMPAIGN_COLORS[i % CAMPAIGN_COLORS.length],
   }))
 
-  // Best & worst CPL campaigns
   const sortedByCpl = [...data.campanas].filter((c) => c.leads > 0).sort((a, b) => a.cpl - b.cpl)
   const bestCampaign = sortedByCpl[0]
   const worstCampaign = sortedByCpl[sortedByCpl.length - 1]
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 font-sans">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -229,14 +186,14 @@ export default function MetaAdsPage() {
         </div>
       </div>
 
-      {/* Config panel */}
+      {/* Config panel - Sin la opción de Pixel, ahora es per-embudo */}
       {showConfig && (
         <Card className="border-primary/30 bg-card/80 backdrop-blur-md">
           <CardContent className="p-6">
             <div className="flex flex-col gap-6">
               <div>
                 <h3 className="text-lg font-bold text-foreground">Configuración de Integración</h3>
-                <p className="text-sm text-muted-foreground">Ingresa tus credenciales para conectar este dashboard con la cuenta real.</p>
+                <p className="text-sm text-muted-foreground">Ingresa tus credenciales de Meta Ads API para sincronizar tus campañas.</p>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -249,6 +206,7 @@ export default function MetaAdsPage() {
                     defaultValue={process.env.NEXT_PUBLIC_META_AD_ACCOUNT_ID || ""}
                     id="config-account-id"
                   />
+                  <p className="text-[10px] text-muted-foreground/60">Identificador de tu cuenta publicitaria</p>
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Access Token</label>
@@ -258,67 +216,8 @@ export default function MetaAdsPage() {
                     className="w-full rounded-lg border border-border/50 bg-secondary/50 px-4 py-2 text-sm focus:border-primary focus:outline-none"
                     id="config-token"
                   />
+                  <p className="text-[10px] text-muted-foreground/60">System User Access Token con ads_read</p>
                 </div>
-              </div>
-
-              {/* ── META PIXEL CONFIG (like Hotmart) ── */}
-              <div className="border-t border-border/30 pt-4">
-                <div className="mb-3">
-                  <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-500/10"><Target className="h-3.5 w-3.5 text-blue-400" /></span>
-                    Meta Pixel (Conversiones)
-                  </h4>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Igual que en Hotmart: conecta tu Pixel para trackear leads que llegan desde campañas. Meta optimiza tus anuncios automáticamente.
-                  </p>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Pixel ID</label>
-                    <input
-                      type="text"
-                      placeholder="Ej: 123456789012345"
-                      className="w-full rounded-lg border border-border/50 bg-secondary/50 px-4 py-2 text-sm focus:border-primary focus:outline-none"
-                      id="config-pixel-id"
-                    />
-                    <p className="text-[10px] text-muted-foreground/60">Lo encuentras en Meta Events Manager → Configuración</p>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Conversions API Token <span className="text-muted-foreground/40">(Opcional)</span></label>
-                    <input
-                      type="password"
-                      placeholder="Token del servidor..."
-                      className="w-full rounded-lg border border-border/50 bg-secondary/50 px-4 py-2 text-sm focus:border-primary focus:outline-none"
-                      id="config-pixel-token"
-                    />
-                    <p className="text-[10px] text-muted-foreground/60">Para Server-Side Events (mayor precisión)</p>
-                  </div>
-                </div>
-                <button
-                  onClick={async () => {
-                    const pixelId = (document.getElementById("config-pixel-id") as HTMLInputElement).value
-                    const pixelToken = (document.getElementById("config-pixel-token") as HTMLInputElement).value
-                    if (!pixelId) { alert("Ingresa tu Pixel ID"); return }
-                    try {
-                      const res = await fetch("/api/pixel/config", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ embudo_id: "global", pixel_id: pixelId, pixel_token: pixelToken }),
-                      })
-                      const result = await res.json()
-                      if (res.ok && result.success) {
-                        alert("✅ Pixel configurado. Se activará en todos tus funnels automáticamente")
-                      } else {
-                        alert(`❌ Error: ${result.error || "Error desconocido"}${result.sql ? "\n\nEjecuta este SQL en Supabase:\n" + result.sql : ""}`)
-                      }
-                    } catch (e: any) {
-                      alert(`❌ Error de conexión: ${e.message}`)
-                    }
-                  }}
-                  className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-500 transition-colors"
-                >
-                  💎 Guardar Pixel
-                </button>
               </div>
 
               <div className="flex flex-wrap gap-2 pt-2">
@@ -331,13 +230,8 @@ export default function MetaAdsPage() {
                       return
                     }
                     try {
-                      // Step 1: Ensure the table exists
                       await fetch("/api/meta-ads/setup", { method: "POST" })
-
-                      // Step 2: Wait a moment for schema refresh
-                      await new Promise(r => setTimeout(r, 1500))
-
-                      // Step 3: Save the config
+                      await new Promise(r => setTimeout(r, 1000))
                       const res = await fetch("/api/meta/insights", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -352,10 +246,10 @@ export default function MetaAdsPage() {
                         alert(`❌ Error al guardar: ${result.error || "Error desconocido"}`)
                       }
                     } catch (e: any) {
-                      alert(`❌ Error de conexión: ${e.message || "No se pudo conectar con el servidor"}`)
+                      alert(`❌ Error de conexión: ${e.message}`)
                     }
                   }}
-                  className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:opacity-90"
+                  className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-black hover:opacity-90 transition-opacity"
                 >
                   Guardar y Sincronizar
                 </button>
@@ -365,14 +259,17 @@ export default function MetaAdsPage() {
                 >
                   Cancelar
                 </button>
-                <a
-                  href="https://developers.facebook.com/tools/explorer/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="ml-auto flex items-center gap-1 text-xs text-primary hover:underline"
-                >
-                  Obtener Token en Meta <ArrowUpRight className="h-3 w-3" />
-                </a>
+                <div className="ml-auto flex flex-col items-end gap-1">
+                  <p className="text-[10px] text-muted-foreground italic">El Meta Pixel ahora se configura individualmente dentro de cada embudo.</p>
+                  <a
+                    href="https://developers.facebook.com/tools/explorer/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1 text-xs text-primary hover:underline"
+                  >
+                    Obtener Token en Meta Explorer <ArrowUpRight className="h-3 w-3" />
+                  </a>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -458,7 +355,7 @@ export default function MetaAdsPage() {
                 <ArrowDownRight className="h-5 w-5 text-emerald-500" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-emerald-400">Mejor CPL</p>
+                <p className="text-xs text-emerald-400 font-bold uppercase tracking-widest">Mejor Rendimiento (CPL)</p>
                 <p className="truncate text-sm font-semibold text-foreground">{bestCampaign.nombre.replace("Nomada VIP - ", "")}</p>
                 <p className="text-lg font-bold text-emerald-400">{formatMoney(bestCampaign.cpl)} <span className="text-xs font-normal text-muted-foreground">por lead</span></p>
               </div>
@@ -470,7 +367,7 @@ export default function MetaAdsPage() {
                 <ArrowUpRight className="h-5 w-5 text-red-500" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-red-400">Peor CPL</p>
+                <p className="text-xs text-red-400 font-bold uppercase tracking-widest">Peor Rendimiento (CPL)</p>
                 <p className="truncate text-sm font-semibold text-foreground">{worstCampaign.nombre.replace("Nomada VIP - ", "")}</p>
                 <p className="text-lg font-bold text-red-400">{formatMoney(worstCampaign.cpl)} <span className="text-xs font-normal text-muted-foreground">por lead</span></p>
               </div>
@@ -479,261 +376,125 @@ export default function MetaAdsPage() {
         </div>
       )}
 
-      {/* Charts row */}
-      <div className="grid gap-6 lg:grid-cols-12">
-        {/* CPL Over Time */}
-        <Card className="border-border/50 lg:col-span-8">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-sm font-medium">
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
-              Costo por Lead - Tendencia diaria
-            </CardTitle>
+      {/* Charts Row */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="border-border/50 flex flex-col min-h-[400px]">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium">Historial de Costo por Lead (MXN)</CardTitle>
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-primary" />
+                <span className="text-[10px] text-muted-foreground">CPL Promedio</span>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="h-[280px] w-full">
+          <CardContent className="flex-1 pb-2">
+            <div className="h-full min-h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={cplDiario}>
                   <defs>
-                    <linearGradient id="cplGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(0, 72%, 51%)" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(0, 72%, 51%)" stopOpacity={0} />
+                    <linearGradient id="colorCpl" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#008F11" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#008F11" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(0, 0%, 16%)" />
-                  <XAxis
-                    dataKey="fechaLabel"
-                    tick={{ fill: "hsl(0, 0%, 55%)", fontSize: 10 }}
-                    tickLine={false}
-                    axisLine={false}
-                    interval={4}
-                  />
-                  <YAxis
-                    tick={{ fill: "hsl(0, 0%, 55%)", fontSize: 10 }}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(v) => `$${v}`}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="fechaLabel" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} minTickGap={30} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(0, 0%, 7%)",
-                      border: "1px solid hsl(0, 0%, 16%)",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                      color: "hsl(0, 0%, 93%)",
-                    }}
-                    formatter={(value: number, name: string) => {
-                      if (name === "cpl") return [`$${value.toFixed(2)}`, "CPL"]
-                      if (name === "gasto") return [`$${value.toFixed(2)}`, "Gasto"]
-                      if (name === "leads") return [value, "Leads"]
-                      return [value, name]
-                    }}
-                    labelFormatter={(label) => `Dia: ${label}`}
+                    contentStyle={{ backgroundColor: "rgba(0,0,0,0.8)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", fontSize: "12px" }}
+                    itemStyle={{ color: "#008F11" }}
                   />
-                  <Area
-                    type="monotone"
-                    dataKey="cpl"
-                    stroke="hsl(0, 72%, 51%)"
-                    strokeWidth={2}
-                    fill="url(#cplGradient)"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="leads"
-                    stroke="hsl(145, 65%, 42%)"
-                    strokeWidth={1.5}
-                    dot={false}
-                    strokeDasharray="4 4"
-                  />
+                  <Area type="monotone" dataKey="cpl" name="CPL" stroke="#008F11" strokeWidth={2} fillOpacity={1} fill="url(#colorCpl)" />
                 </AreaChart>
               </ResponsiveContainer>
-            </div>
-            <div className="mt-2 flex items-center justify-center gap-6">
-              <div className="flex items-center gap-1.5">
-                <div className="h-2 w-5 rounded-full bg-primary" />
-                <span className="text-[10px] text-muted-foreground">CPL ($)</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="h-px w-5 border-t-2 border-dashed border-emerald-500" />
-                <span className="text-[10px] text-muted-foreground">Leads</span>
-              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Spend by Campaign Pie */}
-        <Card className="border-border/50 lg:col-span-4">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Gasto por Campana</CardTitle>
+        <Card className="border-border/50 flex flex-col min-h-[400px]">
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Distribución de Gasto por Campaña</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-[200px] w-full">
+          <CardContent className="flex-1">
+            <div className="h-full min-h-[300px] w-full flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie
-                    data={gastoPorCampana}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={80}
-                    paddingAngle={3}
-                    dataKey="gasto"
-                  >
-                    {gastoPorCampana.map((entry, i) => (
-                      <Cell key={entry.nombre} fill={entry.fill} />
+                  <Pie data={gastoPorCampana} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="gasto" nameKey="nombre">
+                    {gastoPorCampana.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} stroke="none" />
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(0, 0%, 7%)",
-                      border: "1px solid hsl(0, 0%, 16%)",
-                      borderRadius: "8px",
-                      fontSize: "11px",
-                      color: "hsl(0, 0%, 93%)",
-                    }}
-                    formatter={(value: number) => [formatMoney(value), "Gasto"]}
+                    contentStyle={{ backgroundColor: "rgba(0,0,0,0.8)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", fontSize: "10px" }}
+                    formatter={(val: number) => formatMoney(val)}
                   />
                 </PieChart>
               </ResponsiveContainer>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              {gastoPorCampana.map((c, i) => (
-                <div key={c.nombre} className="flex items-center gap-2">
-                  <div className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: c.fill }} />
-                  <span className="min-w-0 truncate text-[10px] text-muted-foreground">{c.nombre}</span>
-                  <span className="ml-auto shrink-0 text-[10px] font-medium">{formatMoney(c.gasto)}</span>
-                </div>
-              ))}
+              <div className="flex flex-col gap-2 ml-4">
+                {gastoPorCampana.slice(0, 5).map((c: any, i: number) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: c.fill }} />
+                    <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">{c.nombre}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Daily Spend + Leads Bar Chart */}
+      {/* Detailed Campaigns Table */}
       <Card className="border-border/50">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-sm font-medium">
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-            Gasto diario vs Leads generados
-          </CardTitle>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Desempeño Detallado por Campaña</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="h-[220px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={cplDiario}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(0, 0%, 16%)" />
-                <XAxis
-                  dataKey="fechaLabel"
-                  tick={{ fill: "hsl(0, 0%, 55%)", fontSize: 10 }}
-                  tickLine={false}
-                  axisLine={false}
-                  interval={4}
-                />
-                <YAxis
-                  yAxisId="gasto"
-                  orientation="left"
-                  tick={{ fill: "hsl(0, 0%, 55%)", fontSize: 10 }}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(v) => `$${v}`}
-                />
-                <YAxis
-                  yAxisId="leads"
-                  orientation="right"
-                  tick={{ fill: "hsl(0, 0%, 55%)", fontSize: 10 }}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(0, 0%, 7%)",
-                    border: "1px solid hsl(0, 0%, 16%)",
-                    borderRadius: "8px",
-                    fontSize: "12px",
-                    color: "hsl(0, 0%, 93%)",
-                  }}
-                  formatter={(value: number, name: string) => {
-                    if (name === "gasto") return [formatMoney(value), "Gasto"]
-                    return [value, "Leads"]
-                  }}
-                />
-                <Bar yAxisId="gasto" dataKey="gasto" fill="hsl(0, 72%, 51%)" radius={[2, 2, 0, 0]} opacity={0.7} />
-                <Bar yAxisId="leads" dataKey="leads" fill="hsl(145, 65%, 42%)" radius={[2, 2, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-muted/50 text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Campaña</th>
+                  <th className="px-4 py-3 font-medium text-right">Gasto</th>
+                  <th className="px-4 py-3 font-medium text-right">Leads</th>
+                  <th className="px-4 py-3 font-medium text-right text-primary">CPL</th>
+                  <th className="px-4 py-3 font-medium text-right">Clics</th>
+                  <th className="px-4 py-3 font-medium text-right">CTR</th>
+                  <th className="px-4 py-3 font-medium text-center">Estado</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {data.campanas.map((campana: any, i: number) => (
+                  <tr key={i} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-4 py-4">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-bold text-foreground line-clamp-1">{campana.nombre.replace("Nomada VIP - ", "")}</span>
+                        <span className="text-[10px] text-muted-foreground uppercase font-mono">{campana.id}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-right font-medium">{formatMoney(campana.gasto)}</td>
+                    <td className="px-4 py-4 text-right font-bold">{campana.leads}</td>
+                    <td className="px-4 py-4 text-right font-black text-primary">{formatMoney(campana.cpl)}</td>
+                    <td className="px-4 py-4 text-right text-muted-foreground">{formatNumber(campana.clics)}</td>
+                    <td className="px-4 py-4 text-right text-muted-foreground">{campana.ctr}%</td>
+                    <td className="px-4 py-4 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <div className={`h-2 w-2 rounded-full ${campana.status === 'ACTIVE' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-muted-foreground/30'}`} />
+                        <span className="text-[10px] font-bold uppercase">{campana.status === 'ACTIVE' ? 'Activo' : 'Pausado'}</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </CardContent>
       </Card>
 
-      {/* Campaigns Table */}
-      <Card className="border-border/50">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Detalle por Campana</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border/50 hover:bg-transparent">
-                  <TableHead className="text-xs">Campana</TableHead>
-                  <TableHead className="text-right text-xs">Gasto</TableHead>
-                  <TableHead className="text-right text-xs">Leads</TableHead>
-                  <TableHead className="text-right text-xs">CPL</TableHead>
-                  <TableHead className="text-right text-xs">Clics</TableHead>
-                  <TableHead className="text-right text-xs">CPC</TableHead>
-                  <TableHead className="text-right text-xs">CTR</TableHead>
-                  <TableHead className="text-right text-xs">Impresiones</TableHead>
-                  <TableHead className="text-right text-xs">Rendimiento</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.campanas.map((campana, i) => {
-                  const avgCpl = data.resumen.cpl_promedio
-                  const isGoodCpl = campana.cpl <= avgCpl
-                  return (
-                    <TableRow key={campana.id} className="border-border/30 hover:bg-secondary/30">
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="h-2 w-2 shrink-0 rounded-full"
-                            style={{ backgroundColor: CAMPAIGN_COLORS[i % CAMPAIGN_COLORS.length] }}
-                          />
-                          <span className="max-w-[200px] truncate text-sm font-medium">
-                            {campana.nombre.replace("Nomada VIP - ", "")}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right text-sm">{formatMoney(campana.gasto)}</TableCell>
-                      <TableCell className="text-right text-sm font-semibold">{campana.leads}</TableCell>
-                      <TableCell className="text-right">
-                        <span className={`text-sm font-bold ${isGoodCpl ? "text-emerald-400" : "text-red-400"}`}>
-                          {formatMoney(campana.cpl)}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right text-sm">{formatNumber(campana.clics)}</TableCell>
-                      <TableCell className="text-right text-sm">{formatMoney(campana.cpc)}</TableCell>
-                      <TableCell className="text-right text-sm">{campana.ctr.toFixed(2)}%</TableCell>
-                      <TableCell className="text-right text-sm">{formatNumber(campana.impresiones)}</TableCell>
-                      <TableCell className="text-right">
-                        {isGoodCpl ? (
-                          <Badge className="border-emerald-500/30 bg-emerald-500/10 text-emerald-400" variant="outline">
-                            <TrendingDown className="mr-1 h-3 w-3" />
-                            Bueno
-                          </Badge>
-                        ) : (
-                          <Badge className="border-red-500/30 bg-red-500/10 text-red-400" variant="outline">
-                            <TrendingUp className="mr-1 h-3 w-3" />
-                            Costoso
-                          </Badge>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      <style jsx global>{`
+        @keyframes scan { from { transform: translateY(-100%); } to { transform: translateY(100%); } }
+        .scan-line { animation: scan 3s linear infinite; box-shadow: 0 0 15px #008f11; }
+      `}</style>
     </div>
   )
 }
