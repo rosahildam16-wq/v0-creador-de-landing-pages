@@ -1,0 +1,1 @@
+ALTER TABLE public.communities ADD COLUMN IF NOT EXISTS settings JSONB DEFAULT '{"zoom_enabled": true, "calendar_enabled": true, "whatsapp_reminders_enabled": true, "agenda_enabled": true, "mailing_enabled": true}'::jsonb;

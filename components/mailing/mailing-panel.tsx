@@ -1,9 +1,13 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { Plus, Mail, Send, Calendar, Users, Eye, Search, Filter, Loader2, CheckCircle2, Clock, AlertCircle, User, Layout, ChevronDown } from "lucide-react"
+import {
+    Plus, Mail, Send, Calendar, Users, Eye, Search, Filter, Loader2,
+    CheckCircle2, Clock, AlertCircle, Sparkles,
+    Palette, Trash2, ArrowUpRight, X, BarChart3
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -19,6 +23,7 @@ import { getAllCommunities, type Community } from "@/lib/communities-data"
 import { EMBUDOS } from "@/lib/embudos-config"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
+import { EmailTemplateBuilder } from "./email-template-builder"
 
 interface MailingPanelProps {
     mode: "admin" | "leader"
@@ -33,6 +38,9 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
     const [isCreateOpen, setIsCreateOpen] = useState(false)
     const [activeTab, setActiveTab] = useState("all")
     const [leadSearch, setLeadSearch] = useState("")
+    const [campaignSearch, setCampaignSearch] = useState("")
+    const [showBuilder, setShowBuilder] = useState(false)
+    const [previewCampaign, setPreviewCampaign] = useState<CampanaEmail | null>(null)
 
     // Form states
     const [newCampana, setNewCampana] = useState({
@@ -60,7 +68,6 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
             getLeads()
         ])
 
-        // Filter by community if in leader mode
         const filteredCampanas = mode === "leader"
             ? campanasData.filter(c => c.community_id === communityId)
             : campanasData
@@ -120,18 +127,23 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
         if (res) {
             toast.success("Campaña creada satisfactoriamente")
             setIsCreateOpen(false)
+            setShowBuilder(false)
             loadData()
-            setNewCampana({
-                titulo: "",
-                asunto: "",
-                contenido_html: "",
-                audiencia: "comunidad",
-                community_id: communityId || "general",
-                programado_para: "",
-                estado: "borrador",
-                audience_filters: { funnel_id: "", lead_ids: [] }
-            })
+            resetForm()
         }
+    }
+
+    const resetForm = () => {
+        setNewCampana({
+            titulo: "",
+            asunto: "",
+            contenido_html: "",
+            audiencia: "comunidad",
+            community_id: communityId || "general",
+            programado_para: "",
+            estado: "borrador",
+            audience_filters: { funnel_id: "", lead_ids: [] }
+        })
     }
 
     const toggleLeadSelection = (leadId: string) => {
@@ -158,13 +170,6 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
             case "cancelada":
                 return <Badge variant="destructive">Cancelada</Badge>
         }
-    }
-
-    const insertVariable = (variable: string) => {
-        setNewCampana(prev => ({
-            ...prev,
-            contenido_html: prev.contenido_html + `{${variable}}`
-        }))
     }
 
     const [sendingId, setSendingId] = useState<string | null>(null)
@@ -195,8 +200,11 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
     }
 
     const filteredCampanas = campanas.filter(c => {
-        if (activeTab === "all") return true
-        return c.estado === activeTab
+        const matchesTab = activeTab === "all" || c.estado === activeTab
+        const matchesSearch = !campaignSearch ||
+            c.titulo.toLowerCase().includes(campaignSearch.toLowerCase()) ||
+            c.asunto.toLowerCase().includes(campaignSearch.toLowerCase())
+        return matchesTab && matchesSearch
     })
 
     const getAudienciaLabel = (audiencia: CampanaEmail["audiencia"]) => {
@@ -210,235 +218,349 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
         }
     }
 
+    // Stats
+    const stats = useMemo(() => {
+        const enviadas = campanas.filter(c => c.estado === "enviada")
+        const totalEnviados = enviadas.reduce((sum, c) => sum + (c.leads_alcanzados || 0), 0)
+        return {
+            totalCampanas: campanas.length,
+            totalEnviados,
+            borradores: campanas.filter(c => c.estado === "borrador").length,
+            programadas: campanas.filter(c => c.estado === "programada").length,
+        }
+    }, [campanas])
+
+    // ─── Full-screen Template Builder Mode ───
+    if (showBuilder) {
+        return (
+            <div className="space-y-6">
+                <EmailTemplateBuilder
+                    initialSubject={newCampana.asunto}
+                    onComplete={(html, subject) => {
+                        setNewCampana(prev => ({
+                            ...prev,
+                            contenido_html: html,
+                            asunto: subject,
+                        }))
+                        setShowBuilder(false)
+                        setIsCreateOpen(true)
+                    }}
+                    onCancel={() => setShowBuilder(false)}
+                />
+            </div>
+        )
+    }
+
     return (
         <div className="space-y-6">
+            {/* ── Header ── */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight text-white flex items-center gap-2">
-                        <Mail className="w-8 h-8 text-primary" />
+                    <h2 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
+                        <div className="flex items-center justify-center h-10 w-10 rounded-2xl bg-primary/10 border border-primary/20">
+                            <Mail className="w-5 h-5 text-primary" />
+                        </div>
                         Email Marketing
                     </h2>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground mt-1">
                         {mode === "admin"
-                            ? "Gestiona todas las comunicaciones de la plataforma."
-                            : "Comunícate con tus socios y prospectos de forma masiva."}
+                            ? "Centro de comando global. Diseña, personaliza y envía campañas a toda la red."
+                            : "Diseña y envía campañas personalizadas a tus prospectos y equipo."}
                     </p>
                 </div>
 
-                <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)]">
-                            <Plus className="w-4 h-4" />
-                            Nueva Campaña
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl bg-zinc-950 border-zinc-800 text-white max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle className="text-2xl font-black italic">CREAR NUEVA CAMPAÑA</DialogTitle>
-                            <DialogDescription className="text-zinc-500">
-                                Diseña tu mensaje y elige a quién enviarlo con precisión militar.
-                            </DialogDescription>
-                        </DialogHeader>
+                <div className="flex items-center gap-2">
+                    {/* Visual Builder button */}
+                    <Button
+                        variant="outline"
+                        onClick={() => setShowBuilder(true)}
+                        className="border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary gap-2 font-bold uppercase tracking-wider text-[11px] h-10 px-5 rounded-xl transition-all shadow-[0_0_15px_rgba(139,92,246,0.1)] hover:shadow-[0_0_25px_rgba(139,92,246,0.2)]"
+                    >
+                        <Palette className="w-4 h-4" />
+                        Diseñar Email
+                    </Button>
 
-                        <div className="grid gap-5 py-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="grid gap-2 text-left">
-                                    <Label htmlFor="titulo" className="text-xs font-bold uppercase tracking-widest text-zinc-400">Nombre interno</Label>
-                                    <Input
-                                        id="titulo"
-                                        placeholder="Ej: Seguimiento Funnel Reset"
-                                        className="bg-zinc-900 border-zinc-700 h-11"
-                                        value={newCampana.titulo}
-                                        onChange={(e) => setNewCampana({ ...newCampana, titulo: e.target.value })}
-                                    />
-                                </div>
+                    {/* Quick create dialog */}
+                    <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                        <DialogTrigger asChild>
+                            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)] font-bold uppercase tracking-wider text-[11px] h-10 px-5 rounded-xl">
+                                <Plus className="w-4 h-4" />
+                                Nueva Campaña
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl bg-zinc-950 border-zinc-800 text-white max-h-[90vh] overflow-y-auto">
+                            <DialogHeader>
+                                <DialogTitle className="text-2xl font-black italic">CREAR NUEVA CAMPAÑA</DialogTitle>
+                                <DialogDescription className="text-zinc-500">
+                                    {newCampana.contenido_html
+                                        ? "Tu diseño visual está listo. Configura la audiencia y envía."
+                                        : "Diseña tu mensaje y elige a quién enviarlo con precisión militar."}
+                                </DialogDescription>
+                            </DialogHeader>
 
-                                <div className="grid gap-2 text-left">
-                                    <Label htmlFor="asunto" className="text-xs font-bold uppercase tracking-widest text-zinc-400">Asunto del correo</Label>
-                                    <Input
-                                        id="asunto"
-                                        placeholder="¡Esto te va a interesar! ⚡"
-                                        className="bg-zinc-900 border-zinc-700 h-11"
-                                        value={newCampana.asunto}
-                                        onChange={(e) => setNewCampana({ ...newCampana, asunto: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="grid gap-2 text-left">
-                                    <Label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Canal / Audiencia</Label>
-                                    <Select
-                                        value={newCampana.audiencia}
-                                        onValueChange={(v: any) => setNewCampana({ ...newCampana, audiencia: v })}
-                                    >
-                                        <SelectTrigger className="bg-zinc-900 border-zinc-700 h-11">
-                                            <SelectValue placeholder="Elegir audiencia" />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-                                            {mode === "admin" && <SelectItem value="todos">Todos los Leads (Global)</SelectItem>}
-                                            <SelectItem value="comunidad">Comunidad Total</SelectItem>
-                                            <SelectItem value="leads_por_embudo">Leads por Embudo</SelectItem>
-                                            <SelectItem value="persona_especifica">Persona en particular</SelectItem>
-                                            <SelectItem value="miembros_activos">Solo Miembros Activos</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="grid gap-2 text-left">
-                                    <Label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Programar Envío</Label>
-                                    <Input
-                                        type="datetime-local"
-                                        className="bg-zinc-900 border-zinc-700 h-11"
-                                        value={newCampana.programado_para}
-                                        onChange={(e) => setNewCampana({ ...newCampana, programado_para: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Additional filters based on audience selection */}
-                            <div className="grid gap-4 p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/50">
-                                {mode === "admin" && newCampana.audiencia !== "todos" && (
+                            <div className="grid gap-5 py-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="grid gap-2 text-left">
-                                        <Label className="text-xs font-bold uppercase tracking-widest text-zinc-500">Seleccionar Comunidad</Label>
+                                        <Label htmlFor="titulo" className="text-xs font-bold uppercase tracking-widest text-zinc-400">Nombre interno</Label>
+                                        <Input
+                                            id="titulo"
+                                            placeholder="Ej: Seguimiento Funnel Reset"
+                                            className="bg-zinc-900 border-zinc-700 h-11"
+                                            value={newCampana.titulo}
+                                            onChange={(e) => setNewCampana({ ...newCampana, titulo: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div className="grid gap-2 text-left">
+                                        <Label htmlFor="asunto" className="text-xs font-bold uppercase tracking-widest text-zinc-400">Asunto del correo</Label>
+                                        <Input
+                                            id="asunto"
+                                            placeholder="¡Esto te va a interesar! ⚡"
+                                            className="bg-zinc-900 border-zinc-700 h-11"
+                                            value={newCampana.asunto}
+                                            onChange={(e) => setNewCampana({ ...newCampana, asunto: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid gap-2 text-left">
+                                        <Label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Canal / Audiencia</Label>
                                         <Select
-                                            value={newCampana.community_id}
-                                            onValueChange={(v) => setNewCampana({ ...newCampana, community_id: v })}
+                                            value={newCampana.audiencia}
+                                            onValueChange={(v: any) => setNewCampana({ ...newCampana, audiencia: v })}
                                         >
-                                            <SelectTrigger className="bg-zinc-950 border-zinc-800 h-10">
-                                                <SelectValue placeholder="Elegir comunidad" />
+                                            <SelectTrigger className="bg-zinc-900 border-zinc-700 h-11">
+                                                <SelectValue placeholder="Elegir audiencia" />
                                             </SelectTrigger>
-                                            <SelectContent className="bg-zinc-950 border-zinc-800 text-white">
-                                                {communities.map(c => (
-                                                    <SelectItem key={c.id} value={c.id}>{c.nombre}</SelectItem>
-                                                ))}
+                                            <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                                                {mode === "admin" && <SelectItem value="todos">Todos los Leads (Global)</SelectItem>}
+                                                <SelectItem value="comunidad">Comunidad Total</SelectItem>
+                                                <SelectItem value="leads_por_embudo">Leads por Embudo</SelectItem>
+                                                <SelectItem value="persona_especifica">Persona en particular</SelectItem>
+                                                <SelectItem value="miembros_activos">Solo Miembros Activos</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                )}
 
-                                {newCampana.audiencia === "leads_por_embudo" && (
                                     <div className="grid gap-2 text-left">
-                                        <Label className="text-xs font-bold uppercase tracking-widest text-zinc-500">Seleccionar Embudo</Label>
-                                        <Select
-                                            value={newCampana.audience_filters.funnel_id}
-                                            onValueChange={(v) => setNewCampana({
-                                                ...newCampana,
-                                                audience_filters: { ...newCampana.audience_filters, funnel_id: v }
-                                            })}
-                                        >
-                                            <SelectTrigger className="bg-zinc-950 border-zinc-800 h-10">
-                                                <SelectValue placeholder="Elegir embudo" />
-                                            </SelectTrigger>
-                                            <SelectContent className="bg-zinc-950 border-zinc-800 text-white">
-                                                {EMBUDOS.map(e => (
-                                                    <SelectItem key={e.id} value={e.id}>{e.nombre}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <Label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Programar Envío</Label>
+                                        <Input
+                                            type="datetime-local"
+                                            className="bg-zinc-900 border-zinc-700 h-11"
+                                            value={newCampana.programado_para}
+                                            onChange={(e) => setNewCampana({ ...newCampana, programado_para: e.target.value })}
+                                        />
                                     </div>
-                                )}
+                                </div>
 
-                                {newCampana.audiencia === "persona_especifica" && (
-                                    <div className="grid gap-3 text-left">
-                                        <Label className="text-xs font-bold uppercase tracking-widest text-zinc-500">Seleccionar Destinatario(s)</Label>
-                                        <div className="relative">
-                                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-600" />
-                                            <Input
-                                                placeholder="Buscar por nombre o email..."
-                                                className="pl-9 bg-zinc-950 border-zinc-800 h-10"
-                                                value={leadSearch}
-                                                onChange={(e) => setLeadSearch(e.target.value)}
-                                            />
+                                {/* Additional filters based on audience selection */}
+                                <div className="grid gap-4 p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/50">
+                                    {mode === "admin" && newCampana.audiencia !== "todos" && (
+                                        <div className="grid gap-2 text-left">
+                                            <Label className="text-xs font-bold uppercase tracking-widest text-zinc-500">Seleccionar Comunidad</Label>
+                                            <Select
+                                                value={newCampana.community_id}
+                                                onValueChange={(v) => setNewCampana({ ...newCampana, community_id: v })}
+                                            >
+                                                <SelectTrigger className="bg-zinc-950 border-zinc-800 h-10">
+                                                    <SelectValue placeholder="Elegir comunidad" />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-zinc-950 border-zinc-800 text-white">
+                                                    {communities.map(c => (
+                                                        <SelectItem key={c.id} value={c.id}>{c.nombre}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
+                                    )}
 
-                                        <div className="max-h-[120px] overflow-y-auto space-y-1 pr-2 custom-scrollbar">
-                                            {filteredLeadsForSearch.map(lead => (
-                                                <div
-                                                    key={lead.id}
-                                                    onClick={() => toggleLeadSelection(lead.id)}
-                                                    className={`flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all ${newCampana.audience_filters.lead_ids?.includes(lead.id)
-                                                        ? "bg-primary/10 border-primary/40"
-                                                        : "bg-zinc-950/40 border-zinc-800 hover:border-zinc-700"
-                                                        }`}
-                                                >
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs font-bold">{lead.nombre}</span>
-                                                        <span className="text-[10px] text-zinc-500">{lead.email}</span>
+                                    {newCampana.audiencia === "leads_por_embudo" && (
+                                        <div className="grid gap-2 text-left">
+                                            <Label className="text-xs font-bold uppercase tracking-widest text-zinc-500">Seleccionar Embudo</Label>
+                                            <Select
+                                                value={newCampana.audience_filters.funnel_id}
+                                                onValueChange={(v) => setNewCampana({
+                                                    ...newCampana,
+                                                    audience_filters: { ...newCampana.audience_filters, funnel_id: v }
+                                                })}
+                                            >
+                                                <SelectTrigger className="bg-zinc-950 border-zinc-800 h-10">
+                                                    <SelectValue placeholder="Elegir embudo" />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-zinc-950 border-zinc-800 text-white">
+                                                    {EMBUDOS.map(e => (
+                                                        <SelectItem key={e.id} value={e.id}>{e.nombre}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
+
+                                    {newCampana.audiencia === "persona_especifica" && (
+                                        <div className="grid gap-3 text-left">
+                                            <Label className="text-xs font-bold uppercase tracking-widest text-zinc-500">Seleccionar Destinatario(s)</Label>
+                                            <div className="relative">
+                                                <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-600" />
+                                                <Input
+                                                    placeholder="Buscar por nombre o email..."
+                                                    className="pl-9 bg-zinc-950 border-zinc-800 h-10"
+                                                    value={leadSearch}
+                                                    onChange={(e) => setLeadSearch(e.target.value)}
+                                                />
+                                            </div>
+
+                                            <div className="max-h-[120px] overflow-y-auto space-y-1 pr-2 custom-scrollbar">
+                                                {filteredLeadsForSearch.map(lead => (
+                                                    <div
+                                                        key={lead.id}
+                                                        onClick={() => toggleLeadSelection(lead.id)}
+                                                        className={`flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all ${newCampana.audience_filters.lead_ids?.includes(lead.id)
+                                                            ? "bg-primary/10 border-primary/40"
+                                                            : "bg-zinc-950/40 border-zinc-800 hover:border-zinc-700"
+                                                            }`}
+                                                    >
+                                                        <div className="flex flex-col">
+                                                            <span className="text-xs font-bold">{lead.nombre}</span>
+                                                            <span className="text-[10px] text-zinc-500">{lead.email}</span>
+                                                        </div>
+                                                        {newCampana.audience_filters.lead_ids?.includes(lead.id) && (
+                                                            <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                                                        )}
                                                     </div>
-                                                    {newCampana.audience_filters.lead_ids?.includes(lead.id) && (
-                                                        <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
-                                                    )}
+                                                ))}
+                                                {filteredLeadsForSearch.length === 0 && (
+                                                    <p className="text-[10px] text-zinc-600 italic text-center py-2">No se encontraron leads</p>
+                                                )}
+                                            </div>
+
+                                            {newCampana.audience_filters.lead_ids && newCampana.audience_filters.lead_ids.length > 0 && (
+                                                <div className="flex flex-wrap gap-1 mt-1">
+                                                    <Badge variant="secondary" className="bg-primary/20 text-primary text-[9px] border-primary/20">
+                                                        {newCampana.audience_filters.lead_ids.length} SELECCIONADOS
+                                                    </Badge>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-5 text-[9px] px-2 hover:bg-zinc-800"
+                                                        onClick={() => setNewCampana(prev => ({ ...prev, audience_filters: { ...prev.audience_filters, lead_ids: [] } }))}
+                                                    >
+                                                        Limpiar
+                                                    </Button>
                                                 </div>
-                                            ))}
-                                            {filteredLeadsForSearch.length === 0 && (
-                                                <p className="text-[10px] text-zinc-600 italic text-center py-2">No se encontraron leads</p>
                                             )}
                                         </div>
+                                    )}
+                                </div>
 
-                                        {newCampana.audience_filters.lead_ids && newCampana.audience_filters.lead_ids.length > 0 && (
-                                            <div className="flex flex-wrap gap-1 mt-1">
-                                                <Badge variant="secondary" className="bg-primary/20 text-primary text-[9px] border-primary/20">
-                                                    {newCampana.audience_filters.lead_ids.length} SELECCIONADOS
-                                                </Badge>
+                                {/* Content - If from builder, show indicator; else show textarea */}
+                                {newCampana.contenido_html ? (
+                                    <div className="grid gap-2 text-left">
+                                        <Label className="text-xs font-bold uppercase tracking-widest text-zinc-400">Contenido del email</Label>
+                                        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-500">
+                                                    <CheckCircle2 className="h-4 w-4" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-emerald-400">Diseño visual aplicado</p>
+                                                    <p className="text-[10px] text-zinc-500">Email diseñado con el template builder</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        setIsCreateOpen(false)
+                                                        setShowBuilder(true)
+                                                    }}
+                                                    className="h-8 text-[10px] border-zinc-700 hover:bg-zinc-800 gap-1"
+                                                >
+                                                    <Palette className="w-3 h-3" /> Editar Diseño
+                                                </Button>
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="h-5 text-[9px] px-2 hover:bg-zinc-800"
-                                                    onClick={() => setNewCampana(prev => ({ ...prev, audience_filters: { ...prev.audience_filters, lead_ids: [] } }))}
+                                                    onClick={() => setNewCampana(prev => ({ ...prev, contenido_html: "" }))}
+                                                    className="h-8 text-[10px] text-zinc-600 hover:text-red-400 hover:bg-red-500/10"
                                                 >
-                                                    Limpiar
+                                                    <X className="w-3 h-3" />
                                                 </Button>
                                             </div>
-                                        )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="grid gap-2 text-left">
+                                        <div className="flex items-center justify-between">
+                                            <Label htmlFor="contenido" className="text-xs font-bold uppercase tracking-widest text-zinc-400">Mensaje HTML</Label>
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        setIsCreateOpen(false)
+                                                        setShowBuilder(true)
+                                                    }}
+                                                    className="h-7 text-[10px] bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary font-bold gap-1"
+                                                >
+                                                    <Sparkles className="w-3 h-3" /> Editor Visual
+                                                </Button>
+                                                <Button variant="outline" size="sm" onClick={() => setNewCampana(prev => ({ ...prev, contenido_html: prev.contenido_html + "{nombre}" }))} className="h-7 text-[10px] bg-zinc-900 border-zinc-700 font-bold hover:bg-primary/10 hover:text-primary transition-all">
+                                                    {`{nombre}`}
+                                                </Button>
+                                                <Button variant="outline" size="sm" onClick={() => setNewCampana(prev => ({ ...prev, contenido_html: prev.contenido_html + "{email}" }))} className="h-7 text-[10px] bg-zinc-900 border-zinc-700 font-bold hover:bg-primary/10 hover:text-primary transition-all">
+                                                    {`{email}`}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                        <Textarea
+                                            id="contenido"
+                                            placeholder="Utiliza etiquetas HTML o texto plano. También puedes usar el Editor Visual para diseñar emails profesionales."
+                                            className="min-h-[180px] bg-zinc-900 border-zinc-700 font-mono text-xs leading-relaxed"
+                                            value={newCampana.contenido_html}
+                                            onChange={(e) => setNewCampana({ ...newCampana, contenido_html: e.target.value })}
+                                        />
                                     </div>
                                 )}
                             </div>
 
-                            <div className="grid gap-2 text-left">
-                                <div className="flex items-center justify-between">
-                                    <Label htmlFor="contenido" className="text-xs font-bold uppercase tracking-widest text-zinc-400">Mensaje HTML</Label>
-                                    <div className="flex gap-2">
-                                        <Button variant="outline" size="sm" onClick={() => insertVariable("nombre")} className="h-7 text-[10px] bg-zinc-900 border-zinc-700 font-bold hover:bg-primary/10 hover:text-primary transition-all">
-                                            {`{nombre}`}
-                                        </Button>
-                                        <Button variant="outline" size="sm" onClick={() => insertVariable("email")} className="h-7 text-[10px] bg-zinc-900 border-zinc-700 font-bold hover:bg-primary/10 hover:text-primary transition-all">
-                                            {`{email}`}
-                                        </Button>
-                                    </div>
-                                </div>
-                                <Textarea
-                                    id="contenido"
-                                    placeholder="Utiliza etiquetas HTML o texto plano. Recuerda incluir un llamado a la acción claro."
-                                    className="min-h-[180px] bg-zinc-900 border-zinc-700 font-mono text-xs leading-relaxed"
-                                    value={newCampana.contenido_html}
-                                    onChange={(e) => setNewCampana({ ...newCampana, contenido_html: e.target.value })}
-                                />
-                            </div>
-                        </div>
-
-                        <DialogFooter className="gap-2">
-                            <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="border-zinc-700 hover:bg-zinc-900 h-11 px-8 rounded-xl font-bold uppercase tracking-widest text-[11px]">
-                                Cancelar
-                            </Button>
-                            <Button onClick={handleCreate} className="h-11 px-8 rounded-xl font-bold uppercase tracking-widest text-[11px] bg-primary text-primary-foreground shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)]">
-                                {newCampana.programado_para ? <><Calendar className="w-3.5 h-3.5 mr-2" /> Programar</> : <><AlertCircle className="w-3.5 h-3.5 mr-2" /> Guardar Borrador</>}
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+                            <DialogFooter className="gap-2">
+                                <Button variant="outline" onClick={() => { setIsCreateOpen(false); resetForm() }} className="border-zinc-700 hover:bg-zinc-900 h-11 px-8 rounded-xl font-bold uppercase tracking-widest text-[11px]">
+                                    Cancelar
+                                </Button>
+                                <Button onClick={handleCreate} className="h-11 px-8 rounded-xl font-bold uppercase tracking-widest text-[11px] bg-primary text-primary-foreground shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)]">
+                                    {newCampana.programado_para ? <><Calendar className="w-3.5 h-3.5 mr-2" /> Programar</> : <><Send className="w-3.5 h-3.5 mr-2" /> Guardar Borrador</>}
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                </div>
             </div>
 
+            {/* ── Stats Cards ── */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="bg-zinc-900/40 border-zinc-800/80 backdrop-blur-sm group hover:border-primary/30 transition-all">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 group-hover:text-primary transition-colors flex items-center gap-2">
                             <Mail className="w-3 h-3" />
-                            Total Enviados
+                            Total Campañas
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-black text-white italic">0</div>
+                        <div className="text-3xl font-black text-white italic">{stats.totalCampanas}</div>
+                        <p className="text-[10px] text-zinc-600 mt-1">{stats.borradores} borradores · {stats.programadas} programadas</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-zinc-900/40 border-zinc-800/80 backdrop-blur-sm group hover:border-emerald-500/30 transition-all">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 group-hover:text-emerald-500 transition-colors flex items-center gap-2">
+                            <Send className="w-3 h-3" />
+                            Emails Enviados
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-3xl font-black text-white italic">{stats.totalEnviados}</div>
                     </CardContent>
                 </Card>
                 <Card className="bg-zinc-900/40 border-zinc-800/80 backdrop-blur-sm group hover:border-amber-500/30 transition-all">
@@ -449,33 +571,25 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-black text-white italic">0%</div>
+                        <div className="text-3xl font-black text-white italic">—</div>
+                        <p className="text-[10px] text-zinc-600 mt-1">Próximamente</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-zinc-900/40 border-zinc-800/80 backdrop-blur-sm group hover:border-sky-500/30 transition-all">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 group-hover:text-sky-500 transition-colors flex items-center gap-2">
-                            <Send className="w-3 h-3" />
+                            <BarChart3 className="w-3 h-3" />
                             Tasa de Click
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-black text-white italic">0%</div>
-                    </CardContent>
-                </Card>
-                <Card className="bg-zinc-900/40 border-zinc-800/80 backdrop-blur-sm group hover:border-emerald-500/30 transition-all">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 group-hover:text-emerald-500 transition-colors flex items-center gap-2">
-                            <Zap className="w-3 h-3" />
-                            Conversión
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-3xl font-black text-white italic">0%</div>
+                        <div className="text-3xl font-black text-white italic">—</div>
+                        <p className="text-[10px] text-zinc-600 mt-1">Próximamente</p>
                     </CardContent>
                 </Card>
             </div>
 
+            {/* ── Campaigns Table ── */}
             <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
                 <div className="flex items-center justify-between border-b border-zinc-800 pb-px">
                     <TabsList className="bg-transparent h-auto p-0 gap-8">
@@ -493,11 +607,13 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
                     <div className="flex items-center gap-2 pb-2">
                         <div className="relative">
                             <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-zinc-600" />
-                            <Input placeholder="Buscar campaña..." className="pl-9 h-9 w-[180px] md:w-[260px] bg-zinc-900/50 border-zinc-800 text-xs" />
+                            <Input
+                                placeholder="Buscar campaña..."
+                                className="pl-9 h-9 w-[180px] md:w-[260px] bg-zinc-900/50 border-zinc-800 text-xs"
+                                value={campaignSearch}
+                                onChange={(e) => setCampaignSearch(e.target.value)}
+                            />
                         </div>
-                        <Button variant="outline" size="icon" className="h-9 w-9 border-zinc-800 bg-zinc-900/50">
-                            <Filter className="h-3.5 w-3.5" />
-                        </Button>
                     </div>
                 </div>
 
@@ -527,9 +643,23 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
                                 ) : filteredCampanas.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={6} className="h-64 text-center text-zinc-500">
-                                            <div className="flex flex-col items-center justify-center gap-4 opacity-20">
-                                                <Mail className="w-16 h-16" />
-                                                <span className="text-xs font-bold uppercase tracking-[0.2em]">Silencio en la red...</span>
+                                            <div className="flex flex-col items-center justify-center gap-4">
+                                                <div className="opacity-20">
+                                                    <Mail className="w-16 h-16" />
+                                                </div>
+                                                <span className="text-xs font-bold uppercase tracking-[0.2em] opacity-40">
+                                                    {campaignSearch ? "No se encontraron campañas" : "Silencio en la red..."}
+                                                </span>
+                                                {!campaignSearch && (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => setShowBuilder(true)}
+                                                        className="h-8 text-[10px] font-bold uppercase tracking-widest border-zinc-800 hover:border-primary/30 hover:text-primary gap-1.5 mt-2"
+                                                    >
+                                                        <Palette className="w-3 h-3" /> Crear tu primer email
+                                                    </Button>
+                                                )}
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -573,7 +703,12 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/20 hover:text-primary rounded-lg">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 hover:bg-primary/20 hover:text-primary rounded-lg"
+                                                        onClick={() => setPreviewCampaign(c)}
+                                                    >
                                                         <Eye className="w-4 h-4" />
                                                     </Button>
                                                     {c.estado === "borrador" && (
@@ -602,6 +737,34 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
                 </TabsContent>
             </Tabs>
 
+            {/* ── Campaign Preview Dialog ── */}
+            <Dialog open={!!previewCampaign} onOpenChange={(open) => !open && setPreviewCampaign(null)}>
+                <DialogContent className="max-w-3xl bg-zinc-950 border-zinc-800 text-white max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-black italic flex items-center gap-2">
+                            <Eye className="w-5 h-5 text-primary" />
+                            PREVIEW: {previewCampaign?.titulo}
+                        </DialogTitle>
+                        <DialogDescription className="text-zinc-500">
+                            Asunto: {previewCampaign?.asunto}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="mt-4 rounded-xl overflow-hidden border border-zinc-800">
+                        {previewCampaign?.contenido_html && (
+                            <iframe
+                                srcDoc={previewCampaign.contenido_html
+                                    .replace(/{nombre}/g, "Carlos Ejemplo")
+                                    .replace(/{email}/g, "carlos@ejemplo.com")
+                                }
+                                className="w-full border-0 bg-white"
+                                style={{ height: "500px" }}
+                                title="Campaign Preview"
+                            />
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             <style jsx global>{`
                 .custom-scrollbar::-webkit-scrollbar {
                     width: 4px;
@@ -618,13 +781,5 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
                 }
             `}</style>
         </div>
-    )
-}
-
-function Zap({ className }: { className?: string }) {
-    return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-        </svg>
     )
 }

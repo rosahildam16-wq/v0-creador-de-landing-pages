@@ -153,6 +153,10 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
 
     // Local Video
     if (slide.videoSrc && videoRef.current) {
+      // Unmute if user has interacted ("Tap para Iniciar")
+      if (hasStarted) {
+        videoRef.current.muted = false
+      }
       const playPromise = videoRef.current.play()
       if (playPromise !== undefined) {
         playPromise.catch(error => console.error("TikTok local auto-play error:", error))
@@ -167,7 +171,7 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
         iframe.contentWindow.postMessage(JSON.stringify({ method: "setVolume", value: 1 }), "*")
       }
     }
-  }, [activeSlide, activeSlides])
+  }, [activeSlide, activeSlides, hasStarted])
 
   // ── Toggle play/pause (Vimeo or Local) ──
   const togglePlay = useCallback((slideIndex: number) => {
@@ -461,14 +465,20 @@ export function TikTokFeed({ onContinue, firstVideoEmbed, customSlides, customCo
                 ref={i === activeSlide ? videoRef : null}
                 className="absolute inset-0 h-full w-full object-cover"
                 playsInline
-                muted={i !== activeSlide}
+                // @ts-ignore — needed for older iOS WebViews
+                webkit-playsinline="true"
+                // @ts-ignore — needed for Android WebView (x5 kernel)
+                x5-playsinline="true"
+                x5-video-player-type="h5"
+                muted={!hasStarted || i !== activeSlide}
                 onEnded={() => setVideoFinished((prev) => ({ ...prev, [i]: true }))}
                 onPlay={() => setVideoPlaying((prev) => ({ ...prev, [i]: true }))}
                 onPause={() => setVideoPlaying((prev) => ({ ...prev, [i]: false }))}
                 preload="auto"
+                disablePictureInPicture
+                controlsList="nodownload nofullscreen noremoteplayback"
               >
                 <source src={slide.videoSrc} type="video/mp4" />
-                <source src={slide.videoSrc} type="video/quicktime" />
               </video>
             ) : slide.videoEmbed ? (
               <>
