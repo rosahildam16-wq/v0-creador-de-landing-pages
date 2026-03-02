@@ -276,13 +276,16 @@ export default function MetaAdsPage() {
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ memberId: "super-admin", adAccountId: accId, accessToken: token }),
                       })
-                      if (res.ok) {
-                        alert("Configuración guardada correctamente. Recargando...")
+                      const result = await res.json()
+                      if (res.ok && result.success) {
+                        alert("✅ Configuración guardada correctamente. Recargando datos...")
                         fetchData()
                         setShowConfig(false)
+                      } else {
+                        alert(`❌ Error al guardar: ${result.error || "Error desconocido"}`)
                       }
-                    } catch (e) {
-                      alert("Error al guardar")
+                    } catch (e: any) {
+                      alert(`❌ Error de conexión: ${e.message || "No se pudo conectar con el servidor"}`)
                     }
                   }}
                   className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:opacity-90"

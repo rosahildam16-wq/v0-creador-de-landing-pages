@@ -92,36 +92,49 @@ export async function saveMetaAdsConfig(memberId: string, config: MetaAdsConfig)
         updated_at: new Date().toISOString()
     }
 
-    // Try via Supabase client first
-    const supabase = createAdminClient()
-    if (supabase) {
-        try {
-            // Explicitly specify onConflict to help PostgREST
-            const { error } = await supabase
-                .from("meta_ads_config")
-                .upsert(payload, { onConflict: 'member_id' })
+    // Strategy 1: Direct REST API call (most reliable, bypasses PostgREST schema cache)
+    const restResult = await directSupabaseRest("POST", "meta_ads_config?on_conflict=member_id", payload)
 
-            if (!error) return // Success
-            console.warn("Supabase client upsert failed, falling back to direct REST:", error.message)
-        } catch (e) {
-            console.warn("Supabase client exception, falling back to direct REST:", e)
+    if (restResult && !(restResult as any).error) {
+        return // Success via direct REST
+    }
+
+    const restErrMsg = (restResult as any)?.message || ""
+    console.warn("Direct REST upsert failed:", restErrMsg)
+
+    // If table doesn't exist, try creating it first
+    if (restErrMsg.includes("relation") || restErrMsg.includes("does not exist") || restErrMsg.includes("404") || restErrMsg.includes("PGRST")) {
+        // Strategy 2: Try via Supabase client (may work if schema is cached)
+        const supabase = createAdminClient()
+        if (supabase) {
+            try {
+                const { error } = await supabase
+                    .from("meta_ads_config")
+                    .upsert(payload, { onConflict: 'member_id' })
+
+                if (!error) return // Success
+                console.warn("Supabase client upsert also failed:", error.message)
+
+                // Check if the table simply doesn't exist
+                if (error.message.includes("relation") || error.code === "42P01") {
+                    throw new Error(
+                        "La tabla meta_ads_config no existe. Ejecuta el script SQL 015_create_meta_ads_config.sql en tu panel de Supabase (SQL Editor) y luego ejecuta: NOTIFY pgrst, 'reload schema';"
+                    )
+                }
+                throw new Error(`Error al guardar: ${error.message}`)
+            } catch (e: any) {
+                if (e.message.includes("tabla meta_ads_config")) throw e
+                console.warn("Supabase client exception:", e)
+            }
         }
+
+        throw new Error(
+            "La tabla meta_ads_config no existe en la base de datos. Ve a Supabase SQL Editor y ejecuta el script de creación de tabla."
+        )
     }
 
-    // Fallback: Direct REST API call (bypasses schema cache issues)
-    const result = await directSupabaseRest("POST", "meta_ads_config?on_conflict=member_id", payload)
-
-    if (result && (result as any).error) {
-        const msg = (result as any).message || ""
-        if (msg.includes("PGRST205") || msg.includes("schema cache")) {
-            throw new Error("La base de datos se está actualizando. Por favor, intenta de nuevo en 10 segundos.")
-        }
-        throw new Error(`Error de base de datos: ${msg}`)
-    }
-
-    if (!result) {
-        throw new Error("No se pudo conectar con la base de datos (verifique configuración de Supabase)")
-    }
+    // Generic error
+    throw new Error(`Error al guardar configuración: ${restErrMsg || "No se pudo conectar con la base de datos"}`)
 }
 
 /**
