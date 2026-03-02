@@ -40,7 +40,12 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const supabase = await createClient()
+    const { createAdminClient } = await import("@/lib/supabase/admin")
+    const supabase = createAdminClient()
+    if (!supabase) {
+      return NextResponse.json({ error: "No database client" }, { status: 500 })
+    }
+
     const { id, settings } = await req.json()
 
     if (!id) {

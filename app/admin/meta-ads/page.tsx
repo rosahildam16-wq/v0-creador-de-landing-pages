@@ -271,6 +271,13 @@ export default function MetaAdsPage() {
                       return
                     }
                     try {
+                      // Step 1: Ensure the table exists
+                      await fetch("/api/meta-ads/setup", { method: "POST" })
+
+                      // Step 2: Wait a moment for schema refresh
+                      await new Promise(r => setTimeout(r, 1500))
+
+                      // Step 3: Save the config
                       const res = await fetch("/api/meta/insights", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
