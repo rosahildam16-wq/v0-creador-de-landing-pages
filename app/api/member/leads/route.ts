@@ -12,19 +12,36 @@ export async function GET(req: NextRequest) {
 
         const supabase = await createClient()
 
-        // 1. Get member details
+        // 1. Get member details (include member_id for attribution matching)
         const { data: member, error: memberError } = await supabase
             .from("community_members")
-            .select("community_id, role, username")
+            .select("community_id, role, username, member_id, name")
             .eq("email", email)
             .maybeSingle()
 
         if (memberError || !member) {
-            // If member not found in DB yet, return empty list instead of error to avoid UI crash
             return NextResponse.json([])
         }
 
-        // 2. Fetch leads assigned to this member (Try with AI insights first)
+        // Build all possible identifiers this member could be assigned as
+        const identifiers = new Set<string>()
+        if (member.username) identifiers.add(member.username)
+        if (member.member_id) identifiers.add(member.member_id)
+        if (member.name) identifiers.add(member.name)
+        // Also try email prefix as some systems use that
+        const emailPrefix = email.split("@")[0]
+        if (emailPrefix) identifiers.add(emailPrefix)
+
+        // Remove empty strings
+        identifiers.delete("")
+        const idArray = Array.from(identifiers)
+
+        if (idArray.length === 0) {
+            return NextResponse.json([])
+        }
+
+
+        // 2. Fetch leads assigned to this member (match ANY known identifier)
         let leadsResult = await supabase
             .from("leads")
             .select(`
@@ -36,7 +53,7 @@ export async function GET(req: NextRequest) {
                     suggested_message
                 )
             `)
-            .eq("asignado_a", member.username)
+            .in("asignado_a", idArray)
             .order("fecha_ingreso", { ascending: false })
 
         // Fallback for insights if join fails (table doesn't exist yet)
@@ -45,9 +62,10 @@ export async function GET(req: NextRequest) {
             leadsResult = await supabase
                 .from("leads")
                 .select("*")
-                .eq("asignado_a", member.username)
+                .in("asignado_a", idArray)
                 .order("fecha_ingreso", { ascending: false })
         }
+
 
         const rawLeads = leadsResult.data || []
         const leads = rawLeads.map((l: any) => ({
