@@ -1,3 +1,4 @@
+"use client"
 
 import { useState, useEffect, useMemo } from "react"
 import { Plus, Mail, Send, Calendar, Users, Eye, Search, Filter, Loader2, CheckCircle2, Clock, AlertCircle, User, Layout, ChevronDown } from "lucide-react"
