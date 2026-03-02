@@ -43,13 +43,13 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
     const [showBuilder, setShowBuilder] = useState(false)
     const [previewCampaign, setPreviewCampaign] = useState<CampanaEmail | null>(null)
 
-    // Form states
+    // Initialize state properly
     const [newCampana, setNewCampana] = useState({
         titulo: "",
         asunto: "",
         contenido_html: "",
         audiencia: "comunidad" as CampanaEmail["audiencia"],
-        community_id: communityId || "general",
+        community_id: communityId || "todas",
         programado_para: "",
         estado: "borrador" as EstadoCampana,
         audience_filters: {
@@ -83,7 +83,7 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
         let result = leads
         if (mode === "leader") {
             result = result.filter(l => l.community_id === communityId)
-        } else if (newCampana.community_id && newCampana.community_id !== "all") {
+        } else if (newCampana.community_id && newCampana.community_id !== "todas" && newCampana.community_id !== "all") {
             result = result.filter(l => l.community_id === newCampana.community_id)
         }
 
@@ -93,7 +93,7 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
                 l.email.toLowerCase().includes(leadSearch.toLowerCase())
             )
         }
-        return result.slice(0, 10)
+        return result.slice(0, 50)
     }, [leads, leadSearch, mode, communityId, newCampana.community_id])
 
     const handleCreate = async (sendImmediately: boolean = false) => {
@@ -393,6 +393,7 @@ export function MailingPanel({ mode, communityId }: MailingPanelProps) {
                                                     <SelectValue placeholder="Elegir comunidad" />
                                                 </SelectTrigger>
                                                 <SelectContent className="bg-zinc-950 border-zinc-800 text-white">
+                                                    <SelectItem value="todas">Todas las Comunidades</SelectItem>
                                                     {communities.map(c => (
                                                         <SelectItem key={c.id} value={c.id}>{c.nombre}</SelectItem>
                                                     ))}
