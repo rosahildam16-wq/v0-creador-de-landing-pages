@@ -1,6 +1,5 @@
 "use client"
 
-import { use } from "react"
 import { Suspense } from "react"
 import { FunnelController } from "@/components/funnel-controller"
 import { MetaPixel } from "@/components/shared/meta-pixel"
@@ -22,8 +21,8 @@ function ReferralFunnel({ memberSlug, funnelId }: { memberSlug: string; funnelId
   )
 }
 
-export default function ReferralPage({ params }: { params: Promise<{ member: string; funnel: string }> }) {
-  const { member, funnel } = use(params)
+export default function ReferralPage({ params }: { params: { member: string; funnel: string } }) {
+  const { member, funnel } = params
 
   return (
     <Suspense>
