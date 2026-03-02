@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Progress } from "@/components/ui/progress"
 import { playQuizClick, playQuizResult } from "@/lib/sounds"
+import { trackMetaEvent } from "@/components/shared/meta-pixel"
 
 interface Props {
   onContinue: () => void
@@ -149,6 +150,14 @@ export function PsychQuiz({ onContinue, onLeadCreated, embudoId = "nomada-vip" }
       if (data.lead_id && onLeadCreated) {
         onLeadCreated(data.lead_id)
       }
+
+      // 🎯 Fire Meta Pixel Lead event for campaign optimization
+      trackMetaEvent("Lead", {
+        content_name: embudoId,
+        content_category: "funnel_registration",
+        value: 0,
+        currency: "USD",
+      })
     } catch {
       // Silently fail - don't block the funnel experience
     }

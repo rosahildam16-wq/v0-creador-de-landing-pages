@@ -261,6 +261,66 @@ export default function MetaAdsPage() {
                 </div>
               </div>
 
+              {/* ── META PIXEL CONFIG (like Hotmart) ── */}
+              <div className="border-t border-border/30 pt-4">
+                <div className="mb-3">
+                  <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-500/10"><Target className="h-3.5 w-3.5 text-blue-400" /></span>
+                    Meta Pixel (Conversiones)
+                  </h4>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Igual que en Hotmart: conecta tu Pixel para trackear leads que llegan desde campañas. Meta optimiza tus anuncios automáticamente.
+                  </p>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Pixel ID</label>
+                    <input
+                      type="text"
+                      placeholder="Ej: 123456789012345"
+                      className="w-full rounded-lg border border-border/50 bg-secondary/50 px-4 py-2 text-sm focus:border-primary focus:outline-none"
+                      id="config-pixel-id"
+                    />
+                    <p className="text-[10px] text-muted-foreground/60">Lo encuentras en Meta Events Manager → Configuración</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Conversions API Token <span className="text-muted-foreground/40">(Opcional)</span></label>
+                    <input
+                      type="password"
+                      placeholder="Token del servidor..."
+                      className="w-full rounded-lg border border-border/50 bg-secondary/50 px-4 py-2 text-sm focus:border-primary focus:outline-none"
+                      id="config-pixel-token"
+                    />
+                    <p className="text-[10px] text-muted-foreground/60">Para Server-Side Events (mayor precisión)</p>
+                  </div>
+                </div>
+                <button
+                  onClick={async () => {
+                    const pixelId = (document.getElementById("config-pixel-id") as HTMLInputElement).value
+                    const pixelToken = (document.getElementById("config-pixel-token") as HTMLInputElement).value
+                    if (!pixelId) { alert("Ingresa tu Pixel ID"); return }
+                    try {
+                      const res = await fetch("/api/pixel/config", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ embudo_id: "global", pixel_id: pixelId, pixel_token: pixelToken }),
+                      })
+                      const result = await res.json()
+                      if (res.ok && result.success) {
+                        alert("✅ Pixel configurado. Se activará en todos tus funnels automáticamente")
+                      } else {
+                        alert(`❌ Error: ${result.error || "Error desconocido"}${result.sql ? "\n\nEjecuta este SQL en Supabase:\n" + result.sql : ""}`)
+                      }
+                    } catch (e: any) {
+                      alert(`❌ Error de conexión: ${e.message}`)
+                    }
+                  }}
+                  className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-500 transition-colors"
+                >
+                  💎 Guardar Pixel
+                </button>
+              </div>
+
               <div className="flex flex-wrap gap-2 pt-2">
                 <button
                   onClick={async () => {
