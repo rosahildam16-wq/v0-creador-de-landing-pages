@@ -65,11 +65,13 @@ export async function getLeads(): Promise<Lead[]> {
       .from("leads")
       .select("*")
       .order("fecha_ingreso", { ascending: false })
-    if (!error && data) {
-      return data.map((row: Record<string, any>) => mapLeadRow(row))
+    if (error) {
+      console.error("Error fetching leads from Supabase:", error.message)
+      return [] // Never fallback to mock when Supabase is configured
     }
+    return (data || []).map((row: Record<string, any>) => mapLeadRow(row))
   }
-  // Fallback: mock data
+  // Fallback: mock data (only when Supabase is NOT configured)
   return [...leads].sort(
     (a, b) => new Date(b.fecha_ingreso).getTime() - new Date(a.fecha_ingreso).getTime()
   )
