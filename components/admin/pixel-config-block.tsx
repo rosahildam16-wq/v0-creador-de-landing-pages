@@ -66,8 +66,32 @@ export function PixelConfigBlock({ embudoId, embudoNombre, memberId = "admin" }:
                 setIsConnected(true)
                 setShowConfig(false)
                 alert("✅ Pixel configurado correctamente. Los eventos se dispararán automáticamente en tus enlaces personales.")
+            } else if (result.error?.includes("schema cache") || result.error?.includes("pixel_config")) {
+                // Table exists but schema cache not refreshed — try setup endpoint
+                await fetch("/api/pixel/setup").catch(() => { })
+                // Wait a bit for schema to refresh, then retry once
+                await new Promise(resolve => setTimeout(resolve, 2000))
+                const retry = await fetch("/api/pixel/config", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        embudo_id: embudoId,
+                        member_id: memberId,
+                        pixel_id: pixelId.trim(),
+                        pixel_token: pixelToken.trim(),
+                        enabled: true,
+                    }),
+                })
+                const retryResult = await retry.json()
+                if (retry.ok && retryResult.success) {
+                    setIsConnected(true)
+                    setShowConfig(false)
+                    alert("✅ Pixel configurado correctamente.")
+                } else {
+                    alert("⚠️ La base de datos necesita refrescar su caché. Por favor, espera 1 minuto y vuelve a intentarlo. Si el problema persiste, contacta al administrador.")
+                }
             } else {
-                alert(`❌ Error: ${result.error || "Error desconocido"}${result.sql ? "\n\nEjecuta este SQL en Supabase:\n" + result.sql : ""}`)
+                alert(`❌ Error: ${result.error || "Error desconocido"}`)
             }
         } catch (e: any) {
             alert(`❌ Error: ${e.message}`)
