@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     // Check if Alivio is configured
     if (!process.env.ALIVIO_API_KEY) {
       return NextResponse.json({
-        invoiceUrl: `${baseUrl}/pricing/status?demo=true`,
+        invoiceUrl: `/pricing/status?demo=true`,
         orderId,
         demo: true,
         message: "Alivio no está configurado. Agrega ALIVIO_API_KEY.",
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
     const paymentData = result.data?.payment
 
     return NextResponse.json({
-      invoiceUrl: paymentData?.paymentUrl || paymentData?.payment_url || `${baseUrl}/pricing/status?payment_id=${paymentData?.id}&status=pending`,
+      invoiceUrl: paymentData?.paymentUrl || paymentData?.payment_url || `/pricing/status?payment_id=${paymentData?.id}&status=pending`,
       paymentId: paymentData?.id,
       orderId,
       provider: "alivio",
