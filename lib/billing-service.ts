@@ -2,7 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 
 /**
  * Core billing logic for Magic Funnel.
- * Prepares the system for multi-gateway support (Alivio, Stripe, etc.)
+ * Multi-gateway support (Alivio primary, extensible for Stripe, etc.)
  */
 
 export type SubscriptionStatus = "trial" | "active" | "past_due" | "canceled" | "none"

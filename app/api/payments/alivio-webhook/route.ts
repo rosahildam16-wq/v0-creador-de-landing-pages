@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifyAlivioWebhook } from "@/lib/alivio"
-import { createAdminClient } from "@/lib/supabase/admin"
+import { activateSubscription, recordPayment, getSubscriptionById } from "@/lib/subscription-data"
 
 /**
  * POST /api/payments/alivio-webhook
@@ -41,75 +41,71 @@ export async function POST(request: NextRequest) {
         const subscriptionIdMatch = orderId.match(/^sub_(.+)_\d+$/)
         const subscriptionId = subscriptionIdMatch?.[1]
 
-        const supabase = createAdminClient()
-
         switch (eventType) {
             case "payment.finished": {
-                // ✅ Payment completed - activate subscription
+                // ✅ Payment completed — activate subscription
                 console.log("[Alivio] Payment completed!", { orderId, subscriptionId })
 
-                if (supabase && subscriptionId) {
-                    // Update subscription to active
-                    const { error } = await supabase
-                        .from("subscriptions")
-                        .update({
-                            status: "active",
-                            payment_id: payment.id,
-                            payment_method: "alivio",
-                            paid_at: new Date().toISOString(),
-                            updated_at: new Date().toISOString(),
-                        })
-                        .eq("id", subscriptionId)
-
-                    if (error) {
-                        console.error("Error activating subscription:", error)
-                    } else {
-                        console.log(`Subscription ${subscriptionId} activated!`)
+                if (subscriptionId) {
+                    // Verify subscription exists
+                    const subscription = await getSubscriptionById(subscriptionId)
+                    if (!subscription) {
+                        console.error("Subscription not found:", subscriptionId)
+                        return NextResponse.json({ error: "Subscription not found" }, { status: 404 })
                     }
 
-                    // Log the transaction
-                    await supabase.from("payment_transactions").insert({
-                        subscription_id: subscriptionId,
-                        payment_id: payment.id,
-                        amount: payment.amount,
-                        currency: payment.currency || "USD",
-                        status: "completed",
+                    // Activate the subscription
+                    await activateSubscription({
+                        subscriptionId,
+                        paymentId: payment.id,
+                        paymentMethod: "alivio",
+                    })
+                    console.log(`Subscription ${subscriptionId} activated!`)
+
+                    // Record the transaction
+                    await recordPayment({
+                        subscriptionId,
+                        providerPaymentId: payment.id,
+                        providerOrderId: orderId,
                         provider: "alivio",
-                        order_id: orderId,
-                        raw_data: payment,
-                    }).catch(() => { })
+                        amountUsdt: payment.amount || 0,
+                        status: "finished",
+                        rawData: payment,
+                    })
                 }
                 break
             }
 
             case "payment.failed": {
                 // ❌ Payment failed
-                console.log("[Alivio] Payment failed", { orderId })
-                if (supabase && subscriptionId) {
-                    await supabase
-                        .from("subscriptions")
-                        .update({
-                            status: "payment_failed",
-                            updated_at: new Date().toISOString(),
-                        })
-                        .eq("id", subscriptionId)
-                        .catch(() => { })
+                console.log("[Alivio] Payment failed", { orderId, subscriptionId })
+                if (subscriptionId) {
+                    await recordPayment({
+                        subscriptionId,
+                        providerPaymentId: payment.id || `failed_${Date.now()}`,
+                        providerOrderId: orderId,
+                        provider: "alivio",
+                        amountUsdt: payment.amount || 0,
+                        status: "failed",
+                        rawData: payment,
+                    })
                 }
                 break
             }
 
             case "payment.expired": {
                 // ⏰ Payment expired
-                console.log("[Alivio] Payment expired", { orderId })
-                if (supabase && subscriptionId) {
-                    await supabase
-                        .from("subscriptions")
-                        .update({
-                            status: "expired",
-                            updated_at: new Date().toISOString(),
-                        })
-                        .eq("id", subscriptionId)
-                        .catch(() => { })
+                console.log("[Alivio] Payment expired", { orderId, subscriptionId })
+                if (subscriptionId) {
+                    await recordPayment({
+                        subscriptionId,
+                        providerPaymentId: payment.id || `expired_${Date.now()}`,
+                        providerOrderId: orderId,
+                        provider: "alivio",
+                        amountUsdt: payment.amount || 0,
+                        status: "expired",
+                        rawData: payment,
+                    })
                 }
                 break
             }
@@ -117,7 +113,7 @@ export async function POST(request: NextRequest) {
             case "payment.waiting":
             case "payment.confirming":
             case "payment.created": {
-                // Informational events - just log
+                // Informational events — just log
                 console.log(`[Alivio] ${eventType}`, { orderId })
                 break
             }

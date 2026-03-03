@@ -77,10 +77,9 @@ export function PricingCards() {
       }
 
       if (data.demo) {
-        // NOWPayments not configured - redirect to status page
         router.push(data.invoiceUrl)
       } else {
-        // Redirect to NOWPayments checkout
+        // Redirect to Alivio payment
         window.location.href = data.invoiceUrl
       }
     } catch (err) {
@@ -103,8 +102,8 @@ export function PricingCards() {
             <div
               key={plan.id}
               className={`relative flex flex-col rounded-2xl border backdrop-blur-xl transition-all duration-500 hover:scale-[1.02] ${isPopular
-                  ? "border-violet-500/30 bg-violet-500/[0.05] shadow-[0_0_60px_-15px_rgba(139,92,246,0.2)]"
-                  : "border-white/[0.06] bg-white/[0.02]"
+                ? "border-violet-500/30 bg-violet-500/[0.05] shadow-[0_0_60px_-15px_rgba(139,92,246,0.2)]"
+                : "border-white/[0.06] bg-white/[0.02]"
                 }`}
             >
               {/* Popular badge */}
@@ -149,8 +148,8 @@ export function PricingCards() {
                   onClick={() => handleSelectPlan(plan.id)}
                   disabled={loadingPlan !== null}
                   className={`relative w-full rounded-xl px-6 py-3.5 text-sm font-semibold text-white transition-all duration-300 disabled:opacity-50 ${isPopular
-                      ? "bg-gradient-to-r from-violet-600 to-fuchsia-500 hover:shadow-[0_0_30px_-5px_rgba(139,92,246,0.4)]"
-                      : "border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.12]"
+                    ? "bg-gradient-to-r from-violet-600 to-fuchsia-500 hover:shadow-[0_0_30px_-5px_rgba(139,92,246,0.4)]"
+                    : "border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.12]"
                     }`}
                 >
                   {loadingPlan === plan.id ? (
@@ -158,8 +157,10 @@ export function PricingCards() {
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Procesando...
                     </span>
+                  ) : user ? (
+                    "Suscribirse ahora"
                   ) : (
-                    "Comenzar prueba gratis (5 d\u00EDas)"
+                    "Comenzar ahora"
                   )}
                 </button>
               </div>

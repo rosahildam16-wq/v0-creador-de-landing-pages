@@ -80,7 +80,7 @@ export default function AdminConfiguracionPage() {
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Procesador</span>
-              <span className="text-sm font-medium text-foreground">NOWPayments (USDT)</span>
+              <span className="text-sm font-medium text-foreground">Alivio Payment</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Planes disponibles</span>

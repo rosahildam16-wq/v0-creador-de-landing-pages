@@ -1,4 +1,4 @@
-// Subscription & Payment types for NOWPayments USDT integration
+// Subscription & Payment types — Alivio Payment Gateway integration
 
 export type SubscriptionStatus = "trial" | "active" | "pending_payment" | "expired" | "cancelled"
 
@@ -6,11 +6,9 @@ export type PaymentStatus =
   | "waiting"
   | "confirming"
   | "confirmed"
-  | "sending"
   | "finished"
   | "failed"
   | "expired"
-  | "partially_paid"
   | "refunded"
 
 export interface SubscriptionPlan {
@@ -37,7 +35,8 @@ export interface Subscription {
   current_period_start: string | null
   current_period_end: string | null
   paid_by: string | null
-  nowpayments_payment_id: string | null
+  payment_id: string | null
+  payment_method: string | null
   created_at: string
   updated_at: string
   // Joined fields
@@ -47,53 +46,15 @@ export interface Subscription {
 export interface Payment {
   id: string
   subscription_id: string
-  nowpayments_payment_id: string | null
-  nowpayments_invoice_id: string | null
-  nowpayments_order_id: string | null
+  provider_payment_id: string | null
+  provider_invoice_id: string | null
+  provider_order_id: string | null
+  provider: string
   amount_usdt: number
   status: PaymentStatus
-  pay_address: string | null
-  network: string | null
+  raw_data: any
   created_at: string
   updated_at: string
-}
-
-// NOWPayments API types
-export interface NowPaymentsInvoice {
-  id: string
-  token_id: string
-  order_id: string
-  order_description: string
-  price_amount: number
-  price_currency: string
-  pay_currency: string | null
-  ipn_callback_url: string
-  invoice_url: string
-  success_url: string
-  cancel_url: string
-  created_at: string
-  updated_at: string
-}
-
-export interface NowPaymentsIPNPayload {
-  payment_id: number
-  invoice_id: number | null
-  payment_status: string
-  pay_address: string
-  price_amount: number
-  price_currency: string
-  pay_amount: number
-  pay_currency: string
-  order_id: string
-  order_description: string
-  outcome_amount: number
-  outcome_currency: string
-  created_at: string
-  updated_at: string
-  actually_paid: number
-  actually_paid_at_fiat: number
-  purchase_id: string
-  network?: string
 }
 
 export const PLAN_TIERS = {

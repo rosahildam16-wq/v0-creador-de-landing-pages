@@ -146,11 +146,12 @@ export async function createTrialSubscription(params: {
 }
 
 /**
- * Activate a subscription after successful payment.
+ * Activate a subscription after successful payment (Alivio).
  */
 export async function activateSubscription(params: {
   subscriptionId: string
-  nowpaymentsPaymentId: string
+  paymentId: string
+  paymentMethod?: string
 }): Promise<Subscription> {
   const supabase = createAdminClient()
   if (!supabase) throw new Error("Supabase client not available")
@@ -164,7 +165,8 @@ export async function activateSubscription(params: {
       status: "active",
       current_period_start: now.toISOString(),
       current_period_end: periodEnd.toISOString(),
-      nowpayments_payment_id: params.nowpaymentsPaymentId,
+      payment_id: params.paymentId,
+      payment_method: params.paymentMethod || "alivio",
       updated_at: now.toISOString(),
     })
     .eq("id", params.subscriptionId)
@@ -180,13 +182,13 @@ export async function activateSubscription(params: {
  */
 export async function recordPayment(params: {
   subscriptionId: string
-  nowpaymentsPaymentId: string
-  nowpaymentsInvoiceId?: string
-  nowpaymentsOrderId?: string
+  providerPaymentId: string
+  providerInvoiceId?: string
+  providerOrderId?: string
+  provider: string
   amountUsdt: number
   status: string
-  payAddress?: string
-  network?: string
+  rawData?: any
 }) {
   const supabase = createAdminClient()
   if (!supabase) return
@@ -194,16 +196,16 @@ export async function recordPayment(params: {
   const { error } = await supabase.from("payments").upsert(
     {
       subscription_id: params.subscriptionId,
-      nowpayments_payment_id: params.nowpaymentsPaymentId,
-      nowpayments_invoice_id: params.nowpaymentsInvoiceId || null,
-      nowpayments_order_id: params.nowpaymentsOrderId || null,
+      provider_payment_id: params.providerPaymentId,
+      provider_invoice_id: params.providerInvoiceId || null,
+      provider_order_id: params.providerOrderId || null,
+      provider: params.provider,
       amount_usdt: params.amountUsdt,
       status: params.status,
-      pay_address: params.payAddress || null,
-      network: params.network || null,
+      raw_data: params.rawData || null,
       updated_at: new Date().toISOString(),
     },
-    { onConflict: "nowpayments_payment_id" }
+    { onConflict: "provider_payment_id" }
   )
 
   if (error) throw new Error(`Error recording payment: ${error.message}`)

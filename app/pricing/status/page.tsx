@@ -72,14 +72,14 @@ function PaymentStatusContent() {
       icon: Loader2,
       iconClass: "w-16 h-16 text-violet-400 animate-spin",
       title: "Verificando pago...",
-      description: "Estamos confirmando tu transaccion en la blockchain.",
+      description: "Estamos confirmando tu pago con Alivio Payment.",
       showCTA: false,
     },
     demo: {
       icon: AlertTriangle,
       iconClass: "w-16 h-16 text-amber-400",
       title: "Modo demostracion",
-      description: "NOWPayments no esta configurado. Cuando agregues las variables de entorno (NOWPAYMENTS_API_KEY, NOWPAYMENTS_IPN_SECRET), los pagos reales en USDT estaran habilitados.",
+      description: "Alivio Payment no esta configurado. Agrega ALIVIO_API_KEY en las variables de entorno para habilitar pagos reales.",
       showCTA: true,
     },
     success: {
@@ -93,7 +93,7 @@ function PaymentStatusContent() {
       icon: Clock,
       iconClass: "w-16 h-16 text-violet-400",
       title: "Esperando confirmacion",
-      description: "Tu pago esta siendo procesado en la blockchain. Esto puede tardar unos minutos. Esta pagina se actualizara automaticamente.",
+      description: "Tu pago esta siendo procesado por Alivio. Esto puede tardar unos minutos. Esta pagina se actualizara automaticamente.",
       showCTA: false,
     },
     failed: {

@@ -1,6 +1,6 @@
 -- ============================================
 -- Subscription Plans, Subscriptions & Payments
--- NOWPayments USDT integration
+-- Alivio Payment Gateway integration
 -- ============================================
 
 -- Tabla de planes de suscripcion
@@ -29,22 +29,23 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   current_period_start timestamptz,
   current_period_end timestamptz,
   paid_by text,
-  nowpayments_payment_id text,
+  payment_id text,
+  payment_method text DEFAULT 'alivio',
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
 
--- Tabla de pagos
+-- Tabla de pagos (multi-gateway)
 CREATE TABLE IF NOT EXISTS payments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   subscription_id uuid REFERENCES subscriptions(id) ON DELETE CASCADE,
-  nowpayments_payment_id text UNIQUE,
-  nowpayments_invoice_id text,
-  nowpayments_order_id text,
+  provider_payment_id text UNIQUE,
+  provider_invoice_id text,
+  provider_order_id text,
+  provider text DEFAULT 'alivio',
   amount_usdt numeric(10,2),
-  status text DEFAULT 'waiting' CHECK (status IN ('waiting', 'confirming', 'confirmed', 'sending', 'finished', 'failed', 'expired', 'partially_paid', 'refunded')),
-  pay_address text,
-  network text,
+  status text DEFAULT 'waiting' CHECK (status IN ('waiting', 'confirming', 'confirmed', 'finished', 'failed', 'expired', 'refunded')),
+  raw_data jsonb,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
@@ -53,9 +54,9 @@ CREATE TABLE IF NOT EXISTS payments (
 CREATE INDEX IF NOT EXISTS idx_subscriptions_email ON subscriptions(user_email);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_paid_by ON subscriptions(paid_by);
-CREATE INDEX IF NOT EXISTS idx_payments_np_id ON payments(nowpayments_payment_id);
-CREATE INDEX IF NOT EXISTS idx_payments_invoice_id ON payments(nowpayments_invoice_id);
+CREATE INDEX IF NOT EXISTS idx_payments_provider_id ON payments(provider_payment_id);
 CREATE INDEX IF NOT EXISTS idx_payments_subscription ON payments(subscription_id);
+CREATE INDEX IF NOT EXISTS idx_payments_provider ON payments(provider);
 
 -- Seed: Insertar planes predeterminados
 INSERT INTO subscription_plans (id, nombre, precio_usdt, periodo, max_leads, max_embudos, max_miembros, features) VALUES
