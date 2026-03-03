@@ -31,7 +31,7 @@ export async function GET(request: Request) {
   // Generate OAuth URL
   if (!process.env.ZOOM_CLIENT_ID || !process.env.ZOOM_CLIENT_SECRET) {
     return NextResponse.json(
-      { error: "Variables ZOOM de entorno no configuradas." },
+      { error: "Variables de entorno de Zoom no configuradas." },
       { status: 500 }
     )
   }

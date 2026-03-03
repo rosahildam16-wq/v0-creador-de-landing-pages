@@ -116,7 +116,11 @@ export default function MemberIntegrationsPage() {
             if (data.url) {
                 window.location.href = data.url
             } else if (data.error) {
-                alert(data.error)
+                if (data.error.includes("Variables") && user?.role === "super_admin") {
+                    alert(`⚠️ ${data.error}\n\nPara el dueño: Accede a tu proveedor de hosting (Vercel/etc) y configura las variables: \n${provider === "google" ? "GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET" : "ZOOM_CLIENT_ID y ZOOM_CLIENT_SECRET"}`)
+                } else {
+                    alert(data.error)
+                }
             }
         } catch (err) {
             console.error(err)
