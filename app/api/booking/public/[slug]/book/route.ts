@@ -44,6 +44,33 @@ export async function POST(
         const startTime = new Date(datetime)
         const endTime = new Date(startTime.getTime() + cal.duration_minutes * 60 * 1000)
 
+        // 4. Generate Zoom meeting if applicable
+        let locationValue = null
+        let meetingDetails = null
+
+        const { data: calWithLoc } = await supabase
+            .from("booking_calendars")
+            .select("location_type, location_value")
+            .eq("id", cal.id)
+            .single()
+
+        if (calWithLoc?.location_type === "zoom") {
+            const { createZoomMeeting } = await import("@/lib/zoom")
+            const meeting = await createZoomMeeting({
+                ownerEmail: cal.owner_email,
+                topic: `Cita: ${guest_name} - ${cal.name}`,
+                startTime: startTime.toISOString(),
+                duration: cal.duration_minutes,
+                guestEmail: guest_email
+            })
+            if (meeting) {
+                locationValue = meeting.join_url
+                meetingDetails = meeting
+            }
+        } else {
+            locationValue = calWithLoc?.location_value
+        }
+
         // Try to insert (unique constraint prevents double booking)
         const { data: booking, error: bookError } = await supabase
             .from("bookings")
@@ -55,6 +82,8 @@ export async function POST(
                 guest_email,
                 guest_phone: guest_phone || null,
                 guest_answers: answers || {},
+                location_url: locationValue,
+                meeting_details: meetingDetails,
                 status: "confirmed",
             })
             .select()
