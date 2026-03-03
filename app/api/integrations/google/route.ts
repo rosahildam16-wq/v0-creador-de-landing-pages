@@ -22,6 +22,9 @@ export async function GET(request: Request) {
   const memberId = session.user.memberId || session.user.email
 
   if (action === "status") {
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      return NextResponse.json({ connected: false, error: "Variables de entorno de Google no configuradas." })
+    }
     const integration = await getIntegration(memberId, "google")
     if (integration) {
       return NextResponse.json({

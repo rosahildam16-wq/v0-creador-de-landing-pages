@@ -2,24 +2,22 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
     MessageSquare,
     Calendar,
     Video,
     Plug,
-    ExternalLink,
     Check,
-    X,
     Loader2,
-    AlertCircle
+    AlertCircle,
+    ExternalLink,
+    Settings
 } from "lucide-react"
-import { cn } from "@/lib/utils"
 
 type IntegrationProvider = "whatsapp" | "google" | "zoom"
-type ConnectionStatus = "connected" | "disconnected" | "loading"
+type ConnectionStatus = "connected" | "disconnected" | "loading" | "config_needed"
 
 interface IntegrationInfo {
     provider: IntegrationProvider
@@ -27,7 +25,6 @@ interface IntegrationInfo {
     description: string
     icon: React.ReactNode
     accentColor: string
-    featureKey: "zoom_enabled" | "calendar_enabled" | "whatsapp_reminders_enabled"
 }
 
 export default function MemberIntegrationsPage() {
@@ -37,8 +34,7 @@ export default function MemberIntegrationsPage() {
         google: "loading",
         zoom: "loading",
     })
-
-    const [communitySettings, setCommunitySettings] = useState<any>(null)
+    const [configErrors, setConfigErrors] = useState<Record<string, string>>({})
     const [loadingSettings, setLoadingSettings] = useState(true)
 
     const integrations: IntegrationInfo[] = [
@@ -48,7 +44,6 @@ export default function MemberIntegrationsPage() {
             description: "Envía recordatorios automáticos de citas por WhatsApp.",
             icon: <MessageSquare className="h-5 w-5 text-emerald-500" />,
             accentColor: "#22c55e",
-            featureKey: "whatsapp_reminders_enabled"
         },
         {
             provider: "google",
@@ -56,7 +51,6 @@ export default function MemberIntegrationsPage() {
             description: "Sincroniza tus citas con tu calendario personal de Google.",
             icon: <Calendar className="h-5 w-5 text-blue-500" />,
             accentColor: "#3b82f6",
-            featureKey: "calendar_enabled"
         },
         {
             provider: "zoom",
@@ -64,27 +58,13 @@ export default function MemberIntegrationsPage() {
             description: "Genera enlaces de reuniones de Zoom automáticamente para tus citas.",
             icon: <Video className="h-5 w-5 text-[#2D8CFF]" />,
             accentColor: "#2D8CFF",
-            featureKey: "zoom_enabled"
         }
     ]
 
     useEffect(() => {
         async function fetchData() {
-            if (!user?.communityId) return
+            setLoadingSettings(false)
 
-            // Load community settings to see what's allowed
-            try {
-                const cRes = await fetch(`/api/communities?communityId=${user.communityId}`)
-                const cData = await cRes.json()
-                const community = cData.communities.find((c: any) => c.id === user.communityId)
-                setCommunitySettings(community?.settings || {})
-            } catch (err) {
-                console.error("Error loading community settings:", err)
-            } finally {
-                setLoadingSettings(false)
-            }
-
-            // Check personal integration statuses
             for (const provider of ["whatsapp", "google", "zoom"] as IntegrationProvider[]) {
                 if (provider === "whatsapp") {
                     setStatuses(prev => ({ ...prev, whatsapp: "disconnected" }))
@@ -94,7 +74,14 @@ export default function MemberIntegrationsPage() {
                 try {
                     const res = await fetch(`/api/integrations/${provider}?action=status`)
                     const data = await res.json()
-                    setStatuses(prev => ({ ...prev, [provider]: data.connected ? "connected" : "disconnected" }))
+                    if (data.connected) {
+                        setStatuses(prev => ({ ...prev, [provider]: "connected" }))
+                    } else if (data.error && data.error.includes("Variables")) {
+                        setStatuses(prev => ({ ...prev, [provider]: "config_needed" }))
+                        setConfigErrors(prev => ({ ...prev, [provider]: data.error }))
+                    } else {
+                        setStatuses(prev => ({ ...prev, [provider]: "disconnected" }))
+                    }
                 } catch {
                     setStatuses(prev => ({ ...prev, [provider]: "disconnected" }))
                 }
@@ -105,10 +92,7 @@ export default function MemberIntegrationsPage() {
     }, [user])
 
     const handleConnect = async (provider: IntegrationProvider) => {
-        if (provider === "whatsapp") {
-            alert("Integración de WhatsApp próximamente disponible.")
-            return
-        }
+        if (provider === "whatsapp") return
 
         try {
             const res = await fetch(`/api/integrations/${provider}`)
@@ -116,8 +100,9 @@ export default function MemberIntegrationsPage() {
             if (data.url) {
                 window.location.href = data.url
             } else if (data.error) {
-                if (data.error.includes("Variables") && user?.role === "super_admin") {
-                    alert(`⚠️ ${data.error}\n\nPara el dueño: Accede a tu proveedor de hosting (Vercel/etc) y configura las variables: \n${provider === "google" ? "GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET" : "ZOOM_CLIENT_ID y ZOOM_CLIENT_SECRET"}`)
+                if (data.error.includes("Variables")) {
+                    setStatuses(prev => ({ ...prev, [provider]: "config_needed" }))
+                    setConfigErrors(prev => ({ ...prev, [provider]: data.error }))
                 } else {
                     alert(data.error)
                 }
@@ -141,6 +126,8 @@ export default function MemberIntegrationsPage() {
         }
     }
 
+    const isAdmin = user?.role === "super_admin"
+
     if (loadingSettings) {
         return (
             <div className="flex flex-col items-center justify-center py-20">
@@ -149,6 +136,8 @@ export default function MemberIntegrationsPage() {
             </div>
         )
     }
+
+    const needsConfig = Object.values(statuses).some(s => s === "config_needed")
 
     return (
         <div className="flex flex-col gap-8 pb-20">
@@ -165,9 +154,74 @@ export default function MemberIntegrationsPage() {
                 </p>
             </div>
 
+            {/* Admin Setup Guide */}
+            {needsConfig && isAdmin && (
+                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.03] p-6 space-y-4">
+                    <div className="flex items-center gap-3">
+                        <Settings className="h-5 w-5 text-amber-400" />
+                        <h3 className="font-bold text-foreground">Configuración requerida</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                        Para habilitar las integraciones, necesitas crear credenciales OAuth en Google y Zoom, y agregarlas como variables de entorno en Vercel.
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        {statuses.google === "config_needed" && (
+                            <div className="rounded-xl border border-border/30 bg-card/50 p-4 space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <Calendar className="h-4 w-4 text-blue-500" />
+                                    <span className="text-sm font-semibold text-foreground">Google Calendar</span>
+                                </div>
+                                <ol className="text-xs text-muted-foreground space-y-1 list-decimal pl-4">
+                                    <li>Ve a Google Cloud Console</li>
+                                    <li>Crea un proyecto &quot;Magic Funnel&quot;</li>
+                                    <li>Habilita Google Calendar API</li>
+                                    <li>Crea credenciales OAuth 2.0</li>
+                                    <li>Redirect URI: <code className="text-primary text-[10px]">https://magicfunnel.app/api/integrations/google/callback</code></li>
+                                </ol>
+                                <a
+                                    href="https://console.cloud.google.com/apis/credentials"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 text-xs font-semibold text-blue-400 hover:bg-blue-500/20 transition-colors"
+                                >
+                                    <ExternalLink className="h-3 w-3" />
+                                    Google Console
+                                </a>
+                            </div>
+                        )}
+                        {statuses.zoom === "config_needed" && (
+                            <div className="rounded-xl border border-border/30 bg-card/50 p-4 space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <Video className="h-4 w-4 text-[#2D8CFF]" />
+                                    <span className="text-sm font-semibold text-foreground">Zoom Meetings</span>
+                                </div>
+                                <ol className="text-xs text-muted-foreground space-y-1 list-decimal pl-4">
+                                    <li>Ve a Zoom App Marketplace</li>
+                                    <li>Develop → Build App → OAuth</li>
+                                    <li>Nombre: &quot;Magic Funnel&quot;</li>
+                                    <li>Copia Client ID y Secret</li>
+                                    <li>Redirect URL: <code className="text-primary text-[10px]">https://magicfunnel.app/api/integrations/zoom/callback</code></li>
+                                </ol>
+                                <a
+                                    href="https://marketplace.zoom.us/develop/create"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#2D8CFF]/10 border border-[#2D8CFF]/20 px-3 py-1.5 text-xs font-semibold text-[#2D8CFF] hover:bg-[#2D8CFF]/20 transition-colors"
+                                >
+                                    <ExternalLink className="h-3 w-3" />
+                                    Zoom Marketplace
+                                </a>
+                            </div>
+                        )}
+                    </div>
+                    <p className="text-xs text-muted-foreground/60">
+                        Variables para Vercel: <code className="text-primary/80">GOOGLE_CLIENT_ID</code>, <code className="text-primary/80">GOOGLE_CLIENT_SECRET</code>, <code className="text-primary/80">ZOOM_CLIENT_ID</code>, <code className="text-primary/80">ZOOM_CLIENT_SECRET</code>
+                    </p>
+                </div>
+            )}
+
             <div className="grid gap-6">
                 {integrations.map((item) => {
-                    const isEnabledByAdmin = communitySettings?.[item.featureKey]
                     const status = statuses[item.provider]
 
                     return (
@@ -185,9 +239,17 @@ export default function MemberIntegrationsPage() {
                                     <div className="flex flex-col gap-1">
                                         <div className="flex items-center gap-2">
                                             <h3 className="font-bold text-foreground">{item.name}</h3>
+                                            {status === "config_needed" && (
+                                                <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-400 border border-amber-500/20">
+                                                    <AlertCircle className="h-2.5 w-2.5" />
+                                                    Config
+                                                </span>
+                                            )}
                                         </div>
                                         <p className="max-w-md text-sm text-muted-foreground font-medium italic">
-                                            {item.description}
+                                            {status === "config_needed" && !isAdmin
+                                                ? "Próximamente disponible. Tu administrador está configurando esta integración."
+                                                : item.description}
                                         </p>
                                     </div>
                                 </div>
@@ -209,6 +271,20 @@ export default function MemberIntegrationsPage() {
                                                 Desconectar
                                             </Button>
                                         </div>
+                                    ) : status === "config_needed" ? (
+                                        <Button
+                                            className="rounded-xl px-8 opacity-50 cursor-not-allowed"
+                                            disabled
+                                        >
+                                            Pendiente de config
+                                        </Button>
+                                    ) : item.provider === "whatsapp" ? (
+                                        <Button
+                                            className="rounded-xl px-8 opacity-60"
+                                            disabled
+                                        >
+                                            Próximamente
+                                        </Button>
                                     ) : (
                                         <Button
                                             className="rounded-xl px-8 shadow-lg shadow-primary/20"
@@ -223,7 +299,6 @@ export default function MemberIntegrationsPage() {
                     )
                 })}
             </div>
-
         </div>
     )
 }

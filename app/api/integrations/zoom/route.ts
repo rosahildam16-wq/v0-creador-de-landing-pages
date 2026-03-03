@@ -18,6 +18,9 @@ export async function GET(request: Request) {
   const memberId = session.user.memberId || session.user.email
 
   if (action === "status") {
+    if (!process.env.ZOOM_CLIENT_ID || !process.env.ZOOM_CLIENT_SECRET) {
+      return NextResponse.json({ connected: false, error: "Variables de entorno de Zoom no configuradas." })
+    }
     const integration = await getIntegration(memberId, "zoom")
     if (integration) {
       return NextResponse.json({
