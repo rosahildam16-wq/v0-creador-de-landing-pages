@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createInvoice } from "@/lib/nowpayments"
+import { createAlivioPayment, ALIVIO_PLANS } from "@/lib/alivio"
 import { getPlan, getSubscription, createTrialSubscription } from "@/lib/subscription-data"
 
 export async function POST(request: NextRequest) {
@@ -36,36 +36,49 @@ export async function POST(request: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
     const orderId = `sub_${subscription.id}_${Date.now()}`
 
-    // Check if NOWPayments is configured
-    if (!process.env.NOWPAYMENTS_API_KEY) {
+    // Get plan amount from Alivio plans config
+    const alivioPlan = ALIVIO_PLANS[planId]
+    const amount = alivioPlan?.amount || plan.precio_usdt || 27
+
+    // Check if Alivio is configured
+    if (!process.env.ALIVIO_API_KEY) {
       // Return a mock response for development
       return NextResponse.json({
         invoiceUrl: `${baseUrl}/pricing/status?subscription_id=${subscription.id}&demo=true`,
         orderId,
         subscriptionId: subscription.id,
         demo: true,
-        message: "NOWPayments no esta configurado. Agrega NOWPAYMENTS_API_KEY para habilitar pagos reales.",
+        message: "Alivio no está configurado. Agrega ALIVIO_API_KEY para habilitar pagos reales.",
       })
     }
 
-    // Create invoice on NOWPayments
-    const invoice = await createInvoice({
-      priceAmount: plan.precio_usdt,
+    // Create payment on Alivio
+    const result = await createAlivioPayment({
+      amount,
+      currency: "USD",
       orderId,
-      orderDescription: `MagicFunnel - Plan ${plan.nombre} (${plan.periodo})`,
-      successUrl: `${baseUrl}/pricing/status?subscription_id=${subscription.id}&status=success`,
-      cancelUrl: `${baseUrl}/pricing?cancelled=true`,
-      ipnCallbackUrl: `${baseUrl}/api/payments/webhook`,
+      customerEmail: userEmail,
+      metadata: {
+        planId,
+        planName: alivioPlan?.name || plan.nombre,
+        subscriptionId: subscription.id,
+        userRole,
+        successUrl: `${baseUrl}/pricing/status?subscription_id=${subscription.id}&status=success`,
+        cancelUrl: `${baseUrl}/pricing?cancelled=true`,
+      },
     })
 
+    const paymentData = result.data?.payment
+
     return NextResponse.json({
-      invoiceUrl: invoice.invoice_url,
-      invoiceId: invoice.id,
+      invoiceUrl: paymentData?.paymentUrl || `${baseUrl}/pricing/status?subscription_id=${subscription.id}&payment_id=${paymentData?.id}`,
+      paymentId: paymentData?.id,
       orderId,
       subscriptionId: subscription.id,
+      provider: "alivio",
     })
   } catch (error) {
-    console.error("Error creating invoice:", error)
+    console.error("Error creating Alivio payment:", error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Error interno del servidor" },
       { status: 500 }

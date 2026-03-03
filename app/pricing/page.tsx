@@ -73,10 +73,10 @@ function PricingContent() {
           <div className="flex flex-col items-center gap-4">
             <div className="flex items-center gap-3 text-sm text-violet-300/30">
               <span>Pagos procesados por</span>
-              <span className="font-semibold text-violet-300/50">NOWPayments</span>
+              <span className="font-semibold text-violet-300/50">Alivio Payment</span>
             </div>
             <p className="text-xs text-violet-300/20 max-w-lg">
-              Todos los pagos se realizan en USDT (TRC-20) de forma segura. Tu suscripcion se activa automaticamente al confirmar el pago en la blockchain.
+              Todos los pagos se realizan de forma segura a traves de Alivio Payment Gateway. Tu suscripcion se activa automaticamente al confirmar el pago.
             </p>
           </div>
         </div>
