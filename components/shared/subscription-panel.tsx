@@ -47,18 +47,20 @@ export function SubscriptionPanel() {
 
   const handleActivatePlan = async () => {
     const sub = data?.subscription
-    if (!sub?.plan_id || !user?.email) return
+    if (!user?.email) return
+
+    // Resolve the plan key first — prefer the resolved key over UUID
+    const resolvedKey = sub?.plan_id ? resolvePlanKeyFromSub(sub) : "basico"
 
     setLoadingPlan(true)
     try {
-      const planId = sub.plan_id // Backend resolves UUID or key
       const res = await fetch("/api/payments/create-invoice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userEmail: user.email,
-          userRole: user.role || "admin",
-          planId,
+          userRole: user.role || "member",
+          planId: resolvedKey, // Send the resolved key directly (e.g. "basico", "pro")
           billingPeriod: isAnnual ? "anual" : "mensual",
         }),
       })
@@ -77,6 +79,29 @@ export function SubscriptionPanel() {
     } finally {
       setLoadingPlan(false)
     }
+  }
+
+  // Helper to resolve plan key from subscription data
+  function resolvePlanKeyFromSub(sub: any): string {
+    const pid = sub.plan_id
+    // If it's already a known key, use it
+    if (pid in PLAN_TIERS) return pid
+    if (pid in PLAN_PRICES) return pid
+    // If plan has a nombre, derive from it
+    if (sub.plan?.nombre) {
+      const n = sub.plan.nombre.toLowerCase()
+      if (n.includes("elite")) return "elite"
+      if (n.includes("pro")) return "pro"
+      if (n.includes("bas") || n.includes("bás")) return "basico"
+    }
+    // Fallback: use precio_usdt to guess
+    if (sub.plan?.precio_usdt) {
+      const p = sub.plan.precio_usdt
+      if (p >= 90) return "elite"
+      if (p >= 40) return "pro"
+      return "basico"
+    }
+    return "basico"
   }
 
   if (isLoading) {
@@ -113,30 +138,7 @@ export function SubscriptionPanel() {
     )
   }
 
-  // Resolve the plan key — plan_id might be a UUID or a string like "basico"
-  const resolvePlanKey = (): string => {
-    const pid = sub.plan_id
-    // If it's already a known key, use it
-    if (pid in PLAN_TIERS) return pid
-    if (pid in PLAN_PRICES) return pid
-    // If plan has a nombre, derive from it
-    if (sub.plan?.nombre) {
-      const n = sub.plan.nombre.toLowerCase()
-      if (n.includes("elite")) return "elite"
-      if (n.includes("pro")) return "pro"
-      if (n.includes("bas") || n.includes("bás")) return "basico"
-    }
-    // Fallback: use precio_usdt to guess
-    if (sub.plan?.precio_usdt) {
-      const p = sub.plan.precio_usdt
-      if (p >= 90) return "elite"
-      if (p >= 40) return "pro"
-      return "basico"
-    }
-    return "basico"
-  }
-
-  const planKey = resolvePlanKey() as keyof typeof PLAN_TIERS
+  const planKey = resolvePlanKeyFromSub(sub) as keyof typeof PLAN_TIERS
   const tier = PLAN_TIERS[planKey]
   const isTrial = sub.status === "trial"
   const isActive = sub.status === "active"
