@@ -252,7 +252,7 @@ export async function createLead(leadData: {
     if (!supabase) return null
 
     try {
-      // Insert with all columns
+      // Insert with columns PostgREST can see
       const { data, error } = await supabase
         .from("leads")
         .insert({
@@ -262,9 +262,6 @@ export async function createLead(leadData: {
           whatsapp: leadData.whatsapp || leadData.telefono || "",
           fuente: leadData.fuente || "Organico",
           asignado_a: leadData.asignado_a || "Sin asignar",
-          pais: leadData.pais || null,
-          trafico: leadData.trafico || "Organico",
-          embudo_id: leadData.embudo_id || "nomada-vip",
         })
         .select()
         .single()
