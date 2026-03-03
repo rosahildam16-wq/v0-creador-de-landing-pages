@@ -1,6 +1,9 @@
+```typescript
 import { NextRequest, NextResponse } from "next/server"
 import { createAlivioPayment, ALIVIO_PLANS } from "@/lib/alivio"
 import { createAdminClient } from "@/lib/supabase/admin"
+
+export const dynamic = "force-dynamic"
 
 /**
  * Resolve a plan from ALIVIO_PLANS.
@@ -80,7 +83,7 @@ export async function POST(request: NextRequest) {
     let finalPlan = plan
     let finalKey = resolvedKey
     if (billingPeriod === "anual" && !resolvedKey.includes("-anual")) {
-      const annualKey = `${resolvedKey}-anual`
+      const annualKey = `${ resolvedKey } -anual`
       if (ALIVIO_PLANS[annualKey]) {
         finalPlan = ALIVIO_PLANS[annualKey]
         finalKey = annualKey
@@ -91,12 +94,12 @@ export async function POST(request: NextRequest) {
     const basePlanId = finalKey.replace("-anual", "")
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
-    const orderId = `sub_${basePlanId}_${Date.now()}`
+    const orderId = `sub_${ basePlanId }_${ Date.now() } `
 
     // Check if Alivio is configured
     if (!process.env.ALIVIO_API_KEY) {
       return NextResponse.json({
-        invoiceUrl: `/pricing/status?demo=true`,
+        invoiceUrl: `/ pricing / status ? demo = true`,
         orderId,
         demo: true,
         message: "Alivio no está configurado. Agrega ALIVIO_API_KEY.",
@@ -114,24 +117,24 @@ export async function POST(request: NextRequest) {
         basePlanId,
         planName: finalPlan.name,
         billingPeriod: billingPeriod || finalPlan.period,
-        successUrl: `${baseUrl}/pricing/status?status=success&plan=${basePlanId}`,
-        cancelUrl: `${baseUrl}/pricing?cancelled=true`,
+        successUrl: `${ baseUrl } /pricing/status ? status = success & plan=${ basePlanId } `,
+        cancelUrl: `${ baseUrl }/pricing?cancelled=true`,
       },
     })
 
-    const paymentData = result.data?.payment
+const paymentData = result.data?.payment
 
-    return NextResponse.json({
-      invoiceUrl: paymentData?.paymentUrl || paymentData?.payment_url || `/pricing/status?payment_id=${paymentData?.id}&status=pending`,
-      paymentId: paymentData?.id,
-      orderId,
-      provider: "alivio",
-    })
+return NextResponse.json({
+  invoiceUrl: paymentData?.paymentUrl || paymentData?.payment_url || `/pricing/status?payment_id=${paymentData?.id}&status=pending`,
+  paymentId: paymentData?.id,
+  orderId,
+  provider: "alivio",
+})
   } catch (error) {
-    console.error("Error creating payment:", error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Error creando pago" },
-      { status: 500 }
-    )
-  }
+  console.error("Error creating payment:", error)
+  return NextResponse.json(
+    { error: error instanceof Error ? error.message : "Error creando pago" },
+    { status: 500 }
+  )
+}
 }
