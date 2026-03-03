@@ -152,12 +152,14 @@ export async function activateSubscription(params: {
   subscriptionId: string
   paymentId: string
   paymentMethod?: string
+  billingPeriod?: "mensual" | "anual"
 }): Promise<Subscription> {
   const supabase = createAdminClient()
   if (!supabase) throw new Error("Supabase client not available")
 
   const now = new Date()
-  const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000) // 30 days
+  const days = params.billingPeriod === "anual" ? 365 : 30
+  const periodEnd = new Date(now.getTime() + days * 24 * 60 * 60 * 1000)
 
   const { data, error } = await supabase
     .from("subscriptions")

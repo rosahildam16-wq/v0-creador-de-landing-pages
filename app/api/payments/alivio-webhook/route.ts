@@ -54,13 +54,18 @@ export async function POST(request: NextRequest) {
                         return NextResponse.json({ error: "Subscription not found" }, { status: 404 })
                     }
 
+                    // Detect billing period from metadata
+                    const metadata = payment.metadata || {}
+                    const billingPeriod = metadata.billingPeriod === "anual" ? "anual" as const : "mensual" as const
+
                     // Activate the subscription
                     await activateSubscription({
                         subscriptionId,
                         paymentId: payment.id,
                         paymentMethod: "alivio",
+                        billingPeriod,
                     })
-                    console.log(`Subscription ${subscriptionId} activated!`)
+                    console.log(`Subscription ${subscriptionId} activated! (${billingPeriod})`)
 
                     // Record the transaction
                     await recordPayment({

@@ -112,13 +112,19 @@ export function verifyAlivioWebhook(
 }
 
 /**
- * Plan configuration
+ * Plan configuration — Monthly & Annual (20% off)
  */
 export const ALIVIO_PLANS: Record<
     string,
     { name: string; amount: number; period: string }
 > = {
+    // Monthly
     basico: { name: "Plan Básico", amount: 27, period: "mensual" },
     pro: { name: "Plan Pro", amount: 47, period: "mensual" },
     elite: { name: "Plan Elite", amount: 97, period: "mensual" },
+    // Annual (20% discount)
+    "basico-anual": { name: "Plan Básico Anual", amount: 259.20, period: "anual" },
+    "pro-anual": { name: "Plan Pro Anual", amount: 451.20, period: "anual" },
+    "elite-anual": { name: "Plan Elite Anual", amount: 931.20, period: "anual" },
 }
+

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createAlivioPayment, ALIVIO_PLANS } from "@/lib/alivio"
+import { createTrialSubscription } from "@/lib/subscription-data"
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { userEmail, planId } = body
+    const { userEmail, userRole, planId, billingPeriod } = body
 
     if (!userEmail || !planId) {
       return NextResponse.json(
@@ -13,14 +14,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get plan from our config
+    // Resolve plan — support both "pro" and "pro-anual" formats
     const plan = ALIVIO_PLANS[planId]
     if (!plan) {
       return NextResponse.json({ error: "Plan no encontrado" }, { status: 404 })
     }
 
+    // For subscription creation, use the base plan id (without -anual suffix)
+    const basePlanId = planId.replace("-anual", "")
+
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
-    const orderId = `mf_${planId}_${Date.now()}`
+    const orderId = `sub_${basePlanId}_${Date.now()}`
+
+    // Create trial subscription if needed
+    try {
+      await createTrialSubscription({
+        userEmail,
+        userRole: userRole || "admin",
+        planId: basePlanId,
+      })
+    } catch {
+      // Subscription may already exist — continue to payment
+    }
 
     // Check if Alivio is configured
     if (!process.env.ALIVIO_API_KEY) {
@@ -40,8 +55,10 @@ export async function POST(request: NextRequest) {
       customerEmail: userEmail,
       metadata: {
         planId,
+        basePlanId,
         planName: plan.name,
-        successUrl: `${baseUrl}/pricing/status?status=success&plan=${planId}`,
+        billingPeriod: billingPeriod || plan.period,
+        successUrl: `${baseUrl}/pricing/status?status=success&plan=${basePlanId}`,
         cancelUrl: `${baseUrl}/pricing?cancelled=true`,
       },
     })

@@ -10,7 +10,7 @@ const PLANS = [
   {
     id: "basico",
     nombre: "Basico",
-    precio: 27,
+    precioMensual: 27,
     icon: Rocket,
     features: [
       "Dashboard personal",
@@ -23,7 +23,7 @@ const PLANS = [
   {
     id: "pro",
     nombre: "Pro",
-    precio: 47,
+    precioMensual: 47,
     icon: Zap,
     features: [
       "Todo lo del plan Basico",
@@ -38,7 +38,7 @@ const PLANS = [
   {
     id: "elite",
     nombre: "Elite",
-    precio: 97,
+    precioMensual: 97,
     icon: Crown,
     features: [
       "Todo lo del plan Pro",
@@ -52,12 +52,16 @@ const PLANS = [
   },
 ]
 
+const ANNUAL_DISCOUNT = 0.20 // 20% off
+
 export function PricingCards() {
   const router = useRouter()
   const { user } = useAuth()
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
+  const [isAnnual, setIsAnnual] = useState(false)
 
   const handleSelectPlan = async (planId: string) => {
+    const finalPlanId = isAnnual ? `${planId}-anual` : planId
     setLoadingPlan(planId)
     try {
       const res = await fetch("/api/payments/create-invoice", {
@@ -66,7 +70,8 @@ export function PricingCards() {
         body: JSON.stringify({
           userEmail: user?.email || "demo@magicfunnel.com",
           userRole: user?.role || "admin",
-          planId,
+          planId: finalPlanId,
+          billingPeriod: isAnnual ? "anual" : "mensual",
         }),
       })
 
@@ -79,7 +84,6 @@ export function PricingCards() {
       if (data.demo) {
         router.push(data.invoiceUrl)
       } else {
-        // Redirect to Alivio payment
         window.location.href = data.invoiceUrl
       }
     } catch (err) {
@@ -92,11 +96,45 @@ export function PricingCards() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
+      {/* Billing toggle */}
+      <div className="flex items-center justify-center gap-4 mb-10">
+        <span className={`text-sm font-medium transition-colors ${!isAnnual ? "text-white" : "text-violet-300/40"}`}>
+          Mensual
+        </span>
+        <button
+          onClick={() => setIsAnnual(!isAnnual)}
+          className={`relative h-8 w-[52px] rounded-full transition-all duration-300 ${isAnnual
+              ? "bg-gradient-to-r from-violet-600 to-fuchsia-500 shadow-[0_0_20px_-5px_rgba(139,92,246,0.5)]"
+              : "bg-white/[0.08] border border-white/[0.1]"
+            }`}
+          aria-label="Toggle billing period"
+        >
+          <span
+            className={`absolute top-1 left-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${isAnnual ? "translate-x-5" : "translate-x-0"
+              }`}
+          />
+        </button>
+        <span className={`text-sm font-medium transition-colors ${isAnnual ? "text-white" : "text-violet-300/40"}`}>
+          Anual
+        </span>
+        {isAnnual && (
+          <span className="ml-1 rounded-full bg-emerald-500/15 border border-emerald-500/25 px-3 py-1 text-xs font-bold text-emerald-400 animate-in fade-in slide-in-from-left-2 duration-300">
+            -20% OFF
+          </span>
+        )}
+      </div>
+
       <div className="grid gap-6 md:grid-cols-3">
         {PLANS.map((plan) => {
           const tier = PLAN_TIERS[plan.id as keyof typeof PLAN_TIERS]
           const isPopular = tier.popular
           const Icon = plan.icon
+
+          const monthlyPrice = plan.precioMensual
+          const annualTotal = Math.round(monthlyPrice * 12 * (1 - ANNUAL_DISCOUNT) * 100) / 100
+          const annualMonthly = Math.round((annualTotal / 12) * 100) / 100
+          const displayPrice = isAnnual ? annualMonthly : monthlyPrice
+          const savings = Math.round(monthlyPrice * 12 - annualTotal)
 
           return (
             <div
@@ -125,10 +163,21 @@ export function PricingCards() {
                   </div>
                   <h3 className="text-xl font-bold text-white">{plan.nombre}</h3>
                   <div className="mt-3 flex items-baseline gap-1">
-                    <span className="text-4xl font-bold text-white">${plan.precio}</span>
+                    <span className="text-4xl font-bold text-white">${displayPrice.toFixed(displayPrice % 1 === 0 ? 0 : 2)}</span>
                     <span className="text-sm text-violet-300/40"> USDT/mes</span>
                   </div>
-                  <p className="mt-2 text-xs text-violet-300/30">{tier.badge}</p>
+                  {isAnnual ? (
+                    <div className="mt-2 space-y-1">
+                      <p className="text-xs text-emerald-400 font-medium">
+                        ${annualTotal.toFixed(2)} USDT/año — Ahorras ${savings} USDT
+                      </p>
+                      <p className="text-xs text-violet-300/30 line-through">
+                        ${monthlyPrice * 12} USDT/año sin descuento
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-xs text-violet-300/30">{tier.badge}</p>
+                  )}
                 </div>
 
                 {/* Features */}
@@ -158,7 +207,7 @@ export function PricingCards() {
                       Procesando...
                     </span>
                   ) : user ? (
-                    "Suscribirse ahora"
+                    isAnnual ? "Suscribirse anual" : "Suscribirse ahora"
                   ) : (
                     "Comenzar ahora"
                   )}

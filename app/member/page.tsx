@@ -9,7 +9,7 @@ import { PersonalLinkCard } from "@/components/member/personal-link-card"
 import { MagicReferralCard } from "@/components/member/magic-referral-card"
 import { getMemberCommunity } from "@/lib/communities-data"
 import { ChallengeLeaderboard } from "@/components/shared/challenge-leaderboard"
-import { MetaAdsSection } from "@/components/member/meta-ads-section"
+
 import Link from "next/link"
 import { NotificationsWidget } from "@/components/member/notifications-widget"
 import {
@@ -405,8 +405,6 @@ export default function MemberDashboard() {
             </div>
           </div>
 
-          {/* Meta Ads Stats */}
-          <MetaAdsSection memberId={member.id} />
 
 
           {/* Quick Access */}
