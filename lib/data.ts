@@ -66,15 +66,12 @@ export async function getLeads(): Promise<Lead[]> {
       .select("*")
       .order("fecha_ingreso", { ascending: false })
     if (error) {
-      console.error("Error fetching leads from Supabase:", error.message)
-      return [] // Never fallback to mock when Supabase is configured
+      console.error("Error fetching leads:", error.message)
+      return []
     }
     return (data || []).map((row: Record<string, any>) => mapLeadRow(row))
   }
-  // Fallback: mock data (only when Supabase is NOT configured)
-  return [...leads].sort(
-    (a, b) => new Date(b.fecha_ingreso).getTime() - new Date(a.fecha_ingreso).getTime()
-  )
+  return []
 }
 
 export async function getLeadById(id: string): Promise<Lead | null> {
@@ -254,55 +251,30 @@ export async function createLead(leadData: {
     const supabase = createAdminClient()
     if (!supabase) return null
 
-    // Use columns that exist in the leads table
-    const insertData: any = {
-      nombre: leadData.nombre,
-      email: leadData.email.trim().toLowerCase(),
-      telefono: leadData.telefono || "",
-      whatsapp: leadData.whatsapp || leadData.telefono || "",
-      fuente: leadData.fuente || "Organico",
-      asignado_a: leadData.asignado_a || "Sin asignar",
-      pais: leadData.pais || null,
-      trafico: leadData.trafico || "Organico",
-      embudo_id: leadData.embudo_id || "nomada-vip",
-    }
-
     try {
+      // Insert with only basic columns that PostgREST always sees
       const { data, error } = await supabase
         .from("leads")
-        .insert(insertData)
+        .insert({
+          nombre: leadData.nombre,
+          email: leadData.email.trim().toLowerCase(),
+          telefono: leadData.telefono || "",
+          whatsapp: leadData.whatsapp || leadData.telefono || "",
+          fuente: leadData.fuente || "Organico",
+          asignado_a: leadData.asignado_a || "Sin asignar",
+        })
         .select()
         .single()
 
       if (!error && data) return mapLeadRow(data)
-
-      // Fallback: try without embudo_id if column doesn't exist
-      if (error && (error.code === 'PGRST204' || error.code === '42703' || error.message?.includes('column'))) {
-        console.warn("Column error, retrying without embudo_id:", error.message)
-        const { embudo_id, ...basicData } = insertData
-        const { data: data2, error: error2 } = await supabase
-          .from("leads")
-          .insert(basicData)
-          .select()
-          .single()
-        if (error2) {
-          console.error("Secondary error creating lead:", error2)
-          return null
-        }
-        return mapLeadRow(data2)
-      }
-
-      if (error) {
-        console.error("Error creating lead:", error)
-        return null
-      }
-      return null
+      if (error) console.error("Lead insert error:", error.message)
     } catch (e: any) {
-      console.error("Fatal error creating lead:", e)
-      return null
+      console.error("Lead insert exception:", e.message)
     }
-
   }
+
+  return null
+
 
   // Fallback: in-memory
   const newLead: Lead = {
