@@ -1,0 +1,19 @@
+-- =============================================
+-- Fix: Grant API access to booking tables
+-- Run this in Supabase SQL Editor
+-- =============================================
+
+-- Grant access to all existing tables for API usage
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated, service_role;
+
+-- Ensure future tables also get the right permissions
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+
+-- Force PostgREST to reload its schema cache
+NOTIFY pgrst, 'reload schema';
+
+SELECT '✅ Permisos actualizados y schema cache recargado!' AS resultado;
