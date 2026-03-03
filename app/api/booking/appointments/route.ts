@@ -9,9 +9,10 @@ import { decrypt } from "@/lib/auth/session"
  */
 export async function GET(req: NextRequest) {
     try {
-        const session = (await cookies()).get("session")?.value
+        const session = (await cookies()).get("mf_session")?.value
         if (!session) return NextResponse.json({ error: "No session" }, { status: 401 })
-        const user = await decrypt(session)
+        const payload = await decrypt(session)
+        const user = payload?.user
         if (!user) return NextResponse.json({ error: "Invalid" }, { status: 401 })
 
         const view = req.nextUrl.searchParams.get("view") || "week"

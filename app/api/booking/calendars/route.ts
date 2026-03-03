@@ -6,9 +6,10 @@ import { generateSlug, DEFAULT_AVAILABILITY } from "@/lib/booking"
 
 export async function GET(req: NextRequest) {
     try {
-        const session = (await cookies()).get("session")?.value
+        const session = (await cookies()).get("mf_session")?.value
         if (!session) return NextResponse.json({ error: "No session" }, { status: 401 })
-        const user = await decrypt(session)
+        const payload = await decrypt(session)
+        const user = payload?.user
         if (!user) return NextResponse.json({ error: "Invalid" }, { status: 401 })
 
         const supabase = await createClient()
@@ -31,17 +32,18 @@ export async function GET(req: NextRequest) {
         }))
 
         return NextResponse.json({ calendars })
-    } catch (err) {
+    } catch (err: any) {
         console.error("Error fetching calendars:", err)
-        return NextResponse.json({ error: "Error interno" }, { status: 500 })
+        return NextResponse.json({ error: err?.message || "Error interno" }, { status: 500 })
     }
 }
 
 export async function POST(req: NextRequest) {
     try {
-        const session = (await cookies()).get("session")?.value
+        const session = (await cookies()).get("mf_session")?.value
         if (!session) return NextResponse.json({ error: "No session" }, { status: 401 })
-        const user = await decrypt(session)
+        const payload = await decrypt(session)
+        const user = payload?.user
         if (!user) return NextResponse.json({ error: "Invalid" }, { status: 401 })
 
         const body = await req.json()
@@ -82,7 +84,10 @@ export async function POST(req: NextRequest) {
             .select()
             .single()
 
-        if (error) throw error
+        if (error) {
+            console.error("Supabase insert error:", error)
+            return NextResponse.json({ error: `Error BD: ${error.message}` }, { status: 500 })
+        }
 
         // Create default availability rules (Mon-Fri 9-5)
         const rules = DEFAULT_AVAILABILITY.map(rule => ({
@@ -90,26 +95,29 @@ export async function POST(req: NextRequest) {
             ...rule,
         }))
 
-        await supabase.from("availability_rules").insert(rules)
+        const { error: rulesErr } = await supabase.from("availability_rules").insert(rules)
+        if (rulesErr) console.error("Rules insert error:", rulesErr)
 
         // Create default questions
-        await supabase.from("booking_questions").insert([
+        const { error: questionsErr } = await supabase.from("booking_questions").insert([
             { calendar_id: calendar.id, label: "Nombre completo", type: "text", required: true, sort_order: 0 },
             { calendar_id: calendar.id, label: "Email", type: "email", required: true, sort_order: 1 },
             { calendar_id: calendar.id, label: "Teléfono", type: "phone", required: false, sort_order: 2 },
         ])
+        if (questionsErr) console.error("Questions insert error:", questionsErr)
 
         // Create default notification rules
-        await supabase.from("notification_rules").insert([
+        const { error: notifErr } = await supabase.from("notification_rules").insert([
             { calendar_id: calendar.id, event_type: "confirmation", channel: "email", timing_minutes: 0, active: true },
             { calendar_id: calendar.id, event_type: "reminder", channel: "email", timing_minutes: 1440, active: true }, // 24h
             { calendar_id: calendar.id, event_type: "reminder", channel: "email", timing_minutes: 60, active: true }, // 1h
             { calendar_id: calendar.id, event_type: "cancellation", channel: "email", timing_minutes: 0, active: true },
         ])
+        if (notifErr) console.error("Notification rules insert error:", notifErr)
 
         return NextResponse.json({ calendar })
-    } catch (err) {
+    } catch (err: any) {
         console.error("Error creating calendar:", err)
-        return NextResponse.json({ error: "Error interno" }, { status: 500 })
+        return NextResponse.json({ error: err?.message || "Error interno" }, { status: 500 })
     }
 }

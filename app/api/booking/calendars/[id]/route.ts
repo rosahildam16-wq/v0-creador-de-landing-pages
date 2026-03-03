@@ -8,9 +8,10 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const session = (await cookies()).get("session")?.value
+        const session = (await cookies()).get("mf_session")?.value
         if (!session) return NextResponse.json({ error: "No session" }, { status: 401 })
-        const user = await decrypt(session)
+        const payload = await decrypt(session)
+        const user = payload?.user
         if (!user) return NextResponse.json({ error: "Invalid" }, { status: 401 })
 
         const { id } = await params
@@ -44,9 +45,10 @@ export async function PUT(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const session = (await cookies()).get("session")?.value
+        const session = (await cookies()).get("mf_session")?.value
         if (!session) return NextResponse.json({ error: "No session" }, { status: 401 })
-        const user = await decrypt(session)
+        const payload = await decrypt(session)
+        const user = payload?.user
         if (!user) return NextResponse.json({ error: "Invalid" }, { status: 401 })
 
         const { id } = await params
@@ -129,9 +131,10 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const session = (await cookies()).get("session")?.value
+        const session = (await cookies()).get("mf_session")?.value
         if (!session) return NextResponse.json({ error: "No session" }, { status: 401 })
-        const user = await decrypt(session)
+        const payload = await decrypt(session)
+        const user = payload?.user
         if (!user) return NextResponse.json({ error: "Invalid" }, { status: 401 })
 
         const { id } = await params

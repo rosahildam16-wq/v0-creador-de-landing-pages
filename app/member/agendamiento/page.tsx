@@ -79,12 +79,15 @@ export default function BookingDashboard() {
                     location_type: newLocation,
                 }),
             })
-            if (!res.ok) throw new Error()
+            const data = await res.json()
+            if (!res.ok) {
+                throw new Error(data?.error || `Error ${res.status}`)
+            }
             setShowNew(false)
             setNewName("")
             mutate("/api/booking/calendars")
-        } catch {
-            alert("Error al crear calendario")
+        } catch (err: any) {
+            alert(`Error al crear calendario: ${err.message || "Error desconocido"}`)
         } finally {
             setCreating(false)
         }
