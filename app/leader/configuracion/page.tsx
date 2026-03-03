@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useLeaderCommunity } from "@/hooks/use-leader-community"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
   Settings, Shield, Users, Route, Trophy, GraduationCap, MessagesSquare,
-  Kanban, Target, Check, Save, Eye, EyeOff, Palette, Clock
+  Kanban, Target, Check, Save, Eye, EyeOff, Palette, Clock, Archive, Plug
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -68,6 +68,22 @@ const DEFAULT_PERMISSIONS: FeaturePermission[] = [
     enabled: true,
     category: "navigation",
   },
+  {
+    id: "recursos",
+    label: "Libreria de Recursos",
+    description: "Seccion donde los miembros ven materiales y usan Notebook AI",
+    icon: Archive,
+    enabled: true,
+    category: "navigation",
+  },
+  {
+    id: "integraciones",
+    label: "Integraciones",
+    description: "Permite a los miembros conectar su Zoom y Google Calendar",
+    icon: Plug,
+    enabled: true,
+    category: "tools",
+  },
 ]
 
 const COLORS = [
@@ -86,13 +102,20 @@ export default function LeaderConfiguracionPage() {
   const [trialDays, setTrialDays] = useState("7")
 
   // Initialize form values when community loads
-  useState(() => {
+  useEffect(() => {
     if (community) {
       setCommunityName(community.nombre)
       setSelectedColor(community.color)
       setTrialDays(String(community.free_trial_days || 7))
+
+      if (community.settings) {
+        setPermissions(prev => prev.map(p => ({
+          ...p,
+          enabled: community.settings[p.id] !== undefined ? community.settings[p.id] : p.enabled
+        })))
+      }
     }
-  })
+  }, [community])
 
   if (loading) {
     return (
@@ -109,6 +132,8 @@ export default function LeaderConfiguracionPage() {
   }
 
   const handleSave = async () => {
+    const settings = permissions.reduce((acc, p) => ({ ...acc, [p.id]: p.enabled }), {})
+
     // Save community settings
     try {
       await fetch("/api/communities/my-community", {
@@ -119,6 +144,7 @@ export default function LeaderConfiguracionPage() {
           nombre: communityName || community?.nombre,
           color: selectedColor || community?.color,
           free_trial_days: parseInt(trialDays) || 7,
+          settings
         }),
       })
     } catch {

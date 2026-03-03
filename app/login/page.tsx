@@ -143,8 +143,10 @@ export default function LoginPage() {
         setIsSubmitting(false)
         return
       }
-      if (sponsorStatus !== "found") {
-        setError("Se requiere un patrocinador valido para registrarse en Skalia VIP.")
+      // Sponsor is now optional. If provided, it must be found. 
+      // If not provided, it's allowed.
+      if (sponsorUsername && sponsorStatus !== "found") {
+        setError("Si ingresas un patrocinador, debe ser uno valido.")
         setIsSubmitting(false)
         return
       }
@@ -314,7 +316,7 @@ export default function LoginPage() {
 
               {/* Error */}
               {error && (
-                <div className="mb-5 rounded-xl border border-red-500/15 bg-red-500/[0.05] px-4 py-3 text-sm text-red-400">
+                <div className="mb-5 rounded-xl border border-amber-500/15 bg-amber-500/[0.05] px-4 py-3 text-sm text-amber-400">
                   {error}
                 </div>
               )}

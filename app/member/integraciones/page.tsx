@@ -169,10 +169,7 @@ export default function MemberIntegrationsPage() {
                     return (
                         <Card
                             key={item.provider}
-                            className={cn(
-                                "group relative overflow-hidden rounded-3xl border border-border/30 bg-card/40 backdrop-blur-sm transition-all hover:border-border/60",
-                                !isEnabledByAdmin && "opacity-60"
-                            )}
+                            className="group relative overflow-hidden rounded-3xl border border-border/30 bg-card/40 backdrop-blur-sm transition-all hover:border-border/60"
                         >
                             <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full opacity-[0.03] transition-opacity group-hover:opacity-[0.05]" style={{ backgroundColor: item.accentColor }} />
 
@@ -184,15 +181,6 @@ export default function MemberIntegrationsPage() {
                                     <div className="flex flex-col gap-1">
                                         <div className="flex items-center gap-2">
                                             <h3 className="font-bold text-foreground">{item.name}</h3>
-                                            {isEnabledByAdmin ? (
-                                                <Badge variant="outline" className="border-emerald-500/20 bg-emerald-500/5 text-[10px] font-bold text-emerald-500">
-                                                    HABILITADO
-                                                </Badge>
-                                            ) : (
-                                                <Badge variant="outline" className="border-amber-500/20 bg-amber-500/5 text-[10px] font-bold text-amber-500">
-                                                    BLOQUEADO POR ADMIN
-                                                </Badge>
-                                            )}
                                         </div>
                                         <p className="max-w-md text-sm text-muted-foreground font-medium italic">
                                             {item.description}
@@ -217,17 +205,13 @@ export default function MemberIntegrationsPage() {
                                                 Desconectar
                                             </Button>
                                         </div>
-                                    ) : isEnabledByAdmin ? (
+                                    ) : (
                                         <Button
                                             className="rounded-xl px-8 shadow-lg shadow-primary/20"
                                             onClick={() => handleConnect(item.provider)}
                                         >
                                             Conectar {item.name.split(" ")[0]}
                                         </Button>
-                                    ) : (
-                                        <div className="flex items-center gap-2 text-[10px] font-bold text-amber-500/60 uppercase tracking-widest">
-                                            <AlertCircle className="h-3.5 w-3.5" /> No disponible en tu comunidad
-                                        </div>
                                     )}
                                 </div>
                             </CardContent>
@@ -236,21 +220,6 @@ export default function MemberIntegrationsPage() {
                 })}
             </div>
 
-            {!Object.values(communitySettings || {}).some(val => val === true) && (
-                <Card className="border-amber-500/20 bg-amber-500/5 rounded-3xl p-6">
-                    <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500">
-                            <AlertCircle className="h-6 w-6" />
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-amber-500">Tu comunidad no tiene integraciones habilitadas</h4>
-                            <p className="text-sm text-amber-600/70 font-medium">
-                                Pide al líder de tu comunidad o al administrador de Skalia VIP que habilite estas funciones.
-                            </p>
-                        </div>
-                    </div>
-                </Card>
-            )}
         </div>
     )
 }

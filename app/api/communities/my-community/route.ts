@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json()
-    const { email, nombre, color, free_trial_days } = body
+    const { email, nombre, color, free_trial_days, settings } = body
 
     if (!email) {
       return NextResponse.json({ error: "Email requerido" }, { status: 400 })
@@ -107,6 +107,7 @@ export async function PATCH(req: NextRequest) {
     if (nombre) updates.nombre = nombre
     if (color) updates.color = color
     if (free_trial_days !== undefined) updates.free_trial_days = parseInt(free_trial_days)
+    if (settings) updates.settings = settings
 
     if (Object.keys(updates).length > 0) {
       const { error } = await supabase

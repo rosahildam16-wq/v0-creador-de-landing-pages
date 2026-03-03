@@ -11,8 +11,9 @@ import {
   Send, MessageSquare, Users, Shield,
   BookOpen, Trophy, Search, Layout,
   MoreHorizontal, Share2, Heart, Award,
-  Sparkles, Zap, Star, ExternalLink
+  Sparkles, Zap, Star, ExternalLink, Loader2
 } from "lucide-react"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { formatDistanceToNow } from "date-fns"
 import { es } from "date-fns/locale"
@@ -28,15 +29,38 @@ export default function MemberComunidadPage() {
   const [newPost, setNewPost] = useState("")
   const [mounted, setMounted] = useState(false)
 
+  const [subLoading, setSubLoading] = useState(true)
+  const [subscription, setSubscription] = useState<any>(null)
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [formData, setFormData] = useState({ nombre: "", codigo: "", descripcion: "" })
+  const [submitting, setSubmitting] = useState(false)
+  const [msg, setMsg] = useState({ type: "", text: "" })
+
   useEffect(() => {
     setMounted(true)
     if (!user?.memberId) return
+
+    // Fetch community
     const comm = getMemberCommunity(user.memberId)
     setCommunity(comm)
     if (comm) {
       setPosts(getCommunityPosts(comm.id))
       setMembers(getCommunityMembers(comm.id))
     }
+
+    // Fetch subscription to check plan
+    const fetchSub = async () => {
+      try {
+        const res = await fetch("/api/payments/check-subscription")
+        const data = await res.json()
+        setSubscription(data.subscription)
+      } catch (e) {
+        console.error("Error fetching sub:", e)
+      } finally {
+        setSubLoading(false)
+      }
+    }
+    fetchSub()
   }, [user])
 
   const handlePost = () => {
@@ -54,18 +78,120 @@ export default function MemberComunidadPage() {
     }
   }
 
+  const handleCreateCommunity = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setMsg({ type: "", text: "" })
+    try {
+      const res = await fetch("/api/communities/my-community", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...formData, email: user?.email }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setMsg({ type: "success", text: "Comunidad creada con exito. Recargando..." })
+        setTimeout(() => window.location.reload(), 1500)
+      } else {
+        setMsg({ type: "error", text: data.error || "Error al crear la comunidad" })
+      }
+    } catch (e) {
+      setMsg({ type: "error", text: "Error de red" })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   if (!mounted) return null
 
   if (!community) {
+    const planPrice = subscription?.plan?.precio_usdt || 0
+    const canCreate = planPrice >= 47
+
+    if (subLoading) return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
-        <div className="rounded-2xl border border-border/30 bg-card/40 p-8 max-w-md backdrop-blur-md">
-          <Shield className="h-12 w-12 text-primary/30 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-foreground mb-2">Comunidad Protegida</h2>
-          <p className="text-sm text-muted-foreground mb-6">
-            Para acceder a esta comunidad restringida de Eskalia, debes estar validado por un administrador o usar un código de acceso VIP.
-          </p>
-          <Button variant="outline" className="w-full">Volver al Inicio</Button>
+      <div className="flex min-h-[70vh] flex-col items-center justify-center p-6 text-center">
+        <div className="rounded-[2.5rem] border border-border/30 bg-card/40 p-10 max-w-xl backdrop-blur-md shadow-2xl relative overflow-hidden">
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl" />
+
+          <div className="relative z-10">
+            <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-primary/20">
+              <Sparkles className="h-8 w-8 text-primary" />
+            </div>
+
+            <h2 className="text-3xl font-extrabold text-white mb-4 tracking-tight">Crea tu propio imperio</h2>
+            <p className="text-muted-foreground mb-8 leading-relaxed">
+              Todavía no perteneces a ninguna comunidad. Como usuario premium de Magic Funnel, puedes liderar tu propio equipo y crear una comunidad exclusiva.
+            </p>
+
+            {showCreateForm ? (
+              <form onSubmit={handleCreateCommunity} className="space-y-4 text-left animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1 mb-1.5 block">Nombre de tu comunidad</label>
+                  <input
+                    required
+                    placeholder="Ej: Visionarios VIP"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-primary/40 outline-none"
+                    value={formData.nombre}
+                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1 mb-1.5 block">Codigo de acceso (Unico)</label>
+                  <input
+                    required
+                    placeholder="Ej: VISION2026"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-mono uppercase focus:ring-1 focus:ring-primary/40 outline-none"
+                    value={formData.codigo}
+                    onChange={(e) => setFormData({ ...formData, codigo: e.target.value.toUpperCase() })}
+                  />
+                </div>
+                {msg.text && (
+                  <p className={cn("text-xs font-bold px-3 py-2 rounded-lg", msg.type === "success" ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400")}>
+                    {msg.text}
+                  </p>
+                )}
+                <div className="flex gap-3 pt-2">
+                  <Button type="button" variant="ghost" className="flex-1 rounded-xl" onClick={() => setShowCreateForm(false)}>Cancelar</Button>
+                  <Button type="submit" disabled={submitting} className="flex-1 rounded-xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/25">
+                    {submitting ? "Creando..." : "Crear Ahora"}
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-4">
+                {canCreate ? (
+                  <Button
+                    size="lg"
+                    className="w-full rounded-2xl bg-primary text-primary-foreground font-bold h-14 text-base shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all"
+                    onClick={() => setShowCreateForm(true)}
+                  >
+                    Configurar mi Comunidad
+                  </Button>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-sm font-medium">
+                      Se requiere el Plan Pro ($47 USD) o superior para crear tu propia comunidad.
+                    </div>
+                    <Link href="/member/suscripcion">
+                      <Button size="lg" className="w-full rounded-2xl bg-white text-black font-bold h-14 text-base hover:bg-white/90">
+                        Mejorar mi Plan
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+                <p className="text-[11px] text-muted-foreground/50 pt-4">
+                  ¿Tienes un codigo de otra comunidad? <Link href="/member/perfil" className="text-primary hover:underline">Ingresalo aqui</Link>
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     )

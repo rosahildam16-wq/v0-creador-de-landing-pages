@@ -13,6 +13,7 @@ export interface LeaderCommunity {
   leader_email: string | null
   free_trial_days: number
   activa: boolean
+  settings?: any
 }
 
 export interface CommunityMember {

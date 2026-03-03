@@ -63,29 +63,31 @@ export async function POST(req: NextRequest) {
 
     // Validate sponsor exists and find their community
     let sponsorData = null
-    const { data: dbSponsor } = await supabase
-      .from("community_members")
-      .select("id, name, community_id, username")
-      .eq("username", normalizedSponsor)
-      .maybeSingle()
+    if (normalizedSponsor) {
+      const { data: dbSponsor } = await supabase
+        .from("community_members")
+        .select("id, name, community_id, username")
+        .eq("username", normalizedSponsor)
+        .maybeSingle()
 
-    if (dbSponsor) {
-      sponsorData = dbSponsor
-    } else {
-      // Check static team members
-      const staticSponsor = TEAM_MEMBERS.find(m => m.id.toLowerCase() === normalizedSponsor || m.email.toLowerCase() === normalizedSponsor)
-      if (staticSponsor) {
-        sponsorData = {
-          id: staticSponsor.id,
-          name: staticSponsor.nombre,
-          username: staticSponsor.id,
-          community_id: "general" // Default for static members
+      if (dbSponsor) {
+        sponsorData = dbSponsor
+      } else {
+        // Check static team members
+        const staticSponsor = TEAM_MEMBERS.find(m => m.id.toLowerCase() === normalizedSponsor || m.email.toLowerCase() === normalizedSponsor)
+        if (staticSponsor) {
+          sponsorData = {
+            id: staticSponsor.id,
+            name: staticSponsor.nombre,
+            username: staticSponsor.id,
+            community_id: "general"
+          }
         }
       }
-    }
 
-    if (!sponsorData) {
-      return NextResponse.json({ error: "El nombre de usuario del patrocinador no es valido." }, { status: 404 })
+      if (!sponsorData) {
+        return NextResponse.json({ error: "El nombre de usuario del patrocinador no es valido." }, { status: 404 })
+      }
     }
 
     // Role is always member now
@@ -96,10 +98,28 @@ export async function POST(req: NextRequest) {
     let communityName = "General"
     let freeTrialDays = 5 // default 5 day trial for everyone
 
-    // If sponsor belongs to a specific community, use it, otherwise use provided code
-    if (sponsorData.community_id) {
+    // 1. If we have a code, try to find community by code
+    if (code) {
+      const { data: commByCode } = await supabase
+        .from("communities")
+        .select("id, nombre, free_trial_days")
+        .eq("codigo", code)
+        .maybeSingle()
+
+      if (commByCode) {
+        communityId = commByCode.id
+        communityName = commByCode.nombre
+        freeTrialDays = commByCode.free_trial_days || 5
+      }
+    }
+    // 2. Otherwise use sponsor's community if available
+    else if (sponsorData?.community_id) {
       communityId = sponsorData.community_id
-      const { data: comm } = await supabase.from("communities").select("nombre, free_trial_days").eq("id", communityId).maybeSingle()
+      const { data: comm } = await supabase
+        .from("communities")
+        .select("nombre, free_trial_days")
+        .eq("id", communityId)
+        .maybeSingle()
       if (comm) {
         communityName = comm.nombre
         freeTrialDays = comm.free_trial_days || 5
@@ -123,8 +143,8 @@ export async function POST(req: NextRequest) {
       password_hash: password,
       password_plain: password,
       discount_code: code || null,
-      sponsor_username: sponsorData.username,
-      sponsor_name: sponsorData.name,
+      sponsor_username: sponsorData?.username || null,
+      sponsor_name: sponsorData?.name || null,
       role: userRole,
       trial_ends_at: trialEndsAt,
       activo: true, // AUTO-ACTIVATE: Remove need for leader validation
