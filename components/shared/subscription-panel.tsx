@@ -51,7 +51,7 @@ export function SubscriptionPanel() {
 
     setLoadingPlan(true)
     try {
-      const planId = isAnnual ? `${sub.plan_id}-anual` : sub.plan_id
+      const planId = sub.plan_id // Backend resolves UUID or key
       const res = await fetch("/api/payments/create-invoice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -113,8 +113,31 @@ export function SubscriptionPanel() {
     )
   }
 
-  const planId = sub.plan_id as keyof typeof PLAN_TIERS
-  const tier = PLAN_TIERS[planId]
+  // Resolve the plan key — plan_id might be a UUID or a string like "basico"
+  const resolvePlanKey = (): string => {
+    const pid = sub.plan_id
+    // If it's already a known key, use it
+    if (pid in PLAN_TIERS) return pid
+    if (pid in PLAN_PRICES) return pid
+    // If plan has a nombre, derive from it
+    if (sub.plan?.nombre) {
+      const n = sub.plan.nombre.toLowerCase()
+      if (n.includes("elite")) return "elite"
+      if (n.includes("pro")) return "pro"
+      if (n.includes("bas") || n.includes("bás")) return "basico"
+    }
+    // Fallback: use precio_usdt to guess
+    if (sub.plan?.precio_usdt) {
+      const p = sub.plan.precio_usdt
+      if (p >= 90) return "elite"
+      if (p >= 40) return "pro"
+      return "basico"
+    }
+    return "basico"
+  }
+
+  const planKey = resolvePlanKey() as keyof typeof PLAN_TIERS
+  const tier = PLAN_TIERS[planKey]
   const isTrial = sub.status === "trial"
   const isActive = sub.status === "active"
   const isExpired = reason === "trial_expired" || reason === "subscription_expired"
@@ -122,7 +145,7 @@ export function SubscriptionPanel() {
   const periodDays = daysUntil(sub.current_period_end)
 
   // Pricing for the activation section
-  const monthlyPrice = PLAN_PRICES[planId] || 0
+  const monthlyPrice = PLAN_PRICES[planKey] || sub.plan?.precio_usdt || 0
   const annualTotal = Math.round(monthlyPrice * 12 * (1 - ANNUAL_DISCOUNT) * 100) / 100
   const annualMonthly = Math.round((annualTotal / 12) * 100) / 100
   const savings = Math.round(monthlyPrice * 12 - annualTotal)
@@ -150,10 +173,10 @@ export function SubscriptionPanel() {
 
             {/* Status badge */}
             <div className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${isTrial
-                ? "bg-violet-500/10 text-violet-400 border border-violet-500/20"
-                : isActive
-                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                  : "bg-red-500/10 text-red-400 border border-red-500/20"
+              ? "bg-violet-500/10 text-violet-400 border border-violet-500/20"
+              : isActive
+                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                : "bg-red-500/10 text-red-400 border border-red-500/20"
               }`}>
               {isTrial && <Clock className="w-3 h-3" />}
               {isActive && <CheckCircle2 className="w-3 h-3" />}
@@ -236,8 +259,8 @@ export function SubscriptionPanel() {
                   <button
                     onClick={() => setIsAnnual(!isAnnual)}
                     className={`relative h-6 w-11 rounded-full transition-all duration-300 ${isAnnual
-                        ? "bg-gradient-to-r from-violet-600 to-fuchsia-500"
-                        : "bg-border/50"
+                      ? "bg-gradient-to-r from-violet-600 to-fuchsia-500"
+                      : "bg-border/50"
                       }`}
                     aria-label="Toggle billing period"
                   >
@@ -329,10 +352,10 @@ export function SubscriptionPanel() {
                   </div>
                 </div>
                 <span className={`text-xs font-medium px-2 py-1 rounded-md ${p.status === "finished"
-                    ? "bg-emerald-500/10 text-emerald-400"
-                    : p.status === "waiting"
-                      ? "bg-amber-500/10 text-amber-400"
-                      : "bg-red-500/10 text-red-400"
+                  ? "bg-emerald-500/10 text-emerald-400"
+                  : p.status === "waiting"
+                    ? "bg-amber-500/10 text-amber-400"
+                    : "bg-red-500/10 text-red-400"
                   }`}>
                   {p.status === "finished" ? "Completado" : p.status === "waiting" ? "Esperando" : p.status}
                 </span>
