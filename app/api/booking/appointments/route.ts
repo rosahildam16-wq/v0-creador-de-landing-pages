@@ -1,9 +1,7 @@
-```typescript
 import { createClient } from "@/lib/supabase/server"
 import { NextRequest, NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { decrypt } from "@/lib/auth/session"
-import { hasValidAccess, getSubscription, getPaymentHistory } from "@/lib/subscription-data"
 
 export const dynamic = "force-dynamic"
 
