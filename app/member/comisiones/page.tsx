@@ -4,15 +4,9 @@ import { useEffect, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
 import {
-  TrendingUp,
-  DollarSign,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
-  ArrowDownToLine,
-  History,
-  Info,
+  TrendingUp, DollarSign, Clock, CheckCircle2, AlertCircle,
+  Loader2, ArrowDownToLine, History, Info, Users, Link2,
+  ShieldAlert, Crown,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -20,12 +14,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogFooter, DialogDescription,
 } from "@/components/ui/dialog"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -58,7 +48,10 @@ interface CommissionsData {
   history: Commission[]
   payable: Commission[]
   monthlyUsage: { level1: number; level2: number }
+  cap: { monthly: number | null; l1Used: number; l2Used: number; totalUsed: number }
+  referrals: { count: number; hasSponsor: boolean }
   platformPlanCode: string | null
+  subscriptionStatus: string | null
 }
 
 interface PayoutsData {
@@ -71,19 +64,30 @@ interface PayoutsData {
   }
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const PLAN_LABELS: Record<string, string> = {
+  student: "Student",
+  plan_27: "Member ($27)",
+  plan_47: "Creator ($47)",
+  plan_97: "Elite ($97)",
+  plan_300: "Club ($300)",
+}
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  queued:  { label: "En cola",    className: "border-amber-500/30 bg-amber-500/10 text-amber-400" },
-  sent:    { label: "Enviado",    className: "border-blue-500/30 bg-blue-500/10 text-blue-400" },
-  paid:    { label: "Pagado",     className: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400" },
-  failed:  { label: "Fallido",    className: "border-red-500/30 bg-red-500/10 text-red-400" },
-  pending: { label: "Pendiente",  className: "border-amber-500/30 bg-amber-500/10 text-amber-400" },
-  payable: { label: "Disponible", className: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400" },
-  paid_c:  { label: "Pagado",     className: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400" },
-  held:    { label: "Retenido",   className: "border-orange-500/30 bg-orange-500/10 text-orange-400" },
-  void:    { label: "Anulado",    className: "border-zinc-500/30 bg-zinc-500/10 text-zinc-400" },
+  queued:              { label: "En cola",     className: "border-amber-500/30 bg-amber-500/10 text-amber-400" },
+  sent:                { label: "Enviado",     className: "border-blue-500/30 bg-blue-500/10 text-blue-400" },
+  paid:                { label: "Pagado",      className: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400" },
+  failed:              { label: "Fallido",     className: "border-red-500/30 bg-red-500/10 text-red-400" },
+  pending:             { label: "En hold 7d",  className: "border-amber-500/30 bg-amber-500/10 text-amber-400" },
+  payable:             { label: "Disponible",  className: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400" },
+  paid_c:              { label: "Pagado",      className: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400" },
+  held:                { label: "Retenido",    className: "border-orange-500/30 bg-orange-500/10 text-orange-400" },
+  void:                { label: "Anulado",     className: "border-zinc-500/30 bg-zinc-500/10 text-zinc-400" },
+  locked_by_plan_limit:{ label: "Cap alcanzado",className: "border-violet-500/30 bg-violet-500/10 text-violet-400" },
 }
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: string }) {
   const cfg = STATUS_CONFIG[status] ?? { label: status, className: "border-border bg-secondary text-muted-foreground" }
@@ -102,6 +106,55 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })
 }
 
+/** Cap progress bar. pct capped at 100 for render. */
+function CapBar({ used, cap, label }: { used: number; cap: number | null; label: string }) {
+  if (cap === null) {
+    return (
+      <div className="space-y-1">
+        <div className="flex justify-between text-xs">
+          <span className="text-muted-foreground">{label}</span>
+          <span className="font-semibold text-emerald-500">{fmt(used)} · Sin límite</span>
+        </div>
+        <div className="h-1.5 rounded-full bg-secondary/40">
+          <div className="h-full rounded-full bg-emerald-500/60 w-full" />
+        </div>
+      </div>
+    )
+  }
+
+  if (cap === 0) {
+    return (
+      <div className="space-y-1">
+        <div className="flex justify-between text-xs">
+          <span className="text-muted-foreground">{label}</span>
+          <span className="text-muted-foreground/50">No elegible</span>
+        </div>
+        <div className="h-1.5 rounded-full bg-secondary/40" />
+      </div>
+    )
+  }
+
+  const pct = Math.min(100, Math.round((used / cap) * 100))
+  const color = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-emerald-500"
+
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between text-xs">
+        <span className="text-muted-foreground">{label}</span>
+        <span className={`font-semibold ${pct >= 90 ? "text-red-400" : pct >= 70 ? "text-amber-400" : "text-emerald-500"}`}>
+          {fmt(used)} / {fmt(cap)} ({pct}%)
+        </span>
+      </div>
+      <div className="h-1.5 rounded-full bg-secondary/40 overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ${color}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ComisionesPage() {
@@ -115,7 +168,6 @@ export default function ComisionesPage() {
   const [payoutAmount, setPayoutAmount] = useState("")
   const [payoutSubmitting, setPayoutSubmitting] = useState(false)
 
-  // ── Load data ──────────────────────────────────────────────────────────────
   async function load() {
     setLoading(true)
     try {
@@ -123,7 +175,6 @@ export default function ComisionesPage() {
         fetch("/api/commissions"),
         fetch("/api/payouts"),
       ])
-
       if (commRes.ok) setCommissionsData(await commRes.json())
       if (payRes.ok) setPayoutsData(await payRes.json())
     } catch {
@@ -135,16 +186,13 @@ export default function ComisionesPage() {
 
   useEffect(() => { load() }, [])
 
-  // ── Request payout ─────────────────────────────────────────────────────────
   async function handleRequestPayout() {
     const amount = parseFloat(payoutAmount)
     const min = payoutsData?.summary.minimumPayout ?? 50
-
     if (isNaN(amount) || amount < min) {
       toast.error(`El monto mínimo es ${fmt(min)}`)
       return
     }
-
     setPayoutSubmitting(true)
     try {
       const res = await fetch("/api/payouts", {
@@ -153,12 +201,10 @@ export default function ComisionesPage() {
         body: JSON.stringify({ amount }),
       })
       const data = await res.json()
-
       if (!res.ok) {
         toast.error(data.error ?? "Error al solicitar retiro")
         return
       }
-
       toast.success("¡Retiro solicitado! Se procesará el próximo viernes.")
       setPayoutDialogOpen(false)
       setPayoutAmount("")
@@ -170,14 +216,11 @@ export default function ComisionesPage() {
     }
   }
 
-  // ── Derived values ─────────────────────────────────────────────────────────
   const summary = payoutsData?.summary
   const available = summary ? summary.payableBalance - summary.pendingPayoutTotal : 0
   const monthlyTotal = commissionsData
     ? commissionsData.monthlyUsage.level1 + commissionsData.monthlyUsage.level2
     : 0
-
-  // My userId for determining which level amount to show
   const myId = user?.memberId as string | undefined
 
   function myCommissionAmount(c: Commission) {
@@ -187,7 +230,10 @@ export default function ComisionesPage() {
     return total
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  const cap = commissionsData?.cap
+  const isEligible = cap && cap.monthly !== 0  // 0 = plan_27, null = unlimited
+  const planCode = commissionsData?.platformPlanCode
+
   if (loading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
@@ -199,14 +245,17 @@ export default function ComisionesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 border border-primary/20">
             <TrendingUp className="h-5 w-5 text-primary" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">Comisiones y Retiros</h1>
-            <p className="text-sm text-muted-foreground">Tus ganancias por referidos y historial de pagos</p>
+            <p className="text-sm text-muted-foreground">
+              Tus ganancias por referidos · Plan actual:{" "}
+              <span className="font-semibold text-foreground">{PLAN_LABELS[planCode ?? ""] ?? planCode ?? "—"}</span>
+            </p>
           </div>
         </div>
         <Button
@@ -218,6 +267,17 @@ export default function ComisionesPage() {
           Solicitar retiro
         </Button>
       </div>
+
+      {/* Not-eligible banner for plan_27 */}
+      {planCode === "plan_27" && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/[0.05] px-4 py-3 text-sm text-amber-400">
+          <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
+          <p>
+            Tu plan <strong>Member ($27)</strong> no es elegible para comisiones.
+            Actualiza a <strong>Creator ($47) o superior</strong> para empezar a ganar el 20% por cada referido.
+          </p>
+        </div>
+      )}
 
       {/* Summary cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -259,40 +319,96 @@ export default function ComisionesPage() {
 
         <Card className="border-border/50">
           <CardContent className="p-5 flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-500/10">
-              <CheckCircle2 className="h-4 w-4 text-blue-500" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-500/10">
+              <Users className="h-4 w-4 text-violet-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{fmt(summary?.lifetimePaid ?? 0)}</p>
-              <p className="text-xs text-muted-foreground">Total pagado (histórico)</p>
+              <p className="text-2xl font-bold text-foreground">{commissionsData?.referrals.count ?? 0}</p>
+              <p className="text-xs text-muted-foreground">Referidos directos (N1)</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Monthly breakdown */}
-      {commissionsData && (commissionsData.monthlyUsage.level1 > 0 || commissionsData.monthlyUsage.level2 > 0) && (
-        <Card className="border-border/50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-primary" />
-              Desglose este mes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-border/30 bg-secondary/20 p-4">
-                <p className="text-xs text-muted-foreground mb-1">Nivel 1 (referidos directos)</p>
-                <p className="text-xl font-bold text-foreground">{fmt(commissionsData.monthlyUsage.level1)}</p>
-              </div>
-              <div className="rounded-lg border border-border/30 bg-secondary/20 p-4">
-                <p className="text-xs text-muted-foreground mb-1">Nivel 2 (referidos de tus referidos)</p>
-                <p className="text-xl font-bold text-foreground">{fmt(commissionsData.monthlyUsage.level2)}</p>
-              </div>
+      {/* Monthly breakdown + cap progress */}
+      <Card className="border-border/50">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Crown className="h-4 w-4 text-primary" />
+            Rendimiento este mes
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-border/30 bg-secondary/20 p-4">
+              <p className="text-xs text-muted-foreground mb-1">Nivel 1 — Referidos directos</p>
+              <p className="text-2xl font-bold text-foreground">{fmt(commissionsData?.monthlyUsage.level1 ?? 0)}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">20% de cada pago de tu N1</p>
             </div>
-          </CardContent>
-        </Card>
-      )}
+            <div className="rounded-lg border border-border/30 bg-secondary/20 p-4">
+              <p className="text-xs text-muted-foreground mb-1">Nivel 2 — Referidos de tus referidos</p>
+              <p className="text-2xl font-bold text-foreground">{fmt(commissionsData?.monthlyUsage.level2 ?? 0)}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">20% de cada pago de tu N2</p>
+            </div>
+          </div>
+
+          {/* Cap progress bars */}
+          {cap && (
+            <div className="space-y-3 pt-1">
+              <p className="text-xs font-medium text-muted-foreground">Límite mensual de comisiones</p>
+              <CapBar
+                used={cap.l1Used}
+                cap={cap.monthly}
+                label="Comisiones N1"
+              />
+              <CapBar
+                used={cap.l2Used}
+                cap={cap.monthly}
+                label="Comisiones N2"
+              />
+              {cap.monthly !== null && cap.monthly > 0 && (
+                <p className="text-[10px] text-muted-foreground">
+                  Cada nivel tiene su propio límite de {fmt(cap.monthly)}/mes.
+                  Actualiza tu plan para aumentar o eliminar el límite.
+                </p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Affiliate link */}
+      <Card className="border-border/50">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Link2 className="h-4 w-4 text-primary" />
+            Tu link de referido
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 rounded-lg border border-border/40 bg-secondary/20 px-3 py-2.5 font-mono text-xs text-muted-foreground overflow-hidden text-ellipsis whitespace-nowrap">
+              {typeof window !== "undefined"
+                ? `${window.location.origin}/join/general?ref=${user?.username ?? user?.memberId}`
+                : `/join/general?ref=${user?.username ?? user?.memberId}`}
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const link = `${window.location.origin}/join/general?ref=${user?.username ?? user?.memberId}`
+                navigator.clipboard.writeText(link)
+                toast.success("Link copiado al portapapeles")
+              }}
+            >
+              Copiar
+            </Button>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-2">
+            Comparte este link. Cuando alguien se registre y pague, recibirás el 20% como comisión N1.
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Payout history */}
       <Card className="border-border/50">
@@ -307,7 +423,9 @@ export default function ComisionesPage() {
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <ArrowDownToLine className="h-8 w-8 text-muted-foreground/40 mb-3" />
               <p className="text-sm text-muted-foreground">Aún no has solicitado ningún retiro</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">El mínimo para retirar es {fmt(summary?.minimumPayout ?? 50)}</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">
+                El mínimo para retirar es {fmt(summary?.minimumPayout ?? 50)}
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -351,7 +469,9 @@ export default function ComisionesPage() {
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <DollarSign className="h-8 w-8 text-muted-foreground/40 mb-3" />
               <p className="text-sm text-muted-foreground">Aún no tienes comisiones registradas</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">Las comisiones se generan cuando tus referidos pagan su plan</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">
+                Las comisiones se generan cuando tus referidos confirman su pago
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -360,25 +480,38 @@ export default function ComisionesPage() {
                   <tr className="border-b border-border/30">
                     <th className="pb-2 text-left text-xs font-medium text-muted-foreground">Fecha</th>
                     <th className="pb-2 text-left text-xs font-medium text-muted-foreground hidden sm:table-cell">Plan</th>
+                    <th className="pb-2 text-left text-xs font-medium text-muted-foreground hidden md:table-cell">Nivel</th>
                     <th className="pb-2 text-right text-xs font-medium text-muted-foreground">Comisión</th>
                     <th className="pb-2 text-center text-xs font-medium text-muted-foreground">Estado</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/20">
-                  {commissionsData.history.map((c) => (
-                    <tr key={c.id}>
-                      <td className="py-3 text-foreground">{fmtDate(c.created_at)}</td>
-                      <td className="py-3 text-muted-foreground capitalize hidden sm:table-cell">
-                        {c.platform_plan_code.replace("plan_", "$")}
-                      </td>
-                      <td className="py-3 text-right font-semibold text-emerald-500">
-                        +{fmt(myCommissionAmount(c), c.currency)}
-                      </td>
-                      <td className="py-3 text-center">
-                        <StatusBadge status={c.status === "paid" ? "paid_c" : c.status} />
-                      </td>
-                    </tr>
-                  ))}
+                  {commissionsData.history.map((c) => {
+                    const isL1 = c.sponsor_level1_user_id === myId
+                    const isL2 = c.sponsor_level2_user_id === myId
+                    const amount = myCommissionAmount(c)
+                    return (
+                      <tr key={c.id}>
+                        <td className="py-3 text-foreground">{fmtDate(c.created_at)}</td>
+                        <td className="py-3 text-muted-foreground capitalize hidden sm:table-cell">
+                          {c.platform_plan_code.replace("plan_", "$")}
+                        </td>
+                        <td className="py-3 hidden md:table-cell">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            isL1 ? "bg-violet-500/10 text-violet-400" : "bg-blue-500/10 text-blue-400"
+                          }`}>
+                            {isL1 && isL2 ? "N1+N2" : isL1 ? "N1" : "N2"}
+                          </span>
+                        </td>
+                        <td className="py-3 text-right font-semibold text-emerald-500">
+                          {amount > 0 ? `+${fmt(amount, c.currency)}` : fmt(0)}
+                        </td>
+                        <td className="py-3 text-center">
+                          <StatusBadge status={c.status === "paid" ? "paid_c" : c.status} />
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
@@ -386,13 +519,22 @@ export default function ComisionesPage() {
         </CardContent>
       </Card>
 
+      {/* Lifetime paid */}
+      <div className="flex items-center justify-between rounded-xl border border-border/30 bg-secondary/20 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+          <span className="text-sm text-muted-foreground">Total pagado (histórico)</span>
+        </div>
+        <span className="text-sm font-bold text-foreground">{fmt(summary?.lifetimePaid ?? 0)}</span>
+      </div>
+
       {/* Info banner */}
       <div className="flex items-start gap-3 rounded-xl border border-border/30 bg-secondary/20 px-4 py-3 text-xs text-muted-foreground">
         <Info className="h-4 w-4 shrink-0 mt-0.5 text-primary/60" />
         <p>
-          Los retiros se procesan cada viernes. El monto mínimo es <strong className="text-foreground">{fmt(summary?.minimumPayout ?? 50)}</strong>.
-          Las comisiones pasan a "Disponible" 7 días después del pago para verificación antifraude.
-          Ganas el <strong className="text-foreground">20%</strong> por referidos directos (N1) y otro <strong className="text-foreground">20%</strong> por referidos de tus referidos (N2).
+          Retiros procesados cada viernes · Mínimo <strong className="text-foreground">{fmt(summary?.minimumPayout ?? 50)}</strong> ·
+          Hold de 7 días por verificación antifraude · Ganas el <strong className="text-foreground">20%</strong> en N1 y otro{" "}
+          <strong className="text-foreground">20%</strong> en N2 · Elegible en plan Creator ($47) o superior.
         </p>
       </div>
 
@@ -431,13 +573,11 @@ export default function ComisionesPage() {
             </div>
             <div className="rounded-lg border border-border/30 bg-secondary/30 p-3 text-xs text-muted-foreground space-y-1">
               <p>• Procesado el próximo viernes</p>
-              <p>• Recibirás confirmación por email</p>
+              <p>• Recibirás confirmación cuando sea procesado</p>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPayoutDialogOpen(false)}>
-              Cancelar
-            </Button>
+            <Button variant="outline" onClick={() => setPayoutDialogOpen(false)}>Cancelar</Button>
             <Button
               onClick={handleRequestPayout}
               disabled={
@@ -449,9 +589,7 @@ export default function ComisionesPage() {
             >
               {payoutSubmitting ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Solicitando...</>
-              ) : (
-                "Confirmar retiro"
-              )}
+              ) : "Confirmar retiro"}
             </Button>
           </DialogFooter>
         </DialogContent>
