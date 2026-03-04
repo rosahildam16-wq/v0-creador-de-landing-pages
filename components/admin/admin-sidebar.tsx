@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
-import { LayoutDashboard, Users, UsersRound, BarChart3, ChevronLeft, ChevronRight, Plug, Zap, LogOut, CreditCard, PanelTop, MessagesSquare, Settings, Globe, Route, Kanban, Megaphone, Trophy, GraduationCap, KeyRound, Mail, Activity, Banknote, ShieldCheck } from "lucide-react"
+import { LayoutDashboard, Users, UsersRound, BarChart3, ChevronLeft, ChevronRight, Plug, Zap, LogOut, CreditCard, PanelTop, MessagesSquare, Settings, Globe, Route, Kanban, Megaphone, Trophy, GraduationCap, KeyRound, Mail, Activity, Banknote, ShieldCheck, Lock } from "lucide-react"
 import { useState } from "react"
 
 const NAV_ITEMS = [
@@ -27,6 +27,8 @@ const NAV_ITEMS = [
   { href: "/admin/planes", label: "Planes y Cobros", icon: CreditCard },
   { href: "/admin/finanzas", label: "Finanzas", icon: Banknote },
   { href: "/admin/auditoria", label: "Auditoría", icon: ShieldCheck },
+  { href: "/admin/seguridad", label: "Seguridad 2FA", icon: Lock },
+  { href: "/admin/roles", label: "Roles Admin", icon: UsersRound },
   { href: "/admin/usuarios", label: "Usuarios y Soporte", icon: KeyRound },
   { href: "/admin/configuracion", label: "Configuracion", icon: Settings },
 ]
