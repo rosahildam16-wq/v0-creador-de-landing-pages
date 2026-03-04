@@ -4,6 +4,7 @@ import { TEAM_MEMBERS } from "@/lib/team-data"
 import { getLeaderCommunity } from "@/lib/communities-data"
 import { logAuditEvent } from "@/lib/server/audit"
 import { isAdminRole } from "@/lib/server/admin-guard"
+import { bootstrapSuperAdmin } from "@/lib/server/bootstrap-admin"
 
 export async function POST(req: NextRequest) {
     try {
@@ -110,6 +111,9 @@ export async function POST(req: NextRequest) {
         // Shield Phase 2: Create secure session cookie
         const { createSession } = await import("@/lib/auth/session")
         await createSession(userData)
+
+        // Auto-bootstrap: ensure super_admin row exists in DB for the admin email
+        void bootstrapSuperAdmin(normalizedEmail)
 
         // Audit admin logins
         if (isAdminRole((userData as { role?: string }).role ?? "")) {
