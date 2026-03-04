@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server"
 import { NextRequest, NextResponse } from "next/server"
 import { TEAM_MEMBERS } from "@/lib/team-data"
 import { getLeaderCommunity } from "@/lib/communities-data"
+import { logAuditEvent } from "@/lib/server/audit"
+import { isAdminRole } from "@/lib/server/admin-guard"
 
 export async function POST(req: NextRequest) {
     try {
@@ -89,12 +91,40 @@ export async function POST(req: NextRequest) {
         }
 
         if (!userData) {
+            // Audit failed login attempt for admin emails (brute-force detection)
+            const ADMIN_EMAIL = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || "").toLowerCase()
+            if (normalizedEmail === ADMIN_EMAIL) {
+                void logAuditEvent({
+                    actor_user_id: normalizedEmail,
+                    actor_role:    "unknown",
+                    action_type:   "login_admin_failed",
+                    target_type:   "auth",
+                    payload:       { email: normalizedEmail },
+                    ip:            req.headers.get("x-forwarded-for") ?? undefined,
+                    user_agent:    req.headers.get("user-agent") ?? undefined,
+                })
+            }
             return NextResponse.json({ success: false }, { status: 401 })
         }
 
         // Shield Phase 2: Create secure session cookie
         const { createSession } = await import("@/lib/auth/session")
         await createSession(userData)
+
+        // Audit admin logins
+        if (isAdminRole((userData as { role?: string }).role ?? "")) {
+            void logAuditEvent({
+                actor_user_id: (userData as { memberId?: string; email?: string }).memberId
+                               || (userData as { email?: string }).email
+                               || normalizedEmail,
+                actor_role:    (userData as { role?: string }).role ?? "unknown",
+                action_type:   "login_admin",
+                target_type:   "auth",
+                payload:       { email: normalizedEmail },
+                ip:            req.headers.get("x-forwarded-for") ?? undefined,
+                user_agent:    req.headers.get("user-agent") ?? undefined,
+            })
+        }
 
         return NextResponse.json({ success: true, ...userData })
     } catch (err) {

@@ -6,7 +6,7 @@ import type { PlatformPlanLimits } from "./platform-plans"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-export type CommissionStatus = "pending" | "payable" | "paid" | "held" | "void"
+export type CommissionStatus = "pending" | "payable" | "paid" | "held" | "void" | "locked_by_plan_limit"
 
 export interface Commission {
   id: string
@@ -205,6 +205,14 @@ export async function recordCommission(
     }
   }
 
+  // Determine initial status:
+  //   "locked_by_plan_limit" if both amounts were zeroed out by the cap
+  //   "pending"              otherwise (7-day hold applies)
+  const l1Capped = l1UserId !== null && l1Amount === 0
+  const l2Capped = l2UserId !== null && l2Amount === 0
+  const allCapped = (l1UserId || l2UserId) && (l1Capped || !l1UserId) && (l2Capped || !l2UserId)
+  const initialStatus: CommissionStatus = allCapped ? "locked_by_plan_limit" : "pending"
+
   const now = new Date().toISOString()
   const { data, error } = await db
     .from("commissions")
@@ -218,7 +226,8 @@ export async function recordCommission(
       currency,
       period_start:           periodStart.toISOString(),
       period_end:             periodEnd.toISOString(),
-      status:                 "pending",
+      status:                 initialStatus,
+      reason:                 allCapped ? "Monthly plan commission cap reached" : null,
       metadata:               metadata ?? null,
       created_at:             now,
       updated_at:             now,
@@ -309,6 +318,55 @@ export async function getPayableCommissions(sponsorUserId: string): Promise<Comm
 
   if (error) {
     console.error("[commissions] getPayableCommissions:", error.message)
+    return []
+  }
+  return (data ?? []) as Commission[]
+}
+
+/**
+ * Moves all `pending` commissions older than `holdDays` days to `payable`.
+ * Called by the Friday cron job to enforce the 7-day anti-fraud hold.
+ * Returns the number of commissions transitioned.
+ */
+export async function markPendingPayableOlderThan(holdDays = 7): Promise<number> {
+  const db = createAdminClient()
+  if (!db) return 0
+
+  const cutoff = new Date(Date.now() - holdDays * 24 * 60 * 60 * 1000).toISOString()
+
+  const { data, error } = await db
+    .from("commissions")
+    .update({ status: "payable", updated_at: new Date().toISOString() })
+    .eq("status", "pending")
+    .lt("created_at", cutoff)
+    .select("id")
+
+  if (error) {
+    console.error("[commissions] markPendingPayableOlderThan:", error.message)
+    return 0
+  }
+  return data?.length ?? 0
+}
+
+/**
+ * Returns commissions in a given status for all users, for admin/export use.
+ */
+export async function getCommissionsByStatus(
+  status: CommissionStatus,
+  limit = 500
+): Promise<Commission[]> {
+  const db = createAdminClient()
+  if (!db) return []
+
+  const { data, error } = await db
+    .from("commissions")
+    .select("*")
+    .eq("status", status)
+    .order("created_at", { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    console.error("[commissions] getCommissionsByStatus:", error.message)
     return []
   }
   return (data ?? []) as Commission[]

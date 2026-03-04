@@ -12,6 +12,8 @@ import {
   AlertCircle,
   DollarSign,
   Clock,
+  Download,
+  FileJson,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -111,8 +113,12 @@ export default function AdminFinanzasPage() {
     const { payout, action, reason } = confirmDialog
     if (!payout || !action) return
 
-    if (action === "failed" && !reason.trim()) {
-      toast.error("Debes indicar el motivo del fallo")
+    // Both "paid" and "failed" require a reason (compliance)
+    if ((action === "failed" || action === "paid") && !reason.trim()) {
+      toast.error(action === "paid"
+        ? "Debes indicar el motivo/referencia del pago (compliance)"
+        : "Debes indicar el motivo del fallo"
+      )
       return
     }
 
@@ -158,16 +164,40 @@ export default function AdminFinanzasPage() {
           <h1 className="text-2xl font-bold text-foreground">Finanzas — Retiros</h1>
           <p className="text-sm text-muted-foreground">Gestión de solicitudes de retiro de comisiones</p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => load(true)}
-          disabled={refreshing}
-          className="gap-2"
-        >
-          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-          Actualizar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
+            className="gap-2"
+          >
+            <a href="/api/admin/payouts/export?format=csv&status=queued" download>
+              <Download className="h-4 w-4" />
+              Export CSV
+            </a>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
+            className="gap-2"
+          >
+            <a href="/api/admin/payouts/export?format=json&status=queued" download>
+              <FileJson className="h-4 w-4" />
+              Export JSON
+            </a>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => load(true)}
+            disabled={refreshing}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+            Actualizar
+          </Button>
+        </div>
       </div>
 
       {/* Summary cards */}
@@ -377,8 +407,30 @@ export default function AdminFinanzasPage() {
             )}
 
             {confirmDialog.action === "paid" && (
-              <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 text-xs text-emerald-400">
-                Esto confirmará que la transferencia fue recibida por el usuario. Esta acción es irreversible.
+              <div className="space-y-3">
+                <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-400 flex items-start gap-2">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                  Solo SUPER_ADMIN puede confirmar pagos. Acción irreversible. Se registra en auditoría.
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="paid-reason">
+                    Referencia / motivo <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="paid-reason"
+                    placeholder="Ej: Transferencia Alivio #TX-1234, confirmado el 2024-01-12"
+                    value={confirmDialog.reason}
+                    onChange={(e) =>
+                      setConfirmDialog((d) => ({ ...d, reason: e.target.value }))
+                    }
+                  />
+                  {!confirmDialog.reason.trim() && (
+                    <p className="flex items-center gap-1 text-xs text-destructive">
+                      <AlertCircle className="h-3 w-3" />
+                      Obligatorio para compliance
+                    </p>
+                  )}
+                </div>
               </div>
             )}
 
@@ -403,7 +455,7 @@ export default function AdminFinanzasPage() {
               onClick={handleConfirm}
               disabled={
                 confirmDialog.submitting ||
-                (confirmDialog.action === "failed" && !confirmDialog.reason.trim())
+                ((confirmDialog.action === "failed" || confirmDialog.action === "paid") && !confirmDialog.reason.trim())
               }
               variant={confirmDialog.action === "failed" ? "destructive" : "default"}
             >

@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { requireAdminSession, requireRole } from "@/lib/server/admin-guard"
 import { getGHLLogs, getGHLLogStats, getGHLLogById } from "@/lib/ghl-log-store"
 import { upsertContact, resolveGHLConfig } from "@/lib/ghl-client"
 import { addGHLLog } from "@/lib/ghl-log-store"
@@ -6,9 +7,14 @@ import { loadGHLConfigFromDB } from "@/lib/integrations-store"
 
 /**
  * GET /api/admin/ghl-logs?embudoId=xxx&limit=50
- * Returns execution logs for GHL integration.
+ * Integration logs — super_admin or admin only (contain API config details).
  */
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const guard = await requireAdminSession(request)
+  if (!guard.ok) return guard.response
+  const roleCheck = requireRole(guard.user.role, ["super_admin", "admin"])
+  if (!roleCheck.ok) return roleCheck.response
+
   const { searchParams } = new URL(request.url)
   const embudoId = searchParams.get("embudoId") || undefined
   const limit = parseInt(searchParams.get("limit") || "50", 10)
@@ -24,7 +30,12 @@ export async function GET(request: Request) {
  * Retry a failed log entry.
  * Body: { logId: string }
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const guard = await requireAdminSession(request)
+  if (!guard.ok) return guard.response
+  const roleCheck = requireRole(guard.user.role, ["super_admin", "admin"])
+  if (!roleCheck.ok) return roleCheck.response
+
   try {
     await loadGHLConfigFromDB()
     const body = await request.json()

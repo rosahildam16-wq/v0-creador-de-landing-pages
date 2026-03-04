@@ -69,3 +69,42 @@ export async function requireAdminSession(
 
   return { ok: true, user: { ...user, role } }
 }
+
+/**
+ * Checks that the authenticated admin's role is in the allowed list.
+ * Use AFTER requireAdminSession.
+ *
+ * @example
+ * const guard = await requireAdminSession(request)
+ * if (!guard.ok) return guard.response
+ * const roleCheck = requireRole(guard.user.role, ["super_admin", "finance_admin"])
+ * if (!roleCheck.ok) return roleCheck.response
+ */
+export function requireRole(
+  role: AdminRole,
+  allowed: AdminRole[]
+): { ok: true } | { ok: false; response: NextResponse } {
+  if (!allowed.includes(role)) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { error: `Acceso denegado. Se requiere uno de: ${allowed.join(", ")}` },
+        { status: 403 }
+      ),
+    }
+  }
+  return { ok: true }
+}
+
+/** Helper to extract IP + user-agent from a request for audit logging. */
+export function getRequestMeta(request: NextRequest) {
+  return {
+    ip: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip") ?? undefined,
+    user_agent: request.headers.get("user-agent") ?? undefined,
+  }
+}
+
+/** Canonical actor ID for audit logs — prefers memberId, falls back to email. */
+export function getActorId(user: Record<string, unknown>): string {
+  return (user.memberId as string) || (user.email as string) || "unknown"
+}

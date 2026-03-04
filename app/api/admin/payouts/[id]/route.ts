@@ -1,21 +1,25 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdminSession } from "@/lib/server/admin-guard"
+import { requireAdminSession, requireRole, getRequestMeta, getActorId } from "@/lib/server/admin-guard"
 import { markPayoutSent, markPayoutPaid, markPayoutFailed } from "@/lib/server/payouts"
 import { logAuditEvent } from "@/lib/server/audit"
+import type { AdminRole } from "@/lib/server/admin-guard"
 
 export const dynamic = "force-dynamic"
 
-const ALLOWED_ROLES = ["super_admin", "admin", "finance_admin"]
+// Access matrix (separation of duties):
+//   "sent"   → finance_admin or super_admin (initiate transfer)
+//   "paid"   → super_admin ONLY           (final payment confirmation)
+//   "failed" → finance_admin or super_admin
+
+const CAN_SEND_OR_FAIL: AdminRole[] = ["super_admin", "finance_admin"]
+const CAN_MARK_PAID:    AdminRole[] = ["super_admin"]
 
 /**
  * PATCH /api/admin/payouts/[id]
- * Updates a payout's status.
- * Requires finance_admin or higher.
- *
- * Body: { status: "sent" | "paid" | "failed", reason? }
- *   - "sent"   → transfer initiated
- *   - "paid"   → transfer confirmed, paid_at = now
- *   - "failed" → transfer failed (reason stored in notes)
+ * Body: { status: "sent" | "paid" | "failed", reason: string }
+ *   - "sent"   → reason optional
+ *   - "paid"   → super_admin ONLY; reason MANDATORY (compliance)
+ *   - "failed" → reason MANDATORY
  */
 export async function PATCH(
   request: NextRequest,
@@ -24,9 +28,9 @@ export async function PATCH(
   const guard = await requireAdminSession(request)
   if (!guard.ok) return guard.response
 
-  if (!ALLOWED_ROLES.includes(guard.user.role)) {
-    return NextResponse.json({ error: "Acceso denegado" }, { status: 403 })
-  }
+  // Minimum access: finance_admin or super_admin
+  const baseCheck = requireRole(guard.user.role, CAN_SEND_OR_FAIL)
+  if (!baseCheck.ok) return baseCheck.response
 
   let body: { status?: "sent" | "paid" | "failed"; reason?: string }
   try {
@@ -39,32 +43,57 @@ export async function PATCH(
     return NextResponse.json({ error: "Se requiere: status" }, { status: 400 })
   }
 
+  const meta    = getRequestMeta(request)
+  const actorId = getActorId(guard.user)
+
   switch (body.status) {
-    case "sent":
+    case "sent": {
       await markPayoutSent(params.id)
       break
-    case "paid":
+    }
+
+    case "paid": {
+      // Final payment confirmation → super_admin only (separation of duties)
+      const paidCheck = requireRole(guard.user.role, CAN_MARK_PAID)
+      if (!paidCheck.ok) return paidCheck.response
+
+      // Reason mandatory for compliance audit trail
+      if (!body.reason?.trim()) {
+        return NextResponse.json(
+          { error: "Se requiere motivo (reason) para confirmar pago — compliance" },
+          { status: 400 }
+        )
+      }
       await markPayoutPaid(params.id)
       break
-    case "failed":
-      if (!body.reason) {
-        return NextResponse.json({ error: "Se requiere: reason para status=failed" }, { status: 400 })
+    }
+
+    case "failed": {
+      if (!body.reason?.trim()) {
+        return NextResponse.json(
+          { error: "Se requiere motivo (reason) para marcar como fallido" },
+          { status: 400 }
+        )
       }
       await markPayoutFailed(params.id, body.reason)
       break
+    }
+
     default:
-      return NextResponse.json({ error: "Status inválido. Use: sent, paid, failed" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Status inválido. Use: sent, paid, failed" },
+        { status: 400 }
+      )
   }
 
   await logAuditEvent({
-    actor_user_id: guard.user.memberId as string ?? guard.user.email as string,
-    actor_role: guard.user.role,
-    action_type: `payout.${body.status}`,
-    target_type: "payout",
-    target_id: params.id,
-    reason: body.reason,
-    ip: request.headers.get("x-forwarded-for") ?? undefined,
-    user_agent: request.headers.get("user-agent") ?? undefined,
+    actor_user_id: actorId,
+    actor_role:    guard.user.role,
+    action_type:   `payout.${body.status}`,
+    target_type:   "payout",
+    target_id:     params.id,
+    reason:        body.reason,
+    ...meta,
   })
 
   return NextResponse.json({ success: true })
