@@ -10,8 +10,10 @@ export async function GET() {
         }
 
         // Auto-bootstrap: ensure super_admin DB row stays in sync on every session init
-        const email = (session.user as { email?: string }).email
-        if (email) void bootstrapSuperAdmin(email)
+        const user = session.user as Record<string, unknown>
+        const email = (user.email as string | undefined) ?? ""
+        const userId = (user.memberId as string | undefined) || email
+        if (email) void bootstrapSuperAdmin(email, userId)
 
         return NextResponse.json({ authenticated: true, user: session.user })
     } catch {

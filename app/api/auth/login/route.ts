@@ -113,7 +113,11 @@ export async function POST(req: NextRequest) {
         await createSession(userData)
 
         // Auto-bootstrap: ensure super_admin row exists in DB for the admin email
-        void bootstrapSuperAdmin(normalizedEmail)
+        const userId =
+            (userData as { memberId?: string; email?: string }).memberId ||
+            (userData as { email?: string }).email ||
+            normalizedEmail
+        void bootstrapSuperAdmin(normalizedEmail, userId)
 
         // Audit admin logins
         if (isAdminRole((userData as { role?: string }).role ?? "")) {

@@ -10,12 +10,20 @@ const BOOTSTRAP_EMAIL = (
  * public.admin_roles.  Safe to call on every login / session init — it is a
  * no-op when the row already exists.
  *
+ * @param email   The authenticated user's email (compared against BOOTSTRAP_EMAIL).
+ * @param userId  The stable user identifier to store as admin_roles.user_id
+ *                (memberId if available, otherwise email).
+ *
  * Strategy:
- *  1. If active super_admin row exists → done (idempotent).
- *  2. Soft-revoke any other active role for this user (unique partial index).
- *  3. Insert super_admin row granted_by='bootstrap'.
+ *  1. Skip if email doesn't match bootstrap email.
+ *  2. If active super_admin row for this userId already exists → done (idempotent).
+ *  3. Soft-revoke any other active role for this userId (unique partial index).
+ *  4. Insert super_admin row with granted_by='bootstrap'.
  */
-export async function bootstrapSuperAdmin(email: string): Promise<void> {
+export async function bootstrapSuperAdmin(
+  email: string,
+  userId: string
+): Promise<void> {
   if (email.trim().toLowerCase() !== BOOTSTRAP_EMAIL) return
 
   const db = createAdminClient()
@@ -29,12 +37,15 @@ export async function bootstrapSuperAdmin(email: string): Promise<void> {
     const { data: existing } = await db
       .from("admin_roles")
       .select("id")
-      .eq("user_id", BOOTSTRAP_EMAIL)
+      .eq("user_id", userId)
       .eq("role", "super_admin")
       .eq("active", true)
       .maybeSingle()
 
-    if (existing) return // Nothing to do
+    if (existing) {
+      console.info("[bootstrap] skipped — super_admin already active for user")
+      return
+    }
 
     // 2. Revoke any conflicting active role (satisfies unique partial index on user_id WHERE active)
     await db
@@ -44,23 +55,23 @@ export async function bootstrapSuperAdmin(email: string): Promise<void> {
         revoked_at: new Date().toISOString(),
         revoked_by: "bootstrap",
       })
-      .eq("user_id", BOOTSTRAP_EMAIL)
+      .eq("user_id", userId)
       .eq("active", true)
 
     // 3. Insert fresh super_admin
     const { error } = await db.from("admin_roles").insert({
-      user_id: BOOTSTRAP_EMAIL,
+      user_id: userId,
       role: "super_admin",
       granted_by: "bootstrap",
       active: true,
     })
 
     if (error) {
-      console.error("[bootstrap] Insert super_admin failed:", error.message)
+      console.error("[bootstrap] insert super_admin failed:", error.message)
     } else {
-      console.info("[bootstrap] super_admin row created for", BOOTSTRAP_EMAIL)
+      console.info("[bootstrap] applied — super_admin row created")
     }
   } catch (err) {
-    console.error("[bootstrap] Unexpected error:", err)
+    console.error("[bootstrap] unexpected error:", err)
   }
 }
