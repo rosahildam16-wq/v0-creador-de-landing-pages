@@ -329,80 +329,79 @@ export function UhMayLanding({ onTrack }: Props) {
             justifyContent: "center",
           }}
         >
-          {/* Fondo con parallax */}
+          {/* Fondo con parallax — imagen real de selva + playa Tulum */}
           <div
             style={{
               position: "absolute",
               inset: "-10%",
-              background: `
-                linear-gradient(160deg, ${C.jungle} 0%, #0D2218 60%, #1A1208 100%)
-              `,
               transform: `translateY(${scrollY * 0.28}px)`,
               willChange: "transform",
             }}
           >
-            {/* Textura orgánica SVG */}
-            <svg
-              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.08 }}
-              viewBox="0 0 800 600"
-              preserveAspectRatio="xMidYMid slice"
-            >
-              <defs>
-                <radialGradient id="g1" cx="30%" cy="70%">
-                  <stop offset="0%" stopColor="#4A8C6F" stopOpacity="1" />
-                  <stop offset="100%" stopColor="#1B3A2E" stopOpacity="0" />
-                </radialGradient>
-                <radialGradient id="g2" cx="80%" cy="20%">
-                  <stop offset="0%" stopColor="#6BAA80" stopOpacity="1" />
-                  <stop offset="100%" stopColor="#1B3A2E" stopOpacity="0" />
-                </radialGradient>
-              </defs>
-              <ellipse cx="240" cy="420" rx="320" ry="280" fill="url(#g1)" />
-              <ellipse cx="640" cy="120" rx="260" ry="200" fill="url(#g2)" />
-              {/* Líneas topográficas abstractas */}
-              {[0,1,2,3,4].map((i) => (
-                <ellipse
-                  key={i}
-                  cx={400} cy={300}
-                  rx={180 + i * 80} ry={120 + i * 55}
-                  fill="none"
-                  stroke="#4A8C6F"
-                  strokeWidth="0.5"
-                  opacity={0.3 - i * 0.05}
-                />
-              ))}
-            </svg>
-            {/* Puntos de luz tipo selva */}
-            {[
-              { x: "15%", y: "25%", r: 180, c: "rgba(106,170,128,0.12)" },
-              { x: "75%", y: "65%", r: 220, c: "rgba(75,140,111,0.09)" },
-              { x: "50%", y: "10%", r: 140, c: "rgba(184,164,110,0.06)" },
-            ].map((spot, i) => (
-              <div
-                key={i}
-                style={{
-                  position: "absolute",
-                  left: spot.x,
-                  top: spot.y,
-                  width: spot.r,
-                  height: spot.r,
-                  background: `radial-gradient(circle, ${spot.c} 0%, transparent 70%)`,
-                  transform: "translate(-50%,-50%)",
-                  borderRadius: "50%",
-                }}
-              />
-            ))}
+            {/* Imagen de fondo: selva y playa de Tulum */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=1920&q=85&auto=format&fit=crop"
+              alt=""
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: "center 40%",
+                filter: "saturate(0.85) brightness(0.75)",
+              }}
+              onError={(e) => {
+                // Fallback a segunda imagen si la principal falla
+                const img = e.currentTarget
+                img.onerror = null
+                img.src = "https://images.unsplash.com/photo-1596178065340-d80bd6a5ca7b?w=1920&q=85&auto=format&fit=crop"
+              }}
+            />
+
+            {/* Capa de color para ajustar tonalidad hacia selva oscura */}
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: `linear-gradient(160deg,
+                  rgba(15, 32, 20, 0.35) 0%,
+                  rgba(10, 20, 14, 0.15) 40%,
+                  rgba(8, 14, 10, 0.45) 100%
+                )`,
+                mixBlendMode: "multiply",
+              }}
+            />
+
+            {/* Viñeta lateral izquierda para dar profundidad */}
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: `radial-gradient(ellipse at 20% 60%, transparent 30%, rgba(5,12,8,0.5) 100%)`,
+              }}
+            />
           </div>
 
           {/* Grain overlay */}
           <div className="grain-overlay" />
 
-          {/* Overlay oscuro para legibilidad */}
+          {/* Overlay para legibilidad del texto — gradiente direccional */}
           <div
             style={{
               position: "absolute",
               inset: 0,
-              background: "linear-gradient(180deg, rgba(15,20,15,0.55) 0%, rgba(10,16,12,0.72) 100%)",
+              background: `
+                linear-gradient(
+                  180deg,
+                  rgba(8,14,10,0.50) 0%,
+                  rgba(8,14,10,0.22) 35%,
+                  rgba(8,14,10,0.30) 65%,
+                  rgba(8,14,10,0.65) 100%
+                )
+              `,
             }}
           />
 
