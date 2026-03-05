@@ -54,6 +54,7 @@ export default function JoinPage() {
   const communitySlug = params.community_slug as string
 
   // URL params
+  const inviteTokenFromUrl = searchParams.get("token") ?? searchParams.get("invite") ?? ""
   const refFromUrl = searchParams.get("ref") ?? searchParams.get("r") ?? ""
 
   // Persist join context in cookies (30d)
@@ -68,6 +69,12 @@ export default function JoinPage() {
   const [plans, setPlans] = useState<PlanData[]>([])
   const [dataLoading, setDataLoading] = useState(true)
   const [dataError, setDataError] = useState("")
+
+  // Invite token state
+  const [inviteToken, setInviteToken] = useState(inviteTokenFromUrl)
+  const [inviteSponsor, setInviteSponsor] = useState<{ username: string; name: string | null } | null>(null)
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [inviteError, setInviteError] = useState("")
 
   // Form state
   const [name, setName] = useState("")
@@ -101,6 +108,27 @@ export default function JoinPage() {
       .catch(() => setDataError("No se pudo cargar la comunidad"))
       .finally(() => setDataLoading(false))
   }, [communitySlug])
+
+  // Validate invite token on mount (if present in URL)
+  useEffect(() => {
+    if (!inviteTokenFromUrl) return
+    setInviteLoading(true)
+    fetch(`/api/invites/${encodeURIComponent(inviteTokenFromUrl)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.valid && data.sponsor) {
+          setInviteSponsor(data.sponsor)
+          setRefUsername(data.sponsor.username)
+          setRefStatus("found")
+          setRefName(data.sponsor.name ?? data.sponsor.username)
+          setInviteError("")
+        } else {
+          setInviteError(data.error ?? "Invitación inválida")
+        }
+      })
+      .catch(() => setInviteError("No se pudo validar la invitación"))
+      .finally(() => setInviteLoading(false))
+  }, [inviteTokenFromUrl])
 
   // Debounced username check
   useEffect(() => {
@@ -175,6 +203,7 @@ export default function JoinPage() {
           username,
           communitySlug,
           refUsername: refUsername || undefined,
+          invite_token: inviteToken || undefined,
         }),
       })
       const data = await res.json()
@@ -324,6 +353,25 @@ export default function JoinPage() {
                     : "Acceso inmediato tras el registro"}
                 </p>
               </div>
+
+              {/* Invite token status */}
+              {inviteLoading && (
+                <div className="mb-4 flex items-center gap-2 text-xs text-violet-400/60">
+                  <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-violet-400/30 border-t-violet-400" />
+                  Verificando invitación...
+                </div>
+              )}
+              {!inviteLoading && inviteSponsor && (
+                <div className="mb-4 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] px-4 py-3 text-sm text-emerald-400">
+                  Invitado por <span className="font-semibold">@{inviteSponsor.username}</span>
+                  {inviteSponsor.name ? ` (${inviteSponsor.name})` : ""}
+                </div>
+              )}
+              {!inviteLoading && inviteError && (
+                <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/[0.05] px-4 py-3 text-sm text-red-400">
+                  {inviteError}
+                </div>
+              )}
 
               {error && (
                 <div className="mb-5 rounded-xl border border-amber-500/15 bg-amber-500/[0.05] px-4 py-3 text-sm text-amber-400">

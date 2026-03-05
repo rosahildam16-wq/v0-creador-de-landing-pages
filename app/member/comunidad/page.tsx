@@ -136,9 +136,6 @@ export default function MemberComunidadPage() {
   if (!mounted) return null
 
   if (!community) {
-    const planPrice = subscription?.plan?.precio_usdt || 0
-    const canCreate = planPrice >= 47
-
     if (subLoading) return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -153,13 +150,21 @@ export default function MemberComunidadPage() {
 
           <div className="relative z-10">
             <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-primary/20">
-              <Sparkles className="h-8 w-8 text-primary" />
+              <Users className="h-8 w-8 text-primary" />
             </div>
 
-            <h2 className="text-3xl font-extrabold text-white mb-4 tracking-tight">Crea tu propio imperio</h2>
-            <p className="text-muted-foreground mb-8 leading-relaxed">
-              Todavía no perteneces a ninguna comunidad. Como usuario premium de Magic Funnel, puedes liderar tu propio equipo y crear una comunidad exclusiva.
+            <h2 className="text-2xl font-extrabold text-white mb-3 tracking-tight">Aún no perteneces a una comunidad</h2>
+            <p className="text-muted-foreground mb-6 leading-relaxed text-sm">
+              Para unirte necesitas un link de invitación de tu patrocinador. Pídele a quien te refirió que comparta su link contigo.
             </p>
+
+            <a
+              href="/join"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Ingresar link de invitación
+            </a>
 
             {showCreateForm ? (
               <form onSubmit={handleCreateCommunity} className="space-y-4 text-left animate-in fade-in slide-in-from-bottom-4 duration-500">

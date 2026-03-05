@@ -7,6 +7,7 @@ import { addGHLLog } from "@/lib/ghl-log-store"
 import { loadGHLConfigFromDB } from "@/lib/integrations-store"
 import { qualifyLead } from "@/lib/ai-service"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { resolveSponsorAndCommunity } from "@/lib/server/resolve-sponsor"
 
 // POST /api/leads
 // Receives lead data from the quiz registration form,
@@ -50,95 +51,19 @@ export async function POST(request: Request) {
     const whatsappClean = normalizePhone(body.whatsapp, phoneCountryCode)
     const emailNormalized = body.correo.trim().toLowerCase()
 
-    // ─── Resolve Community and Sponsor from Ref ───
+    // ─── Resolve Community and Sponsor (universal resolver) ──────────────────
     let communityId = "general"
     let asignadoA = "Sin asignar"
 
-    // 0. If invite_token is provided, resolve community + sponsor from invite table
-    if (body.invite_token) {
-      try {
-        const token = body.invite_token.toLowerCase().trim()
-        const supabase = createAdminClient()
-        if (supabase) {
-          const { data: invite } = await supabase
-            .from("community_invites")
-            .select("community_id, sponsor_username, max_uses, uses, expires_at")
-            .eq("token", token)
-            .maybeSingle()
-
-          if (
-            invite &&
-            !(invite.expires_at && new Date(invite.expires_at) < new Date()) &&
-            !(invite.max_uses > 0 && invite.uses >= invite.max_uses)
-          ) {
-            communityId = invite.community_id
-            if (invite.sponsor_username) {
-              asignadoA = invite.sponsor_username
-            }
-          }
-        }
-      } catch { /* non-blocking */ }
-    }
-
-    if (body.ref) {
-      try {
-        // First try static team members (Sync & memory fast)
-        const { getMemberBySlug } = await import("@/lib/team-data")
-        const staticMember = getMemberBySlug(body.ref)
-        if (staticMember) {
-          asignadoA = staticMember.id
-          // Look up their real community_id in DB to avoid leaving leads in "general"
-          try {
-            const { createAdminClient: getAdmin } = await import("@/lib/supabase/admin")
-            const adminDb = getAdmin()
-            if (adminDb) {
-              const { data: dbMember } = await adminDb
-                .from("community_members")
-                .select("community_id")
-                .eq("username", staticMember.id.toLowerCase())
-                .maybeSingle()
-              if (dbMember?.community_id) {
-                communityId = dbMember.community_id
-              } else {
-                // Fallback to Skalia VIP
-                const { data: skalia } = await adminDb
-                  .from("communities")
-                  .select("id")
-                  .eq("slug", "skalia-vip")
-                  .maybeSingle()
-                if (skalia) communityId = skalia.id
-              }
-            }
-          } catch { /* non-blocking */ }
-        } else {
-          // Then try Supabase
-          const { createAdminClient } = await import("@/lib/supabase/admin")
-          const supabase = createAdminClient()
-          if (supabase) {
-            const refsToTry = [
-              body.ref,                         // exact match (jorge_leon)
-              body.ref.replace(/-/g, "_"),      // slug to username (jorge-leon -> jorge_leon)
-              body.ref.replace(/-/g, ""),       // slug to username (jorge-leon -> jorgeleon)
-            ]
-
-            let foundMember = null
-            const refsCsv = refsToTry.map(r => `"${r}"`).join(',')
-            const { data } = await supabase
-              .from("community_members")
-              .select("community_id, name, username")
-              .or(`member_id.in.(${refsCsv}),username.in.(${refsCsv})`)
-              .maybeSingle()
-
-            if (data) {
-              foundMember = data
-              communityId = data.community_id
-              asignadoA = data.username || data.name
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Attribution error:", err)
-      }
+    try {
+      const ctx = await resolveSponsorAndCommunity({
+        inviteToken: body.invite_token || null,
+        sponsorUsername: body.ref || null,
+      })
+      communityId = ctx.communityId
+      asignadoA = ctx.sponsorUsername || "Sin asignar"
+    } catch {
+      // non-blocking: lead still gets saved with defaults
     }
 
     // Create lead via data layer

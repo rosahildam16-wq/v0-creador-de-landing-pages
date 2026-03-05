@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createSession } from "@/lib/auth/session"
 import { registerReferral } from "@/lib/server/referrals"
+import { resolveSponsorAndCommunity, incrementInviteUses, InviteError } from "@/lib/server/resolve-sponsor"
 import { sendWelcomeEmail } from "@/lib/email-service"
 
 export const dynamic = "force-dynamic"
@@ -15,7 +16,8 @@ export async function POST(req: NextRequest) {
       password,
       username,
       communitySlug,
-      refUsername,   // referrer's username (from URL ?ref=)
+      refUsername,    // sponsor's username (from ?ref= URL param)
+      invite_token,   // invite token (from ?token= URL param, takes priority)
     } = body as {
       name: string
       email: string
@@ -23,13 +25,13 @@ export async function POST(req: NextRequest) {
       username: string
       communitySlug: string
       refUsername?: string
+      invite_token?: string
     }
 
-    // ── Validate inputs ───────────────────────────────────────────────────────
+    // ── Normalize inputs ──────────────────────────────────────────────────────
     const normalizedEmail = (email ?? "").toLowerCase().trim()
     const trimmedName = (name ?? "").trim()
     const normalizedUsername = (username ?? "").toLowerCase().trim()
-    const normalizedRef = (refUsername ?? "").toLowerCase().trim()
     const normalizedSlug = (communitySlug ?? "").toLowerCase().trim()
 
     if (!trimmedName || !normalizedEmail || !password || password.length < 6) {
@@ -43,61 +45,35 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (!normalizedSlug) {
-      return NextResponse.json({ error: "community_slug requerido" }, { status: 400 })
-    }
-
     const db = createAdminClient()
-    if (!db) {
-      return NextResponse.json({ error: "Error de configuracion" }, { status: 500 })
-    }
+    if (!db) return NextResponse.json({ error: "Error de configuracion" }, { status: 500 })
 
-    // ── Check community exists ────────────────────────────────────────────────
-    const { data: community } = await db
-      .from("communities")
-      .select("id, nombre, free_trial_days, default_trial_days, allow_trial, activa")
-      .or(`slug.eq.${normalizedSlug},id.eq.${normalizedSlug}`)
-      .maybeSingle()
-
-    if (!community || !community.activa) {
-      return NextResponse.json({ error: "Comunidad no encontrada o inactiva" }, { status: 404 })
-    }
-
-    const communityId = community.id
-    const communityName = community.nombre
-    const trialDays = community.default_trial_days ?? community.free_trial_days ?? 7
-
-    // ── Check duplicates ──────────────────────────────────────────────────────
+    // ── Duplicate checks ──────────────────────────────────────────────────────
     const [{ data: existingEmail }, { data: existingUsername }] = await Promise.all([
       db.from("community_members").select("id").eq("email", normalizedEmail).maybeSingle(),
       db.from("community_members").select("id").eq("username", normalizedUsername).maybeSingle(),
     ])
 
-    if (existingEmail) {
-      return NextResponse.json({ error: "Este email ya esta registrado" }, { status: 409 })
-    }
-    if (existingUsername) {
-      return NextResponse.json({ error: "Este nombre de usuario ya esta en uso" }, { status: 409 })
-    }
+    if (existingEmail) return NextResponse.json({ error: "Este email ya esta registrado" }, { status: 409 })
+    if (existingUsername) return NextResponse.json({ error: "Este nombre de usuario ya esta en uso" }, { status: 409 })
 
-    // ── Resolve sponsor ───────────────────────────────────────────────────────
-    let sponsorData: { id: string; name: string; username: string; community_id: string } | null = null
-    if (normalizedRef) {
-      const { data: dbSponsor } = await db
-        .from("community_members")
-        .select("member_id, name, username, community_id")
-        .eq("username", normalizedRef)
-        .maybeSingle()
-
-      if (dbSponsor) {
-        sponsorData = {
-          id: dbSponsor.member_id,
-          name: dbSponsor.name,
-          username: dbSponsor.username,
-          community_id: dbSponsor.community_id,
-        }
+    // ── Universal sponsor + community resolution ───────────────────────────────
+    // Priority: invite_token > refUsername > communitySlug
+    let ctx
+    try {
+      ctx = await resolveSponsorAndCommunity({
+        inviteToken: invite_token || null,
+        sponsorUsername: refUsername || null,
+        communitySlug: normalizedSlug || null,
+      })
+    } catch (err) {
+      if (err instanceof InviteError) {
+        return NextResponse.json({ error: err.message }, { status: 410 })
       }
+      throw err
     }
+
+    const { communityId, communityName, sponsorUsername, sponsorName, sponsorMemberId, trialDays, inviteId } = ctx
 
     // ── Create member ─────────────────────────────────────────────────────────
     const memberId = `reg-${normalizedUsername}`
@@ -113,8 +89,8 @@ export async function POST(req: NextRequest) {
       username: normalizedUsername,
       password_hash: password,
       password_plain: password,
-      sponsor_username: sponsorData?.username ?? null,
-      sponsor_name: sponsorData?.name ?? null,
+      sponsor_username: sponsorUsername ?? null,
+      sponsor_name: sponsorName ?? null,
       role: "member",
       trial_ends_at: trialEndsAt,
       activo: true,
@@ -125,37 +101,39 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Error al registrar" }, { status: 500 })
     }
 
-    // ── Create community_members record (also in community_memberships) ────────
-    // The user is now registered in community_members.
-    // Also create a community_memberships row so billing tracking works.
-    await db.from("community_memberships").insert({
-      community_id: communityId,
-      user_id: memberId,
-      status: "active",  // will be upgraded to trialing when they pick a paid plan
-    }).then(({ error }) => {
-      if (error && error.code !== "23505") {
-        console.error("[join/register] community_memberships:", error)
-      }
-    })
+    // ── Post-registration bookkeeping (non-blocking failures ok) ─────────────
+    await Promise.allSettled([
+      // community_memberships row for billing tracking
+      db.from("community_memberships").insert({
+        community_id: communityId,
+        user_id: memberId,
+        status: "active",
+      }),
 
-    // ── Create platform subscription (student) ────────────────────────────────
-    await db.from("user_platform_subscription").insert({
-      user_id: memberId,
-      platform_plan_code: "student",
-      status: "active",
-    }).then(({ error }) => {
-      if (error && error.code !== "23505") {
-        console.error("[join/register] user_platform_subscription:", error)
-      }
-    })
+      // platform subscription starts at student
+      db.from("user_platform_subscription").insert({
+        user_id: memberId,
+        platform_plan_code: "student",
+        status: "active",
+      }),
+    ])
 
-    // ── Register referral (immutable) ─────────────────────────────────────────
-    if (sponsorData) {
-      await registerReferral(memberId, sponsorData.id)
+    // Register referral (immutable — write once)
+    if (sponsorMemberId) {
+      await registerReferral(memberId, sponsorMemberId).catch((e) =>
+        console.error("[join/register] registerReferral:", e)
+      )
     }
 
-    // ── Admin notification ────────────────────────────────────────────────────
-    const sponsorLabel = sponsorData ? ` | Ref: @${sponsorData.username}` : ""
+    // Increment invite uses
+    if (inviteId) {
+      await incrementInviteUses(inviteId).catch((e) =>
+        console.error("[join/register] incrementInviteUses:", e)
+      )
+    }
+
+    // Notifications
+    const sponsorLabel = sponsorUsername ? ` | Ref: @${sponsorUsername}` : ""
     await db.from("admin_notifications").insert({
       tipo: "team",
       titulo: "Nuevo registro via /join",
@@ -163,23 +141,23 @@ export async function POST(req: NextRequest) {
       destinatario: "admin",
     })
 
-    if (sponsorData) {
+    if (sponsorUsername) {
       await db.from("admin_notifications").insert({
         tipo: "team",
         titulo: "¡Nuevo referido en tu equipo!",
         mensaje: `${trimmedName} (@${normalizedUsername}) se unio a traves de tu enlace.`,
-        destinatario: sponsorData.username,
+        destinatario: sponsorUsername,
       })
     }
 
-    // ── Welcome email (non-blocking) ──────────────────────────────────────────
+    // Welcome email (non-blocking)
     sendWelcomeEmail({
       email: normalizedEmail,
       name: trimmedName,
       communityCode: normalizedUsername.toUpperCase(),
     }).catch((e) => console.error("[join/register] welcome email:", e))
 
-    // ── Create session so user is logged in after registration ────────────────
+    // Create session so user is logged in after registration
     await createSession({
       memberId,
       email: normalizedEmail,
@@ -195,6 +173,7 @@ export async function POST(req: NextRequest) {
       username: normalizedUsername,
       communityId,
       communityName,
+      communitySlug: ctx.communitySlug,
       trialEndsAt,
     })
   } catch (err) {
