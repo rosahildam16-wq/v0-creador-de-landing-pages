@@ -59,8 +59,30 @@ export async function POST(request: Request) {
         const { getMemberBySlug } = await import("@/lib/team-data")
         const staticMember = getMemberBySlug(body.ref)
         if (staticMember) {
-          asignadoA = staticMember.id // Or staticMember.nombre
-          // If we had community association in TEAM_MEMBERS, we'd use it here
+          asignadoA = staticMember.id
+          // Look up their real community_id in DB to avoid leaving leads in "general"
+          try {
+            const { createAdminClient: getAdmin } = await import("@/lib/supabase/admin")
+            const adminDb = getAdmin()
+            if (adminDb) {
+              const { data: dbMember } = await adminDb
+                .from("community_members")
+                .select("community_id")
+                .eq("username", staticMember.id.toLowerCase())
+                .maybeSingle()
+              if (dbMember?.community_id) {
+                communityId = dbMember.community_id
+              } else {
+                // Fallback to Skalia VIP
+                const { data: skalia } = await adminDb
+                  .from("communities")
+                  .select("id")
+                  .eq("slug", "skalia-vip")
+                  .maybeSingle()
+                if (skalia) communityId = skalia.id
+              }
+            }
+          } catch { /* non-blocking */ }
         } else {
           // Then try Supabase
           const { createAdminClient } = await import("@/lib/supabase/admin")

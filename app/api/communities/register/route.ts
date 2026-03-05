@@ -76,11 +76,29 @@ export async function POST(req: NextRequest) {
         // Check static team members
         const staticSponsor = TEAM_MEMBERS.find(m => m.id.toLowerCase() === normalizedSponsor || m.email.toLowerCase() === normalizedSponsor)
         if (staticSponsor) {
+          // Try to find their real community_id in Supabase to avoid defaulting to "general"
+          let realCommunityId = "general"
+          const { data: staticMemberInDb } = await supabase
+            .from("community_members")
+            .select("community_id")
+            .eq("username", staticSponsor.id.toLowerCase())
+            .maybeSingle()
+          if (staticMemberInDb?.community_id) {
+            realCommunityId = staticMemberInDb.community_id
+          } else {
+            // Fallback: look up "Skalia VIP" community directly (platform default)
+            const { data: skalia } = await supabase
+              .from("communities")
+              .select("id")
+              .eq("slug", "skalia-vip")
+              .maybeSingle()
+            if (skalia) realCommunityId = skalia.id
+          }
           sponsorData = {
             id: staticSponsor.id,
             name: staticSponsor.nombre,
             username: staticSponsor.id,
-            community_id: "general"
+            community_id: realCommunityId,
           }
         }
       }
