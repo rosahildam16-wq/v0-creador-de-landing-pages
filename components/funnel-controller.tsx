@@ -13,6 +13,7 @@ import { ResetLanding } from "./experiences/reset-landing"
 import { DecisionVideo } from "./experiences/exp8-decision-video"
 import { MunotLanding } from "./experiences/munot-landing"
 import { EsclavoDigitalLanding } from "./experiences/esclavo-digital-landing"
+import { UhMayLanding } from "./experiences/uh-may-landing"
 
 // Order: Video(1) → Call(2) → Quiz(3) → Hacker(4) → WhatsApp(5) → Login(6) → Feed(7) → Decision(8) → Sales(9)
 type Experience = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
@@ -136,6 +137,15 @@ export function FunnelController({ embudoId = "nomada-vip", startAt, referrer }:
         <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col">
           <EsclavoDigitalLanding leadId={leadIdRef.current} onTrack={() => trackStep(1)} />
         </div>
+      </main>
+    )
+  }
+
+  // Uh May — landing inmobiliaria premium (full-width, sin max-w-md)
+  if (embudoId === "uh-may") {
+    return (
+      <main className="relative min-h-dvh w-full overflow-x-hidden">
+        <UhMayLanding leadId={leadIdRef.current} onTrack={() => trackStep(1)} />
       </main>
     )
   }
