@@ -25,6 +25,7 @@ interface LeadPayload {
   tags?: string[]
   funnel_step?: string
   ref?: string
+  invite_token?: string   // invite link token → resolves community_id + sponsor
   pais?: string
   trafico?: "Organico" | "Pauta"
 }
@@ -52,6 +53,32 @@ export async function POST(request: Request) {
     // ─── Resolve Community and Sponsor from Ref ───
     let communityId = "general"
     let asignadoA = "Sin asignar"
+
+    // 0. If invite_token is provided, resolve community + sponsor from invite table
+    if (body.invite_token) {
+      try {
+        const token = body.invite_token.toLowerCase().trim()
+        const supabase = createAdminClient()
+        if (supabase) {
+          const { data: invite } = await supabase
+            .from("community_invites")
+            .select("community_id, sponsor_username, max_uses, uses, expires_at")
+            .eq("token", token)
+            .maybeSingle()
+
+          if (
+            invite &&
+            !(invite.expires_at && new Date(invite.expires_at) < new Date()) &&
+            !(invite.max_uses > 0 && invite.uses >= invite.max_uses)
+          ) {
+            communityId = invite.community_id
+            if (invite.sponsor_username) {
+              asignadoA = invite.sponsor_username
+            }
+          }
+        }
+      } catch { /* non-blocking */ }
+    }
 
     if (body.ref) {
       try {

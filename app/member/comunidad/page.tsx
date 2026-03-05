@@ -38,18 +38,48 @@ export default function MemberComunidadPage() {
 
   useEffect(() => {
     setMounted(true)
-    if (!user?.memberId) return
+    if (!user?.email) return
 
-    // Fetch community
-    const comm = getMemberCommunity(user.memberId)
-    setCommunity(comm)
-    if (comm) {
-      setPosts(getCommunityPosts(comm.id))
-      setMembers(getCommunityMembers(comm.id))
-    }
+    const fetchAll = async () => {
+      // 1. Load community from DB (source of truth — replaces static localStorage lookup)
+      try {
+        const res = await fetch(`/api/communities/my-community?email=${encodeURIComponent(user.email)}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.community) {
+            const dbComm = data.community
+            const mappedComm: Community = {
+              id: dbComm.id,
+              nombre: dbComm.nombre,
+              codigo: dbComm.codigo || null,
+              embudos_default: dbComm.embudos_default || [],
+              color: dbComm.color || "#8b5cf6",
+              descripcion: dbComm.descripcion || "",
+              activa: dbComm.activa !== false,
+              leaderEmail: dbComm.leader_email || null,
+              leaderName: dbComm.leader_name || null,
+              cuota_miembro: dbComm.cuota_miembro || 0,
+              mailing_enabled: false,
+              createdAt: dbComm.created_at || new Date().toISOString(),
+            }
+            setCommunity(mappedComm)
+            setPosts(getCommunityPosts(mappedComm.id))
+            setMembers(getCommunityMembers(mappedComm.id))
+          }
+        }
+      } catch {
+        // Fallback: static lookup for legacy users
+        if (user.memberId) {
+          const comm = getMemberCommunity(user.memberId)
+          if (comm) {
+            setCommunity(comm)
+            setPosts(getCommunityPosts(comm.id))
+            setMembers(getCommunityMembers(comm.id))
+          }
+        }
+      }
 
-    // Fetch subscription to check plan
-    const fetchSub = async () => {
+      // 2. Fetch subscription to check plan (for upgrade gate)
       try {
         const res = await fetch("/api/payments/check-subscription")
         const data = await res.json()
@@ -60,7 +90,8 @@ export default function MemberComunidadPage() {
         setSubLoading(false)
       }
     }
-    fetchSub()
+
+    fetchAll()
   }, [user])
 
   const handlePost = () => {
