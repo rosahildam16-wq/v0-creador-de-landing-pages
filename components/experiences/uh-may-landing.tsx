@@ -338,10 +338,10 @@ export function UhMayLanding({ onTrack }: Props) {
               willChange: "transform",
             }}
           >
-            {/* Imagen de fondo: selva y playa de Tulum */}
+            {/* Imagen de fondo: cenote Uh May — coloca el archivo en /public/images/uh-may-hero.jpg */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=1920&q=85&auto=format&fit=crop"
+              src="/images/uh-may-hero.jpg"
               alt=""
               aria-hidden="true"
               style={{
@@ -350,14 +350,14 @@ export function UhMayLanding({ onTrack }: Props) {
                 width: "100%",
                 height: "100%",
                 objectFit: "cover",
-                objectPosition: "center 40%",
-                filter: "saturate(0.85) brightness(0.75)",
+                objectPosition: "center 35%",
+                filter: "saturate(0.9) brightness(0.7)",
               }}
               onError={(e) => {
-                // Fallback a segunda imagen si la principal falla
+                // Fallback: cenote de Unsplash mientras se coloca la imagen definitiva
                 const img = e.currentTarget
                 img.onerror = null
-                img.src = "https://images.unsplash.com/photo-1596178065340-d80bd6a5ca7b?w=1920&q=85&auto=format&fit=crop"
+                img.src = "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=1920&q=85&auto=format&fit=crop"
               }}
             />
 
