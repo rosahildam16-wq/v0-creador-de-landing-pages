@@ -338,10 +338,10 @@ export function UhMayLanding({ onTrack }: Props) {
               willChange: "transform",
             }}
           >
-            {/* Imagen de fondo: cenote Uh May — coloca el archivo en /public/images/uh-may-hero.jpg */}
+            {/* Imagen de fondo: cenote Ik-Kil / Uh May */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/images/uh-may-hero.jpg"
+              src="https://i.pinimg.com/1200x/47/ea/3e/47ea3e4cae2c823faca9f4b80de52a54.jpg"
               alt=""
               aria-hidden="true"
               style={{
@@ -354,10 +354,9 @@ export function UhMayLanding({ onTrack }: Props) {
                 filter: "saturate(0.9) brightness(0.7)",
               }}
               onError={(e) => {
-                // Fallback: cenote de Unsplash mientras se coloca la imagen definitiva
                 const img = e.currentTarget
                 img.onerror = null
-                img.src = "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=1920&q=85&auto=format&fit=crop"
+                img.src = "/images/uh-may-hero.jpg"
               }}
             />
 
