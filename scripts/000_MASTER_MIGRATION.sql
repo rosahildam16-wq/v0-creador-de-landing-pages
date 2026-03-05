@@ -70,8 +70,11 @@ ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.eventos_actividad ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "leads_allow_all" ON public.leads;
 CREATE POLICY "leads_allow_all" ON public.leads FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "notas_allow_all" ON public.notas;
 CREATE POLICY "notas_allow_all" ON public.notas FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "eventos_allow_all" ON public.eventos_actividad;
 CREATE POLICY "eventos_allow_all" ON public.eventos_actividad FOR ALL USING (true) WITH CHECK (true);
 
 CREATE OR REPLACE FUNCTION public.update_updated_at()
@@ -295,9 +298,13 @@ CREATE TABLE IF NOT EXISTS public.communities (
 );
 
 ALTER TABLE public.communities ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "communities_select_all" ON public.communities;
 CREATE POLICY "communities_select_all" ON public.communities FOR SELECT USING (true);
+DROP POLICY IF EXISTS "communities_insert_admin" ON public.communities;
 CREATE POLICY "communities_insert_admin" ON public.communities FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "communities_update_admin" ON public.communities;
 CREATE POLICY "communities_update_admin" ON public.communities FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "communities_delete_admin" ON public.communities;
 CREATE POLICY "communities_delete_admin" ON public.communities FOR DELETE USING (true);
 
 CREATE TABLE IF NOT EXISTS public.community_members (
@@ -315,9 +322,13 @@ CREATE TABLE IF NOT EXISTS public.community_members (
 );
 
 ALTER TABLE public.community_members ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "members_select_all" ON public.community_members;
 CREATE POLICY "members_select_all" ON public.community_members FOR SELECT USING (true);
+DROP POLICY IF EXISTS "members_insert_all" ON public.community_members;
 CREATE POLICY "members_insert_all" ON public.community_members FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "members_update_all" ON public.community_members;
 CREATE POLICY "members_update_all" ON public.community_members FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "members_delete_all" ON public.community_members;
 CREATE POLICY "members_delete_all" ON public.community_members FOR DELETE USING (true);
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_member_email ON public.community_members(email);
@@ -333,8 +344,11 @@ CREATE TABLE IF NOT EXISTS public.admin_notifications (
 );
 
 ALTER TABLE public.admin_notifications ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "notifications_select_all" ON public.admin_notifications;
 CREATE POLICY "notifications_select_all" ON public.admin_notifications FOR SELECT USING (true);
+DROP POLICY IF EXISTS "notifications_insert_all" ON public.admin_notifications;
 CREATE POLICY "notifications_insert_all" ON public.admin_notifications FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "notifications_update_all" ON public.admin_notifications;
 CREATE POLICY "notifications_update_all" ON public.admin_notifications FOR UPDATE USING (true);
 
 INSERT INTO public.communities (id, nombre, codigo, descripcion, color, embudos_default, leader_email, leader_name, cuota_miembro, activa)
@@ -467,7 +481,9 @@ CREATE TABLE IF NOT EXISTS public.appointments (
 
 ALTER TABLE public.member_integrations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "integrations_allow_all" ON public.member_integrations;
 CREATE POLICY "integrations_allow_all" ON public.member_integrations FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "appointments_allow_all" ON public.appointments;
 CREATE POLICY "appointments_allow_all" ON public.appointments FOR ALL USING (true) WITH CHECK (true);
 
 
@@ -587,12 +603,19 @@ ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_rules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE booking_audit_log ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "booking_calendars_all" ON booking_calendars;
 CREATE POLICY "booking_calendars_all" ON booking_calendars FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "availability_rules_all" ON availability_rules;
 CREATE POLICY "availability_rules_all" ON availability_rules FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "blackout_dates_all" ON blackout_dates;
 CREATE POLICY "blackout_dates_all" ON blackout_dates FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "booking_questions_all" ON booking_questions;
 CREATE POLICY "booking_questions_all" ON booking_questions FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "bookings_all" ON bookings;
 CREATE POLICY "bookings_all" ON bookings FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "notification_rules_all" ON notification_rules;
 CREATE POLICY "notification_rules_all" ON notification_rules FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "booking_audit_log_all" ON booking_audit_log;
 CREATE POLICY "booking_audit_log_all" ON booking_audit_log FOR ALL USING (true) WITH CHECK (true);
 
 
@@ -622,7 +645,9 @@ CREATE TABLE IF NOT EXISTS public.social_centers (
 );
 
 ALTER TABLE public.social_centers ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "social_centers_select_all" ON public.social_centers;
 CREATE POLICY "social_centers_select_all" ON public.social_centers FOR SELECT USING (true);
+DROP POLICY IF EXISTS "social_centers_access_all" ON public.social_centers;
 CREATE POLICY "social_centers_access_all" ON public.social_centers FOR ALL USING (true) WITH CHECK (true);
 
 
@@ -686,9 +711,13 @@ CREATE TABLE IF NOT EXISTS public.community_resources (
 );
 
 ALTER TABLE public.community_resources ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "resources_select_all" ON public.community_resources;
 CREATE POLICY "resources_select_all" ON public.community_resources FOR SELECT USING (true);
+DROP POLICY IF EXISTS "resources_insert_all" ON public.community_resources;
 CREATE POLICY "resources_insert_all" ON public.community_resources FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "resources_update_all" ON public.community_resources;
 CREATE POLICY "resources_update_all" ON public.community_resources FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "resources_delete_all" ON public.community_resources;
 CREATE POLICY "resources_delete_all" ON public.community_resources FOR DELETE USING (true);
 CREATE INDEX IF NOT EXISTS idx_resources_comm ON public.community_resources(community_id);
 
@@ -707,6 +736,7 @@ CREATE TABLE IF NOT EXISTS public.meta_ads_config (
 );
 
 ALTER TABLE public.meta_ads_config ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "meta_config_allow_all" ON public.meta_ads_config;
 CREATE POLICY "meta_config_allow_all" ON public.meta_ads_config FOR ALL USING (true) WITH CHECK (true);
 
 
@@ -730,9 +760,12 @@ CREATE TABLE IF NOT EXISTS public.campanas_email (
 
 ALTER TABLE public.campanas_email ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "campanas_select_all" ON public.campanas_email;
+DROP POLICY IF EXISTS "campanas_select_all" ON public.campanas_email;
 CREATE POLICY "campanas_select_all" ON public.campanas_email FOR SELECT USING (true);
 DROP POLICY IF EXISTS "campanas_insert_all" ON public.campanas_email;
+DROP POLICY IF EXISTS "campanas_insert_all" ON public.campanas_email;
 CREATE POLICY "campanas_insert_all" ON public.campanas_email FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "campanas_update_all" ON public.campanas_email;
 DROP POLICY IF EXISTS "campanas_update_all" ON public.campanas_email;
 CREATE POLICY "campanas_update_all" ON public.campanas_email FOR UPDATE USING (true);
 
@@ -807,9 +840,13 @@ ALTER TABLE public.email_sequence_steps ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.email_sequence_enrollments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.lead_tags ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "allow_all_email_sequences" ON public.email_sequences;
 CREATE POLICY "allow_all_email_sequences" ON public.email_sequences FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "allow_all_email_sequence_steps" ON public.email_sequence_steps;
 CREATE POLICY "allow_all_email_sequence_steps" ON public.email_sequence_steps FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "allow_all_email_sequence_enrollments" ON public.email_sequence_enrollments;
 CREATE POLICY "allow_all_email_sequence_enrollments" ON public.email_sequence_enrollments FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "allow_all_lead_tags" ON public.lead_tags;
 CREATE POLICY "allow_all_lead_tags" ON public.lead_tags FOR ALL USING (true) WITH CHECK (true);
 
 CREATE INDEX IF NOT EXISTS idx_enrollments_next_send ON public.email_sequence_enrollments(next_send_at) WHERE estado = 'activa';
@@ -829,6 +866,7 @@ CREATE TABLE IF NOT EXISTS pixel_config (
 );
 
 ALTER TABLE pixel_config ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "allow_all_pixel" ON pixel_config;
 CREATE POLICY "allow_all_pixel" ON pixel_config FOR ALL USING (true) WITH CHECK (true);
 
 
@@ -872,7 +910,9 @@ CREATE INDEX IF NOT EXISTS idx_leads_tags ON leads USING GIN(tags);
 ALTER TABLE sequence_enrollments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sequence_email_logs ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "service_all_enrollments" ON sequence_enrollments;
 CREATE POLICY "service_all_enrollments" ON sequence_enrollments FOR ALL USING (true);
+DROP POLICY IF EXISTS "service_all_logs" ON sequence_email_logs;
 CREATE POLICY "service_all_logs" ON sequence_email_logs FOR ALL USING (true);
 
 
@@ -907,9 +947,13 @@ CREATE INDEX IF NOT EXISTS idx_admin_roles_role
   WHERE active = true;
 
 ALTER TABLE public.admin_roles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "admin_roles_no_public_select" ON public.admin_roles;
 CREATE POLICY "admin_roles_no_public_select" ON public.admin_roles FOR SELECT USING (false);
+DROP POLICY IF EXISTS "admin_roles_no_public_insert" ON public.admin_roles;
 CREATE POLICY "admin_roles_no_public_insert" ON public.admin_roles FOR INSERT WITH CHECK (false);
+DROP POLICY IF EXISTS "admin_roles_no_public_update" ON public.admin_roles;
 CREATE POLICY "admin_roles_no_public_update" ON public.admin_roles FOR UPDATE USING (false);
+DROP POLICY IF EXISTS "admin_roles_no_public_delete" ON public.admin_roles;
 CREATE POLICY "admin_roles_no_public_delete" ON public.admin_roles FOR DELETE USING (false);
 
 CREATE TABLE IF NOT EXISTS public.audit_logs (
@@ -927,7 +971,9 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
 );
 
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "audit_logs_no_public_select" ON public.audit_logs;
 CREATE POLICY "audit_logs_no_public_select" ON public.audit_logs FOR SELECT USING (false);
+DROP POLICY IF EXISTS "audit_logs_insert_deny" ON public.audit_logs;
 CREATE POLICY "audit_logs_insert_deny" ON public.audit_logs FOR INSERT WITH CHECK (false);
 
 CREATE INDEX IF NOT EXISTS idx_audit_logs_actor ON public.audit_logs (actor_user_id, timestamp DESC);
@@ -959,6 +1005,7 @@ CREATE TABLE IF NOT EXISTS public.community_plans (
 
 CREATE INDEX IF NOT EXISTS idx_community_plans_community ON public.community_plans (community_id) WHERE is_active = true;
 ALTER TABLE public.community_plans ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "community_plans_no_public" ON public.community_plans;
 CREATE POLICY "community_plans_no_public" ON public.community_plans FOR ALL USING (false) WITH CHECK (false);
 
 CREATE TABLE IF NOT EXISTS public.community_memberships (
@@ -982,6 +1029,7 @@ CREATE INDEX IF NOT EXISTS idx_community_memberships_user ON public.community_me
 CREATE INDEX IF NOT EXISTS idx_community_memberships_status ON public.community_memberships (status);
 CREATE INDEX IF NOT EXISTS idx_community_memberships_trial_end ON public.community_memberships (trial_end) WHERE status = 'trialing';
 ALTER TABLE public.community_memberships ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "community_memberships_no_public" ON public.community_memberships;
 CREATE POLICY "community_memberships_no_public" ON public.community_memberships FOR ALL USING (false) WITH CHECK (false);
 
 CREATE TABLE IF NOT EXISTS public.platform_plans (
@@ -997,7 +1045,9 @@ CREATE TABLE IF NOT EXISTS public.platform_plans (
 );
 
 ALTER TABLE public.platform_plans ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "platform_plans_public_read" ON public.platform_plans;
 CREATE POLICY "platform_plans_public_read" ON public.platform_plans FOR SELECT USING (is_active = true);
+DROP POLICY IF EXISTS "platform_plans_no_public_write" ON public.platform_plans;
 CREATE POLICY "platform_plans_no_public_write" ON public.platform_plans FOR INSERT WITH CHECK (false);
 
 INSERT INTO public.platform_plans (code, name, price, interval, trial_days, limits)
@@ -1027,6 +1077,7 @@ CREATE INDEX IF NOT EXISTS idx_ups_status ON public.user_platform_subscription (
 CREATE INDEX IF NOT EXISTS idx_ups_trial_end ON public.user_platform_subscription (trial_end) WHERE status = 'trialing';
 CREATE INDEX IF NOT EXISTS idx_ups_downgrade ON public.user_platform_subscription (downgrade_to_student_at) WHERE downgrade_to_student_at IS NOT NULL;
 ALTER TABLE public.user_platform_subscription ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "ups_no_public" ON public.user_platform_subscription;
 CREATE POLICY "ups_no_public" ON public.user_platform_subscription FOR ALL USING (false) WITH CHECK (false);
 
 CREATE TABLE IF NOT EXISTS public.referrals (
@@ -1053,6 +1104,7 @@ CREATE TRIGGER trg_referrals_immutable
   FOR EACH ROW EXECUTE FUNCTION public.fn_referrals_immutable();
 
 ALTER TABLE public.referrals ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "referrals_no_public" ON public.referrals;
 CREATE POLICY "referrals_no_public" ON public.referrals FOR ALL USING (false) WITH CHECK (false);
 
 CREATE TABLE IF NOT EXISTS public.commissions (
@@ -1078,6 +1130,7 @@ CREATE INDEX IF NOT EXISTS idx_commissions_level2_period ON public.commissions (
 CREATE INDEX IF NOT EXISTS idx_commissions_status ON public.commissions (status);
 CREATE INDEX IF NOT EXISTS idx_commissions_payer ON public.commissions (payer_user_id);
 ALTER TABLE public.commissions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "commissions_no_public" ON public.commissions;
 CREATE POLICY "commissions_no_public" ON public.commissions FOR ALL USING (false) WITH CHECK (false);
 
 CREATE TABLE IF NOT EXISTS public.payouts (
@@ -1094,6 +1147,7 @@ CREATE TABLE IF NOT EXISTS public.payouts (
 CREATE INDEX IF NOT EXISTS idx_payouts_user ON public.payouts (user_id);
 CREATE INDEX IF NOT EXISTS idx_payouts_status ON public.payouts (status);
 ALTER TABLE public.payouts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "payouts_no_public" ON public.payouts;
 CREATE POLICY "payouts_no_public" ON public.payouts FOR ALL USING (false) WITH CHECK (false);
 
 
@@ -1177,9 +1231,13 @@ CREATE TABLE IF NOT EXISTS public.admin_2fa (
 
 CREATE INDEX IF NOT EXISTS idx_admin_2fa_user ON public.admin_2fa (user_id);
 ALTER TABLE public.admin_2fa ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "admin_2fa_no_public_select" ON public.admin_;
 CREATE POLICY "admin_2fa_no_public_select" ON public.admin_2fa FOR SELECT USING (false);
+DROP POLICY IF EXISTS "admin_2fa_no_public_insert" ON public.admin_;
 CREATE POLICY "admin_2fa_no_public_insert" ON public.admin_2fa FOR INSERT WITH CHECK (false);
+DROP POLICY IF EXISTS "admin_2fa_no_public_update" ON public.admin_;
 CREATE POLICY "admin_2fa_no_public_update" ON public.admin_2fa FOR UPDATE USING (false);
+DROP POLICY IF EXISTS "admin_2fa_no_public_delete" ON public.admin_;
 CREATE POLICY "admin_2fa_no_public_delete" ON public.admin_2fa FOR DELETE USING (false);
 
 CREATE TABLE IF NOT EXISTS public.admin_2fa_challenges (
@@ -1195,6 +1253,7 @@ CREATE INDEX IF NOT EXISTS idx_2fa_challenges_token  ON public.admin_2fa_challen
 CREATE INDEX IF NOT EXISTS idx_2fa_challenges_user   ON public.admin_2fa_challenges (user_id);
 CREATE INDEX IF NOT EXISTS idx_2fa_challenges_expiry ON public.admin_2fa_challenges (expires_at);
 ALTER TABLE public.admin_2fa_challenges ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "admin_2fa_challenges_no_public" ON public.admin_;
 CREATE POLICY "admin_2fa_challenges_no_public" ON public.admin_2fa_challenges FOR ALL USING (false);
 
 
@@ -1223,6 +1282,7 @@ CREATE TABLE IF NOT EXISTS public.community_price_overrides (
 
 CREATE INDEX IF NOT EXISTS idx_cpo_community ON public.community_price_overrides (community_id) WHERE is_active = true;
 ALTER TABLE public.community_price_overrides ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "cpo_no_public" ON public.community_price_overrides;
 CREATE POLICY "cpo_no_public" ON public.community_price_overrides FOR ALL USING (false) WITH CHECK (false);
 
 CREATE TABLE IF NOT EXISTS public.user_discounts (
@@ -1247,6 +1307,7 @@ CREATE TABLE IF NOT EXISTS public.user_discounts (
 
 CREATE INDEX IF NOT EXISTS idx_user_discounts_user ON public.user_discounts (user_id) WHERE is_active = true;
 ALTER TABLE public.user_discounts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "user_discounts_no_public" ON public.user_discounts;
 CREATE POLICY "user_discounts_no_public" ON public.user_discounts FOR ALL USING (false) WITH CHECK (false);
 
 CREATE OR REPLACE FUNCTION public.fn_resolve_price(
@@ -1318,22 +1379,28 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.audit_logs TO anon, authenticated
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='admin_roles' AND policyname='admin_roles_no_public_select') THEN
-    CREATE POLICY admin_roles_no_public_select ON public.admin_roles FOR SELECT USING (false);
+    DROP POLICY IF EXISTS admin_roles_no_public_select ON public.admin_roles;
+CREATE POLICY admin_roles_no_public_select ON public.admin_roles FOR SELECT USING (false);
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='admin_roles' AND policyname='admin_roles_no_public_insert') THEN
-    CREATE POLICY admin_roles_no_public_insert ON public.admin_roles FOR INSERT WITH CHECK (false);
+    DROP POLICY IF EXISTS admin_roles_no_public_insert ON public.admin_roles;
+CREATE POLICY admin_roles_no_public_insert ON public.admin_roles FOR INSERT WITH CHECK (false);
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='admin_roles' AND policyname='admin_roles_no_public_update') THEN
-    CREATE POLICY admin_roles_no_public_update ON public.admin_roles FOR UPDATE USING (false);
+    DROP POLICY IF EXISTS admin_roles_no_public_update ON public.admin_roles;
+CREATE POLICY admin_roles_no_public_update ON public.admin_roles FOR UPDATE USING (false);
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='admin_roles' AND policyname='admin_roles_no_public_delete') THEN
-    CREATE POLICY admin_roles_no_public_delete ON public.admin_roles FOR DELETE USING (false);
+    DROP POLICY IF EXISTS admin_roles_no_public_delete ON public.admin_roles;
+CREATE POLICY admin_roles_no_public_delete ON public.admin_roles FOR DELETE USING (false);
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='audit_logs' AND policyname='audit_logs_no_public_select') THEN
-    CREATE POLICY audit_logs_no_public_select ON public.audit_logs FOR SELECT USING (false);
+    DROP POLICY IF EXISTS audit_logs_no_public_select ON public.audit_logs;
+CREATE POLICY audit_logs_no_public_select ON public.audit_logs FOR SELECT USING (false);
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='audit_logs' AND policyname='audit_logs_insert_deny') THEN
-    CREATE POLICY audit_logs_insert_deny ON public.audit_logs FOR INSERT WITH CHECK (false);
+    DROP POLICY IF EXISTS audit_logs_insert_deny ON public.audit_logs;
+CREATE POLICY audit_logs_insert_deny ON public.audit_logs FOR INSERT WITH CHECK (false);
   END IF;
 END $$;
 
@@ -1357,9 +1424,13 @@ CREATE TABLE IF NOT EXISTS public.community_invites (
 );
 
 ALTER TABLE public.community_invites ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "invites_select_all" ON public.community_invites;
 CREATE POLICY "invites_select_all"   ON public.community_invites FOR SELECT USING (true);
+DROP POLICY IF EXISTS "invites_insert_admin" ON public.community_invites;
 CREATE POLICY "invites_insert_admin" ON public.community_invites FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "invites_update_admin" ON public.community_invites;
 CREATE POLICY "invites_update_admin" ON public.community_invites FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "invites_delete_admin" ON public.community_invites;
 CREATE POLICY "invites_delete_admin" ON public.community_invites FOR DELETE USING (true);
 
 CREATE INDEX IF NOT EXISTS idx_community_invites_token ON public.community_invites(token);
