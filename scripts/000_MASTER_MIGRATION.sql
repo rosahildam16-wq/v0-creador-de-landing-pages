@@ -353,9 +353,14 @@ CREATE POLICY "notifications_update_all" ON public.admin_notifications FOR UPDAT
 
 INSERT INTO public.communities (id, nombre, codigo, descripcion, color, embudos_default, leader_email, leader_name, cuota_miembro, activa)
 VALUES
-  ('skalia-vip', 'Skalia VIP', 'DIAMANTECELION', 'Comunidad exclusiva del equipo Skalia. Acceso completo a herramientas premium y embudos especializados.', '#8b5cf6', ARRAY['franquicia-reset'], 'iajorgeleon21@gmail.com', 'Jorge Leon', 10, true),
+  ('skalia-vip', 'Skalia VIP', 'DIAMANTECELION', 'Comunidad exclusiva del equipo Skalia. Acceso completo a herramientas premium y embudos especializados.', '#8b5cf6', ARRAY['franquicia-reset'], 'iajorgeleon21@gmail.com', 'Sensei', 10, true),
   ('general', 'General', NULL, 'Usuarios registrados sin comunidad especifica. Acceso basico a la plataforma.', '#6366f1', '{}', NULL, NULL, 0, true)
 ON CONFLICT (id) DO NOTHING;
+
+-- Asegurar que Sensei es el owner de Skalia VIP (corre siempre, incluso si la fila ya existía)
+UPDATE public.communities
+SET leader_name = 'Sensei', owner_username = 'sensei'
+WHERE id = 'skalia-vip';
 
 
 -- ============================================================
