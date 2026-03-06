@@ -203,7 +203,7 @@ export function MainLanding() {
                             <div className="relative rounded-[2.5rem] border border-white/10 bg-black/40 p-4 backdrop-blur-3xl glass-card-float">
                                 <div className="absolute -inset-1 rounded-[2.6rem] bg-gradient-to-br from-primary/30 to-fuchsia-400/30 blur opacity-20" />
                                 <img
-                                    src="/images/hero-resort.jpg"
+                                    src="/magic_funnel_hero_concept.png"
                                     alt="Magic Funnel Dashboard"
                                     className="rounded-[2rem] w-full shadow-2xl"
                                 />

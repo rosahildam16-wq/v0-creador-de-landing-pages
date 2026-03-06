@@ -338,10 +338,10 @@ export function UhMayLanding({ onTrack }: Props) {
               willChange: "transform",
             }}
           >
-            {/* Imagen de fondo: cenote Ik-Kil / Uh May */}
+            {/* Imagen de fondo: vista aérea Boutique Living Umay */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="https://i.pinimg.com/1200x/47/ea/3e/47ea3e4cae2c823faca9f4b80de52a54.jpg"
+              src="/images/hero-resort.jpg"
               alt=""
               aria-hidden="true"
               style={{
@@ -352,11 +352,6 @@ export function UhMayLanding({ onTrack }: Props) {
                 objectFit: "cover",
                 objectPosition: "center 35%",
                 filter: "saturate(0.9) brightness(0.7)",
-              }}
-              onError={(e) => {
-                const img = e.currentTarget
-                img.onerror = null
-                img.src = "/images/uh-may-hero.jpg"
               }}
             />
 
