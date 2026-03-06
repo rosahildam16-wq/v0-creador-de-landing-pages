@@ -86,6 +86,7 @@ export async function POST(req: NextRequest) {
                     role: member.role || "member",
                     memberId: member.member_id,
                     communityId: member.community_id,
+                    hasCommunity: !!member.community_id,
                     planId: sub?.plan_id || "basico" // Fallback to basico
                 }
             }

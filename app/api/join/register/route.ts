@@ -75,11 +75,27 @@ export async function POST(req: NextRequest) {
 
     const { communityId, communityName, sponsorUsername, sponsorName, sponsorMemberId, trialDays, inviteId } = ctx
 
+    // ── Fetch community_type and platform_trial_days from DB ──────────────────
+    const { data: communityMeta } = await db
+      .from("communities")
+      .select("community_type, platform_trial_days")
+      .eq("id", communityId)
+      .maybeSingle()
+
+    const communityType: string = (communityMeta?.community_type as string | null) ?? "team"
+    const platformTrialDays: number = (communityMeta?.platform_trial_days as number | null) ?? 7
+
     // ── Create member ─────────────────────────────────────────────────────────
     const memberId = `reg-${normalizedUsername}`
+    // Community membership trial uses the community's configured trial days
     const trialEnd = new Date()
     trialEnd.setDate(trialEnd.getDate() + trialDays)
     const trialEndsAt = trialEnd.toISOString()
+
+    // Platform trial uses community's platform_trial_days (default 7, skalia-vip = 90)
+    const platformTrialEnd = new Date()
+    platformTrialEnd.setDate(platformTrialEnd.getDate() + platformTrialDays)
+    const platformTrialEndsAt = platformTrialEnd.toISOString()
 
     const { error: insertError } = await db.from("community_members").insert({
       member_id: memberId,
@@ -110,11 +126,13 @@ export async function POST(req: NextRequest) {
         status: "active",
       }),
 
-      // platform subscription starts at student
+      // platform subscription starts as student in trial
       db.from("user_platform_subscription").insert({
         user_id: memberId,
         platform_plan_code: "student",
-        status: "active",
+        status: "trialing",
+        trial_start: new Date().toISOString(),
+        trial_end: platformTrialEndsAt,
       }),
     ])
 
@@ -174,7 +192,9 @@ export async function POST(req: NextRequest) {
       communityId,
       communityName,
       communitySlug: ctx.communitySlug,
+      communityType,
       trialEndsAt,
+      platformTrialEndsAt,
     })
   } catch (err) {
     console.error("[join/register] error:", err)

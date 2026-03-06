@@ -99,8 +99,14 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!authLoading && isAuthenticated && user) {
-      if (user.role === "super_admin") router.replace("/admin")
-      else router.replace("/member")
+      if (user.role === "super_admin") {
+        router.replace("/admin")
+      } else if (user.hasCommunity === false) {
+        // Logged-in but not part of any community → send to commercial onboarding
+        router.replace("/start")
+      } else {
+        router.replace("/member")
+      }
     }
   }, [isAuthenticated, authLoading, user, router])
 

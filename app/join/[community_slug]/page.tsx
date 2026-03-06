@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { useRouter, useSearchParams, useParams } from "next/navigation"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
 import {
   Eye, EyeOff, ArrowRight, Check, X, AtSign, Loader2,
-  Users, Sparkles, Shield, ChevronRight,
+  Users, Sparkles, Shield, ChevronRight, Link2,
 } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -18,6 +18,8 @@ interface CommunityData {
   color: string
   trial_days: number
   allow_trial: boolean
+  community_type: "team" | "student_paid" | "free"
+  platform_trial_days: number
 }
 
 interface PlanData {
@@ -53,7 +55,7 @@ export default function JoinPage() {
   const searchParams = useSearchParams()
   const communitySlug = params.community_slug as string
 
-  // URL params
+  // URL params — token is required for entry
   const inviteTokenFromUrl = searchParams.get("token") ?? searchParams.get("invite") ?? ""
   const refFromUrl = searchParams.get("ref") ?? searchParams.get("r") ?? ""
 
@@ -64,14 +66,13 @@ export default function JoinPage() {
   useCookiePersist("mf_join_utm_medium", searchParams.get("utm_medium"))
   useCookiePersist("mf_join_utm_campaign", searchParams.get("utm_campaign"))
 
-  // Data
+  // Community + plans
   const [community, setCommunity] = useState<CommunityData | null>(null)
   const [plans, setPlans] = useState<PlanData[]>([])
   const [dataLoading, setDataLoading] = useState(true)
   const [dataError, setDataError] = useState("")
 
-  // Invite token state
-  const [inviteToken, setInviteToken] = useState(inviteTokenFromUrl)
+  // Invite token validation
   const [inviteSponsor, setInviteSponsor] = useState<{ username: string; name: string | null } | null>(null)
   const [inviteLoading, setInviteLoading] = useState(false)
   const [inviteError, setInviteError] = useState("")
@@ -81,16 +82,13 @@ export default function JoinPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [username, setUsername] = useState("")
-  const [refUsername, setRefUsername] = useState(refFromUrl)
   const [showPassword, setShowPassword] = useState(false)
   const [focusedField, setFocusedField] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
 
-  // Async checks
+  // Username async check
   const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle")
-  const [refStatus, setRefStatus] = useState<"idle" | "checking" | "found" | "not_found">("idle")
-  const [refName, setRefName] = useState("")
 
   // Load community + plans
   useEffect(() => {
@@ -109,7 +107,7 @@ export default function JoinPage() {
       .finally(() => setDataLoading(false))
   }, [communitySlug])
 
-  // Validate invite token on mount (if present in URL)
+  // Validate invite token on mount (only if token present)
   useEffect(() => {
     if (!inviteTokenFromUrl) return
     setInviteLoading(true)
@@ -118,12 +116,13 @@ export default function JoinPage() {
       .then((data) => {
         if (data.valid && data.sponsor) {
           setInviteSponsor(data.sponsor)
-          setRefUsername(data.sponsor.username)
-          setRefStatus("found")
-          setRefName(data.sponsor.name ?? data.sponsor.username)
+          setInviteError("")
+        } else if (data.valid) {
+          // Valid token but no sponsor (open invite)
+          setInviteSponsor(null)
           setInviteError("")
         } else {
-          setInviteError(data.error ?? "Invitación inválida")
+          setInviteError(data.error ?? "Invitación inválida o expirada")
         }
       })
       .catch(() => setInviteError("No se pudo validar la invitación"))
@@ -153,32 +152,6 @@ export default function JoinPage() {
     return () => clearTimeout(t)
   }, [username])
 
-  // Debounced referrer check
-  useEffect(() => {
-    if (!refUsername || refUsername.length < 3) {
-      setRefStatus(refUsername.length > 0 ? "not_found" : "idle")
-      setRefName("")
-      return
-    }
-    setRefStatus("checking")
-    const t = setTimeout(async () => {
-      try {
-        const r = await fetch(`/api/users/check-sponsor?username=${encodeURIComponent(refUsername)}`)
-        const d = await r.json()
-        if (d.exists) {
-          setRefStatus("found")
-          setRefName(d.name)
-        } else {
-          setRefStatus("not_found")
-          setRefName("")
-        }
-      } catch {
-        setRefStatus("idle")
-      }
-    }, 500)
-    return () => clearTimeout(t)
-  }, [refUsername])
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
@@ -188,8 +161,6 @@ export default function JoinPage() {
       return setError("El usuario debe tener mínimo 3 caracteres (letras, números y _).")
     if (usernameStatus === "taken") return setError("Ese nombre de usuario ya está en uso.")
     if (password.length < 6) return setError("La contraseña debe tener al menos 6 caracteres.")
-    if (refUsername && refStatus !== "found")
-      return setError("Si ingresas un referido, debe ser un usuario válido.")
 
     setIsSubmitting(true)
     try {
@@ -202,8 +173,9 @@ export default function JoinPage() {
           password,
           username,
           communitySlug,
-          refUsername: refUsername || undefined,
-          invite_token: inviteToken || undefined,
+          // Sponsor from URL param only when there's no invite token
+          refUsername: !inviteTokenFromUrl && refFromUrl ? refFromUrl : undefined,
+          invite_token: inviteTokenFromUrl || undefined,
         }),
       })
       const data = await res.json()
@@ -213,8 +185,16 @@ export default function JoinPage() {
         return
       }
 
-      // Success → redirect to plan selection
-      router.push(`/join/${communitySlug}/plans`)
+      // Route based on community_type returned by the API
+      const type: string = data.communityType ?? "team"
+      const slug = data.communitySlug ?? communitySlug
+
+      if (type === "team") {
+        router.push(`/join/${slug}/plans`)
+      } else {
+        // free and student_paid (future payment flow) both land in /member for now
+        router.push("/member")
+      }
     } catch {
       setError("Error de conexión. Intenta de nuevo.")
     } finally {
@@ -222,7 +202,7 @@ export default function JoinPage() {
     }
   }
 
-  // ── Render states ────────────────────────────────────────────────────────────
+  // ── Loading / error states ────────────────────────────────────────────────
 
   if (dataLoading) {
     return (
@@ -241,8 +221,101 @@ export default function JoinPage() {
     )
   }
 
+  // ── Gate: require a valid invite token ───────────────────────────────────
+  // Show a clear "invite required" screen when no token is in the URL
+  if (!inviteTokenFromUrl) {
+    return (
+      <div className="relative min-h-screen flex items-center justify-center px-6" style={{ background: "#050012" }}>
+        <div
+          className="pointer-events-none fixed inset-0"
+          style={{
+            background: `radial-gradient(ellipse 80% 50% at 50% -20%, ${community.color || "#7c3aed"}22 0%, transparent 70%)`,
+          }}
+        />
+        <div className="relative z-10 w-full max-w-md text-center">
+          <div className="mb-8">
+            <MagicFunnelLogo size="md" animated />
+          </div>
+
+          <div className="rounded-[2rem] border border-white/[0.08] bg-white/[0.01] backdrop-blur-[40px] p-10 shadow-[0_24px_80px_-15px_rgba(0,0,0,0.5)]">
+            <div className="absolute -top-px left-20 right-20 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
+
+            {/* Community badge */}
+            <div
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-5"
+              style={{
+                background: `${community.color || "#7c3aed"}22`,
+                color: community.color || "#a78bfa",
+                border: `1px solid ${community.color || "#7c3aed"}44`,
+              }}
+            >
+              <Users className="w-3 h-3" />
+              {community.nombre}
+            </div>
+
+            <div className="flex justify-center mb-5">
+              <div className="w-14 h-14 rounded-2xl bg-violet-500/10 border border-violet-500/15 flex items-center justify-center">
+                <Link2 className="w-7 h-7 text-violet-400/70" />
+              </div>
+            </div>
+
+            <h2 className="text-2xl font-extrabold text-white mb-3">
+              Necesitas un link de invitación
+            </h2>
+            <p className="text-sm text-violet-200/40 leading-relaxed mb-6">
+              Esta comunidad es privada. Para unirte, pide a un miembro activo que te comparta su link de invitación personalizado.
+            </p>
+
+            <div className="rounded-xl border border-violet-500/10 bg-violet-500/[0.04] px-4 py-3 text-xs text-violet-300/50 text-left mb-6">
+              El link tiene la forma:<br />
+              <code className="text-violet-400/70 font-mono">
+                …/join/{community.slug}?token=…
+              </code>
+            </div>
+
+            <a
+              href="/login"
+              className="block w-full text-center py-3 rounded-xl border border-white/10 text-sm text-violet-300/60 hover:text-white hover:border-violet-500/30 transition-all"
+            >
+              ¿Ya tienes cuenta? Inicia sesión
+            </a>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Gate: invalid token ───────────────────────────────────────────────────
+  if (!inviteLoading && inviteError) {
+    return (
+      <div className="relative min-h-screen flex items-center justify-center px-6" style={{ background: "#050012" }}>
+        <div className="relative z-10 w-full max-w-md text-center">
+          <div className="mb-8">
+            <MagicFunnelLogo size="md" animated />
+          </div>
+          <div className="rounded-[2rem] border border-red-500/20 bg-white/[0.01] backdrop-blur-[40px] p-10">
+            <div className="flex justify-center mb-4">
+              <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/15 flex items-center justify-center">
+                <X className="w-7 h-7 text-red-400/70" />
+              </div>
+            </div>
+            <h2 className="text-xl font-extrabold text-white mb-2">Invitación inválida</h2>
+            <p className="text-sm text-red-400/80 mb-6">{inviteError}</p>
+            <a
+              href="/login"
+              className="block w-full text-center py-3 rounded-xl border border-white/10 text-sm text-violet-300/60 hover:text-white transition-all"
+            >
+              Volver al inicio de sesión
+            </a>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const lowestPlan = plans[0]
 
+  // ── Main registration form ────────────────────────────────────────────────
   return (
     <div className="relative min-h-screen flex flex-col" style={{ background: "#050012" }}>
       {/* Background gradient */}
@@ -254,7 +327,7 @@ export default function JoinPage() {
       />
 
       <div className="relative z-10 flex min-h-screen">
-        {/* ── Left: Community info ──────────────────────────────────────────── */}
+        {/* ── Left: Community info ────────────────────────────────────────────── */}
         <div className="hidden lg:flex lg:w-[48%] flex-col justify-center p-16 gap-8">
           <MagicFunnelLogo size="md" animated />
 
@@ -326,7 +399,7 @@ export default function JoinPage() {
           </div>
         </div>
 
-        {/* ── Right: Registration form ──────────────────────────────────────── */}
+        {/* ── Right: Registration form ────────────────────────────────────────── */}
         <div className="flex flex-1 items-center justify-center px-6 py-12 lg:px-12">
           <div className="w-full max-w-[420px]">
             {/* Mobile logo */}
@@ -344,35 +417,50 @@ export default function JoinPage() {
                 <h2 className="text-xl font-bold text-white">{community.nombre}</h2>
               </div>
 
-              <div className="hidden lg:block mb-8">
+              <div className="hidden lg:block mb-6">
                 <p className="text-[11px] text-violet-400/60 uppercase tracking-widest mb-1">Crear tu cuenta</p>
                 <h2 className="text-2xl font-bold text-white">Únete ahora</h2>
                 <p className="text-sm text-violet-200/30 mt-1">
-                  {lowestPlan?.trial_days
-                    ? `${lowestPlan.trial_days} días de prueba gratis`
+                  {community.platform_trial_days > 0
+                    ? `${community.platform_trial_days} días de acceso gratuito a la plataforma`
                     : "Acceso inmediato tras el registro"}
                 </p>
               </div>
 
-              {/* Invite token status */}
+              {/* ── Invite / sponsor banner ──────────────────────────────────── */}
               {inviteLoading && (
                 <div className="mb-4 flex items-center gap-2 text-xs text-violet-400/60">
                   <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-violet-400/30 border-t-violet-400" />
                   Verificando invitación...
                 </div>
               )}
-              {!inviteLoading && inviteSponsor && (
-                <div className="mb-4 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] px-4 py-3 text-sm text-emerald-400">
-                  Invitado por <span className="font-semibold">@{inviteSponsor.username}</span>
-                  {inviteSponsor.name ? ` (${inviteSponsor.name})` : ""}
-                </div>
-              )}
-              {!inviteLoading && inviteError && (
-                <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/[0.05] px-4 py-3 text-sm text-red-400">
-                  {inviteError}
+
+              {!inviteLoading && !inviteError && (
+                <div
+                  className="mb-5 rounded-xl p-4"
+                  style={{
+                    background: `${community.color || "#7c3aed"}10`,
+                    border: `1px solid ${community.color || "#7c3aed"}30`,
+                  }}
+                >
+                  <p className="text-[11px] font-semibold uppercase tracking-widest mb-1"
+                    style={{ color: community.color || "#a78bfa" }}>
+                    Te estás uniendo a
+                  </p>
+                  <p className="text-base font-bold text-white mb-1">{community.nombre}</p>
+                  {inviteSponsor && (
+                    <p className="text-xs text-violet-200/50">
+                      Invitado por{" "}
+                      <span className="font-semibold text-violet-300">
+                        @{inviteSponsor.username}
+                        {inviteSponsor.name ? ` · ${inviteSponsor.name}` : ""}
+                      </span>
+                    </p>
+                  )}
                 </div>
               )}
 
+              {/* Form error */}
               {error && (
                 <div className="mb-5 rounded-xl border border-amber-500/15 bg-amber-500/[0.05] px-4 py-3 text-sm text-amber-400">
                   {error}
@@ -481,49 +569,9 @@ export default function JoinPage() {
                   </p>
                 </div>
 
-                {/* Referrer */}
-                <div>
-                  <label className="block text-xs font-medium text-violet-200/60 mb-2 ml-0.5">
-                    Usuario que te invitó <span className="text-violet-400/30">(opcional)</span>
-                  </label>
-                  <div
-                    className={`relative rounded-xl border transition-all duration-300 ${
-                      refStatus === "found"
-                        ? "border-emerald-500/40"
-                        : refStatus === "not_found" && refUsername.length >= 3
-                        ? "border-amber-500/40"
-                        : focusedField === "ref"
-                        ? "border-violet-500/40 shadow-[0_0_0_3px_rgba(139,92,246,0.06)]"
-                        : "border-white/[0.06] hover:border-white/[0.10]"
-                    }`}
-                  >
-                    <AtSign className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-violet-400/25" />
-                    <input
-                      type="text"
-                      value={refUsername}
-                      onChange={(e) => setRefUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
-                      onFocus={() => setFocusedField("ref")}
-                      onBlur={() => setFocusedField(null)}
-                      placeholder="usuario_referidor"
-                      autoComplete="off"
-                      className="w-full pl-11 pr-11 py-3.5 bg-white/[0.02] text-white text-sm font-mono placeholder:text-violet-400/20 focus:outline-none rounded-2xl"
-                    />
-                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
-                      {refStatus === "checking" && (
-                        <div className="w-4 h-4 border-2 border-violet-400/30 border-t-violet-400 rounded-full animate-spin" />
-                      )}
-                      {refStatus === "found" && <Check className="w-4 h-4 text-emerald-400" />}
-                      {refStatus === "not_found" && refUsername.length >= 3 && <X className="w-4 h-4 text-amber-400" />}
-                    </div>
-                  </div>
-                  {refStatus === "found" && (
-                    <p className="mt-1 text-[10px] text-emerald-400">Referido por: {refName}</p>
-                  )}
-                </div>
-
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || inviteLoading}
                   className="premium-submit-btn group relative w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-white text-sm font-semibold overflow-hidden transition-all duration-500 disabled:opacity-50 disabled:pointer-events-none mt-2"
                 >
                   <span className="relative z-10 flex items-center gap-2">
@@ -549,7 +597,7 @@ export default function JoinPage() {
                 </a>
               </p>
 
-              <p className="mt-6 text-center text-[10px] text-violet-300/10 leading-relaxed">
+              <p className="mt-4 text-center text-[10px] text-violet-300/10 leading-relaxed">
                 Al registrarte aceptas nuestros términos y política de privacidad.
               </p>
             </div>

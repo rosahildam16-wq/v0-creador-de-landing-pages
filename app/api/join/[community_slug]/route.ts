@@ -23,7 +23,7 @@ export async function GET(
   // ── Community ─────────────────────────────────────────────────────────────
   const { data: community } = await db
     .from("communities")
-    .select("id, nombre, descripcion, slug, color, activa, allow_trial, default_trial_days, free_trial_days")
+    .select("id, nombre, descripcion, slug, color, activa, allow_trial, default_trial_days, free_trial_days, community_type, platform_trial_days")
     .or(`slug.eq.${slug},id.eq.${slug}`)
     .maybeSingle()
 
@@ -133,6 +133,8 @@ export async function GET(
       color: community.color,
       trial_days: community.default_trial_days ?? community.free_trial_days ?? 7,
       allow_trial: community.allow_trial,
+      community_type: (community.community_type as string | null) ?? "team",
+      platform_trial_days: (community.platform_trial_days as number | null) ?? 7,
     },
     plans: plansWithPrices,
     user_discount: userDiscount,
