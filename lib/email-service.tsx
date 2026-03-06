@@ -6,14 +6,18 @@ export async function sendWelcomeEmail({
     email,
     name,
     communityCode,
+    communityId,
 }: {
     email: string
     name: string
     communityCode: string
+    communityId?: string
 }) {
     try {
         const resend = await getResend();
-        const isSkalia = communityCode?.toUpperCase() === "DIAMANTECELION"
+        const isSkalia =
+            communityCode?.toUpperCase() === "DIAMANTECELION" ||
+            communityId === "skalia-vip"
         const EmailComponent = isSkalia ? SkaliaWelcomeEmail : WelcomeEmail
 
         const { data, error } = await resend.emails.send({

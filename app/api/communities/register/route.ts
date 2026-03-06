@@ -311,6 +311,7 @@ export async function POST(req: NextRequest) {
       email: normalizedEmail,
       name: trimmedName,
       communityCode: code || normalizedUsername.toUpperCase(),
+      communityId: resolvedCommunityId,
     }).catch(e => console.error("Async email error:", e))
 
     return NextResponse.json({

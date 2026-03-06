@@ -55,7 +55,7 @@ export const WelcomeEmail = ({
                     </Section>
 
                     <Link href={dashboardUrl} style={button}>
-                        ACCERDER A MI PANEL AHORA
+                        ACCEDER A MI PANEL AHORA
                     </Link>
 
                     <Hr style={hr} />
@@ -85,20 +85,10 @@ const container = {
 const header = {
     padding: "40px 32px",
     textAlign: "center" as const,
-    position: "relative" as const,
 }
 
 const glow = {
-    position: "absolute" as const,
-    top: "-50px",
-    left: "50%",
-    transform: "translateX(-50%)",
-    width: "200px",
-    height: "100px",
-    backgroundColor: "#8b5cf6",
-    opacity: "0.2",
-    borderRadius: "100%",
-    filter: "blur(60px)",
+    display: "none" as const,
 }
 
 const heading = {
