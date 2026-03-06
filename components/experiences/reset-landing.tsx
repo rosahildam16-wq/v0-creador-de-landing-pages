@@ -23,7 +23,6 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DiagnosticQuiz } from "./diagnostic-quiz"
-import { getMemberBySlug } from "@/lib/team-data"
 import { pixelTrackCompleteRegistration, pixelTrackContact } from "@/components/shared/meta-pixel"
 
 // ─── Particle canvas background (Enhanced) ───
@@ -301,30 +300,29 @@ export function ResetLanding({ leadId, onTrack, referrer }: Props) {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  const waConfig = useMemo(() => {
-    let num = "15558865145" // Default
-    let msg = "Hola, acabo de completar el diagnóstico y quiero solicitar mi acceso prioritario a la Franquicia RESET."
+  const DEFAULT_WA_NUM = "15558865145"
+  const DEFAULT_WA_MSG = "Hola, acabo de completar el diagnóstico y quiero solicitar mi acceso prioritario a la Franquicia RESET."
 
-    if (referrer) {
-      // Try to get from static member list first
-      const member = getMemberBySlug(referrer)
-      if (member) {
-        // In a real app, we'd fetch these from a database.
-        // For this prototype, we'll check localStorage as if it were a shared store
-        // or use hardcoded defaults for specific known members
-        const savedNum = typeof window !== "undefined" ? localStorage.getItem(`mf_wa_num_${member.id}`) : null
-        const savedMsg = typeof window !== "undefined" ? localStorage.getItem(`mf_wa_msg_${member.id}`) : null
+  const [waConfig, setWaConfig] = useState({
+    url: `https://wa.me/${DEFAULT_WA_NUM}?text=${encodeURIComponent(DEFAULT_WA_MSG)}`,
+    number: DEFAULT_WA_NUM,
+    message: DEFAULT_WA_MSG,
+  })
 
-        if (savedNum) num = savedNum
-        if (savedMsg) msg = savedMsg
-      }
-    }
-
-    return {
-      url: `https://wa.me/${num}?text=${encodeURIComponent(msg)}`,
-      number: num,
-      message: msg
-    }
+  useEffect(() => {
+    if (!referrer) return
+    fetch(`/api/public/member-whatsapp?slug=${encodeURIComponent(referrer)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const num = data.whatsapp_number || DEFAULT_WA_NUM
+        const msg = data.whatsapp_message || DEFAULT_WA_MSG
+        setWaConfig({
+          url: `https://wa.me/${num}?text=${encodeURIComponent(msg)}`,
+          number: num,
+          message: msg,
+        })
+      })
+      .catch(() => {/* use defaults */})
   }, [referrer])
 
   const whatsappUrl = waConfig.url

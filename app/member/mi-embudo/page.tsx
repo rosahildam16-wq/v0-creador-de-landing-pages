@@ -368,10 +368,14 @@ export default function MemberEmbudoPage() {
                         const val = e.target.value.replace(/[^0-9]/g, "");
                         import("@/lib/team-data").then(m => {
                           m.updateMemberWhatsApp(finalMember.id, val, finalMember.whatsapp_message || "");
-                          // We need to trigger a re-render. Since we're using local state or SWR might be overkill,
-                          // we'll just force a selectedEmbudo set to same to re-render.
                           setSelectedEmbudo(activeEmbudo.id);
                         });
+                        // Persist to DB (fire and forget)
+                        fetch("/api/member/whatsapp", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ whatsapp_number: val, whatsapp_message: finalMember.whatsapp_message || "" }),
+                        }).catch(() => {/* silent – localStorage already saved */});
                       }}
                     />
                   </div>
@@ -393,6 +397,12 @@ export default function MemberEmbudoPage() {
                                 m.updateMemberWhatsApp(finalMember.id, finalMember.whatsapp_number || "", msg);
                                 setSelectedEmbudo(activeEmbudo.id);
                               });
+                              // Persist to DB (fire and forget)
+                              fetch("/api/member/whatsapp", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ whatsapp_number: finalMember.whatsapp_number || "", whatsapp_message: msg }),
+                              }).catch(() => {});
                             }}
                             className={cn(
                               "text-left p-3 rounded-xl border text-xs transition-all duration-200",
