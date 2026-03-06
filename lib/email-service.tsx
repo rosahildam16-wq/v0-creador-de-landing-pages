@@ -35,13 +35,13 @@ export async function sendWelcomeEmail({
 
         if (error) {
             console.error("Error sending welcome email:", error)
-            return { success: false, error }
+            return { success: false, error: (error as any)?.message || String(error) }
         }
 
         return { success: true, data }
     } catch (err) {
         console.error("Exception sending welcome email:", err)
-        return { success: false, error: err }
+        return { success: false, error: err instanceof Error ? err.message : String(err) }
     }
 }
 
@@ -81,12 +81,12 @@ export async function sendCampaignEmail({
 
         if (error) {
             console.error("Error sending campaign email:", error)
-            return { success: false, error }
+            return { success: false, error: (error as any)?.message || String(error) }
         }
 
         return { success: true, data }
     } catch (err) {
         console.error("Exception sending campaign email:", err)
-        return { success: false, error: err }
+        return { success: false, error: err instanceof Error ? err.message : String(err) }
     }
 }

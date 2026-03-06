@@ -29,7 +29,7 @@ export default function EmailPreviewPage() {
       if (res.ok && data.result?.success) {
         setResult({ ok: true, msg: `Email enviado a ${testEmail}` })
       } else {
-        setResult({ ok: false, msg: data.result?.error?.message || data.error || "Error desconocido" })
+        setResult({ ok: false, msg: data.result?.error || data.error || "Error desconocido" })
       }
     } catch {
       setResult({ ok: false, msg: "Error de red al enviar" })
