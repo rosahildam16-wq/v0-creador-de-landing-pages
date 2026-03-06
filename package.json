@@ -38,6 +38,7 @@
     "@radix-ui/react-toggle-group": "1.1.1",
     "@radix-ui/react-tooltip": "1.1.6",
     "@react-email/components": "^1.0.8",
+    "@react-email/render": "^1.0.3",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.49.1",
     "@vimeo/player": "^2.24.0",

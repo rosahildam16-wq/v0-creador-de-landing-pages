@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { renderToStaticMarkup } from "react-dom/server"
+import { render } from "@react-email/render"
 import React from "react"
 import { SkaliaWelcomeEmail } from "@/components/emails/skalia-welcome"
 import { WelcomeEmail } from "@/components/emails/welcome-email"
@@ -17,9 +17,7 @@ export async function GET(req: NextRequest) {
       ? React.createElement(SkaliaWelcomeEmail, { name, dashboardUrl })
       : React.createElement(WelcomeEmail, { name, communityCode: code, dashboardUrl })
 
-  const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-  ${renderToStaticMarkup(element)}`
+  const html = await render(element)
 
   return new NextResponse(html, {
     headers: { "Content-Type": "text/html; charset=utf-8" },
