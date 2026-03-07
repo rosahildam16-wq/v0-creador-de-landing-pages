@@ -40,12 +40,23 @@ export async function GET(request: Request) {
     const email = userInfo.data.email || ""
 
     // Persist to Supabase
-    await saveIntegration(state, "google", {
+    const saved = await saveIntegration(state, "google", {
       access_token: tokens.access_token || "",
       refresh_token: tokens.refresh_token || undefined,
       expiry_date: tokens.expiry_date || undefined,
       email,
     })
+
+    if (!saved) {
+      // Table may not exist — trigger auto-migration and ask user to retry
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+        await fetch(`${baseUrl}/api/admin/migrate-forms`, { method: "POST" })
+      } catch {}
+      return NextResponse.redirect(
+        new URL(`${redirectBase}?google=error&reason=db_save_failed`, request.url)
+      )
+    }
 
     return NextResponse.redirect(
       new URL(`${redirectBase}?google=success&email=${encodeURIComponent(email)}`, request.url)

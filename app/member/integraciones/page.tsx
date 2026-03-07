@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -28,8 +29,9 @@ interface IntegrationInfo {
     accentColor: string
 }
 
-export default function MemberIntegrationsPage() {
+function IntegrationsContent() {
     const { user } = useAuth()
+    const searchParams = useSearchParams()
     const [statuses, setStatuses] = useState<Record<IntegrationProvider, ConnectionStatus>>({
         whatsapp: "loading",
         google: "loading",
@@ -37,6 +39,27 @@ export default function MemberIntegrationsPage() {
     })
     const [configErrors, setConfigErrors] = useState<Record<string, string>>({})
     const [loadingSettings, setLoadingSettings] = useState(true)
+    const [callbackMsg, setCallbackMsg] = useState<{ type: "success" | "error"; text: string } | null>(null)
+
+    // Read OAuth callback result from URL params
+    useEffect(() => {
+        const googleResult = searchParams.get("google")
+        const reason = searchParams.get("reason")
+        const email = searchParams.get("email")
+        if (googleResult === "success") {
+            setCallbackMsg({ type: "success", text: `Google Calendar conectado${email ? ` como ${email}` : ""}.` })
+            // Clean URL
+            window.history.replaceState({}, "", "/member/integraciones")
+        } else if (googleResult === "error") {
+            const msg = reason === "db_save_failed"
+                ? "Error al guardar la conexión. Las tablas se están creando, intenta conectar de nuevo en 30 segundos."
+                : reason === "token_exchange_failed"
+                ? "Error al intercambiar el token con Google. Intenta de nuevo."
+                : `Error de Google: ${reason || "desconocido"}`
+            setCallbackMsg({ type: "error", text: msg })
+            window.history.replaceState({}, "", "/member/integraciones")
+        }
+    }, [searchParams])
 
     const integrations: IntegrationInfo[] = [
         {
@@ -172,6 +195,13 @@ export default function MemberIntegrationsPage() {
 
     return (
         <div className="flex flex-col gap-8 pb-20">
+            {/* Callback feedback */}
+            {callbackMsg && (
+                <div className={`rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2 ${callbackMsg.type === "success" ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" : "bg-red-500/10 border border-red-500/20 text-red-400"}`}>
+                    {callbackMsg.type === "success" ? <Check className="h-4 w-4 shrink-0" /> : <AlertCircle className="h-4 w-4 shrink-0" />}
+                    {callbackMsg.text}
+                </div>
+            )}
             {/* Header */}
             <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-3">
@@ -343,5 +373,17 @@ export default function MemberIntegrationsPage() {
                 })}
             </div>
         </div>
+    )
+}
+
+export default function MemberIntegrationsPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center py-20">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+        }>
+            <IntegrationsContent />
+        </Suspense>
     )
 }

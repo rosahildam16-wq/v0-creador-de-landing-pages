@@ -104,6 +104,30 @@ CREATE TABLE IF NOT EXISTS form_answers (
 CREATE INDEX IF NOT EXISTS idx_form_answers_submission ON form_answers(submission_id);
 CREATE INDEX IF NOT EXISTS idx_form_answers_form ON form_answers(form_id);
 
+-- member_integrations (Google, Zoom, WhatsApp tokens)
+CREATE TABLE IF NOT EXISTS member_integrations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  member_id TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  access_token TEXT,
+  refresh_token TEXT,
+  expiry_date BIGINT,
+  email TEXT,
+  phone TEXT,
+  settings JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(member_id, provider)
+);
+
+ALTER TABLE member_integrations ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'member_integrations' AND policyname = 'integrations_allow_all') THEN
+    CREATE POLICY "integrations_allow_all" ON member_integrations FOR ALL USING (true) WITH CHECK (true);
+  END IF;
+END $$;
+
 ALTER TABLE forms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE form_questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE form_logic_rules ENABLE ROW LEVEL SECURITY;
