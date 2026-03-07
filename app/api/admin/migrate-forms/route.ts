@@ -312,6 +312,49 @@ DO $$ BEGIN
     CREATE POLICY "booking_audit_log_all" ON booking_audit_log FOR ALL USING (true) WITH CHECK (true);
   END IF;
 END $$;
+
+-- ===================================================
+-- SOCIAL CENTERS (012 + 036)
+-- ===================================================
+CREATE TABLE IF NOT EXISTS social_centers (
+  username TEXT PRIMARY KEY,
+  display_name TEXT NOT NULL,
+  bio TEXT,
+  avatar_url TEXT,
+  tagline TEXT,
+  is_published BOOLEAN NOT NULL DEFAULT true,
+  theme_config JSONB DEFAULT '{"primary_color":"#8b5cf6","bg_style":"glass_mesh","layout":"list","button_style":"glass"}'::JSONB,
+  links JSONB DEFAULT '[]'::JSONB,
+  social_links JSONB DEFAULT '{}'::JSONB,
+  views_count INT DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 036 fix: add columns if missing
+ALTER TABLE social_centers ADD COLUMN IF NOT EXISTS tagline text;
+ALTER TABLE social_centers ADD COLUMN IF NOT EXISTS is_published boolean NOT NULL DEFAULT true;
+
+ALTER TABLE social_centers ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'social_centers' AND policyname = 'social_centers_select_all') THEN
+    CREATE POLICY "social_centers_select_all" ON social_centers FOR SELECT USING (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'social_centers' AND policyname = 'social_centers_access_all') THEN
+    CREATE POLICY "social_centers_access_all" ON social_centers FOR ALL USING (true) WITH CHECK (true);
+  END IF;
+END $$;
+
+CREATE OR REPLACE FUNCTION increment_social_views(x_username text)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  UPDATE social_centers SET views_count = COALESCE(views_count, 0) + 1 WHERE username = x_username;
+END;
+$$;
+
+-- Notify PostgREST to reload schema cache so new tables are available immediately
+NOTIFY pgrst, 'reload schema';
 `
 
 export async function POST() {

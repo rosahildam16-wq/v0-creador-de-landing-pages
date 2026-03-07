@@ -16,7 +16,13 @@ export async function GET() {
             .eq("username", username)
             .maybeSingle()
 
-        if (error) throw error
+        if (error) {
+            if (error.message?.includes("schema cache") || error.code === "42P01" || error.message?.includes("does not exist")) {
+                await triggerMigration()
+                return NextResponse.json({ success: true, profile: null })
+            }
+            throw error
+        }
 
         return NextResponse.json({ success: true, profile: data })
     } catch (err: any) {
@@ -49,10 +55,23 @@ export async function POST(req: Request) {
             .select()
             .single()
 
-        if (error) throw error
+        if (error) {
+            if (error.message?.includes("schema cache") || error.code === "42P01" || error.message?.includes("does not exist") || error.message?.includes("column")) {
+                await triggerMigration()
+                return NextResponse.json({ error: "Tablas actualizadas, intenta de nuevo en 15 segundos." }, { status: 503 })
+            }
+            throw error
+        }
 
         return NextResponse.json({ success: true, profile: data })
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 })
     }
+}
+
+async function triggerMigration() {
+    try {
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+        await fetch(`${baseUrl}/api/admin/migrate-forms`, { method: "POST" })
+    } catch {}
 }
