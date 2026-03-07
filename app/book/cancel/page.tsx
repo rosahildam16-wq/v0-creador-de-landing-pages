@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { CalendarX2, CheckCircle2, AlertCircle, Loader2, Clock, Calendar } from "lucide-react"
 import Link from "next/link"
@@ -29,7 +29,7 @@ function formatTime(iso: string, tz: string) {
     })
 }
 
-export default function CancelBookingPage() {
+function CancelBookingContent() {
     const searchParams = useSearchParams()
     const token = searchParams.get("token")
 
@@ -203,5 +203,17 @@ export default function CancelBookingPage() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function CancelBookingPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-white/30" />
+            </div>
+        }>
+            <CancelBookingContent />
+        </Suspense>
     )
 }
