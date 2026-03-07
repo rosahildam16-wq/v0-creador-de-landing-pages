@@ -38,8 +38,9 @@ export async function POST(req: Request) {
             .upsert({
                 username: username,
                 display_name: body.display_name,
+                tagline: body.tagline || null,
                 bio: body.bio,
-                avatar_url: body.avatar_url,
+                avatar_url: body.avatar_url || null,
                 theme_config: body.theme_config,
                 links: body.links,
                 social_links: body.social_links,
