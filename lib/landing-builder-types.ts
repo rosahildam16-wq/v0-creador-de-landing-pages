@@ -103,6 +103,9 @@ export interface FormProps {
   fields: Array<{ name: string; type: "text" | "email" | "tel" | "select"; label: string; required: boolean }>
   buttonText: string
   successMessage: string
+  // Form Builder integration — when set, renders the Form Builder form instead of static fields
+  form_slug?: string
+  form_embed_mode?: "inline" | "redirect"
 }
 
 export interface VideoProps {

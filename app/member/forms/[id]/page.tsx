@@ -5,10 +5,10 @@ import { useRouter, useParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
     ChevronLeft, Plus, Trash2, ChevronUp, ChevronDown, Save,
-    Globe, Eye, EyeOff, Settings2, Loader2, Copy, CheckCircle,
-    GripVertical, AlignLeft, Mail, Phone, List, CheckSquare,
+    Globe, Eye, Loader2, Copy, CheckCircle,
+    AlignLeft, Mail, Phone, List, CheckSquare,
     ChevronDownSquare, Hash, Calendar, Star, LayoutGrid,
-    Layers, Palette, GitBranch, Share2, Type, ToggleLeft
+    Layers, Palette, GitBranch, Share2, Type, BarChart2, FileText, Tag, CalendarCheck
 } from "lucide-react"
 import type { Form, FormQuestion, FormLogicRule, QuestionType } from "@/lib/form-types"
 import {
@@ -256,6 +256,20 @@ export default function FormBuilderPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => router.push(`/member/forms/${formId}/responses`)}
+                        className="p-2 rounded-xl hover:bg-white/5 text-white/40 hover:text-white transition-colors"
+                        title="Respuestas"
+                    >
+                        <FileText className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={() => router.push(`/member/forms/${formId}/analytics`)}
+                        className="p-2 rounded-xl hover:bg-white/5 text-white/40 hover:text-white transition-colors"
+                        title="Analytics"
+                    >
+                        <BarChart2 className="w-4 h-4" />
+                    </button>
                     <a
                         href={`/form/${form.slug}`}
                         target="_blank"
@@ -729,9 +743,12 @@ export default function FormBuilderPage() {
                         <div className="max-w-2xl mx-auto space-y-8">
                             <h2 className="text-xl font-black">Publicar y compartir</h2>
 
-                            {/* Pipeline settings */}
-                            <div className="space-y-4 p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
-                                <h3 className="font-black text-white">Conexión con CRM</h3>
+                            {/* Pipeline + CRM settings */}
+                            <div className="space-y-5 p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+                                <div className="flex items-center gap-2">
+                                    <CalendarCheck className="w-4 h-4 text-violet-400" />
+                                    <h3 className="font-black text-white">Conexión con CRM y Pipeline</h3>
+                                </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-black uppercase tracking-widest text-white/30">Etapa del pipeline al ingresar</label>
                                     <select
@@ -741,6 +758,20 @@ export default function FormBuilderPage() {
                                     >
                                         {PIPELINE_STAGES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                                     </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black uppercase tracking-widest text-white/30">
+                                        <Tag className="w-3 h-3 inline mr-1" />
+                                        Etiqueta automática al lead
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={form.settings?.tag || ""}
+                                        onChange={e => updateForm({ settings: { ...form.settings, tag: e.target.value || undefined } })}
+                                        placeholder="Ej: formulario-captacion, webinar-junio..."
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm font-medium focus:outline-none focus:border-violet-500 transition-colors placeholder:text-white/15"
+                                    />
+                                    <p className="text-[11px] text-white/20">El lead recibirá esta etiqueta automáticamente al enviar el formulario.</p>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div>
@@ -754,6 +785,37 @@ export default function FormBuilderPage() {
                                         <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${form.settings?.notify_email ? "left-6" : "left-0.5"}`} />
                                     </button>
                                 </div>
+                            </div>
+
+                            {/* Booking post-submit */}
+                            <div className="space-y-4 p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <CalendarCheck className="w-4 h-4 text-emerald-400" />
+                                        <h3 className="font-black text-white">Redirigir a citas después del envío</h3>
+                                    </div>
+                                    <button
+                                        onClick={() => updateForm({ end_screen: { ...(form.end_screen || {}), show_booking: !(form.end_screen as any)?.show_booking } as any })}
+                                        className={`w-12 h-6 rounded-full border-2 transition-all relative ${(form.end_screen as any)?.show_booking ? "bg-emerald-600 border-emerald-600" : "bg-transparent border-white/20"}`}
+                                    >
+                                        <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${(form.end_screen as any)?.show_booking ? "left-6" : "left-0.5"}`} />
+                                    </button>
+                                </div>
+                                {(form.end_screen as any)?.show_booking && (
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black uppercase tracking-widest text-white/30">Slug del calendario de citas</label>
+                                        <input
+                                            type="text"
+                                            value={(form.end_screen as any)?.booking_calendar_slug || ""}
+                                            onChange={e => updateForm({ end_screen: { ...(form.end_screen as any), booking_calendar_slug: e.target.value } as any })}
+                                            placeholder="mi-calendario"
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm font-medium focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-white/15"
+                                        />
+                                        <p className="text-[11px] text-white/20">
+                                            Después del formulario, el lead verá un botón para agendar una cita. El nombre y email se pre-llenarán automáticamente.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Publish status */}
