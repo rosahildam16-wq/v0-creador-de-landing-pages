@@ -81,7 +81,7 @@ export default function MemberComunidadPage() {
 
       // 2. Fetch subscription to check plan (for upgrade gate)
       try {
-        const res = await fetch("/api/payments/check-subscription")
+        const res = await fetch(`/api/payments/check-subscription?email=${encodeURIComponent(user.email)}`)
         const data = await res.json()
         setSubscription(data.subscription)
       } catch (e) {
@@ -132,6 +132,13 @@ export default function MemberComunidadPage() {
       setSubmitting(false)
     }
   }
+
+  const QUALIFYING_PLANS = ["plan_47", "plan_97", "plan_300", "pro", "elite"]
+  const canCreate =
+    user?.memberId === "sensei" ||
+    user?.memberId === "super-admin" ||
+    user?.role === "super_admin" ||
+    QUALIFYING_PLANS.includes(subscription?.plan_id || "")
 
   if (!mounted) return null
 

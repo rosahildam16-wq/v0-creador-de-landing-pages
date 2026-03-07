@@ -26,11 +26,31 @@ export async function GET() {
             .eq("owner_email", user.email)
             .order("updated_at", { ascending: false })
 
-        if (error) throw error
+        if (error) {
+            // If forms table doesn't exist, trigger auto-migration
+            if (error.message?.includes("schema cache") || error.code === "42P01" || error.message?.includes("does not exist")) {
+                await triggerFormsMigration()
+                return NextResponse.json({ forms: [], migration: "triggered" })
+            }
+            throw error
+        }
 
         return NextResponse.json({ forms: data || [] })
     } catch (err: any) {
+        if (err?.message?.includes("schema cache") || err?.code === "42P01" || err?.message?.includes("does not exist")) {
+            await triggerFormsMigration()
+            return NextResponse.json({ forms: [], migration: "triggered" })
+        }
         return NextResponse.json({ error: err.message || "Error interno" }, { status: 500 })
+    }
+}
+
+async function triggerFormsMigration() {
+    try {
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+        await fetch(`${baseUrl}/api/admin/migrate-forms`, { method: "POST" })
+    } catch (e) {
+        console.error("[forms] Auto-migration failed:", e)
     }
 }
 
@@ -92,7 +112,13 @@ export async function POST(req: NextRequest) {
             .select()
             .single()
 
-        if (error) throw error
+        if (error) {
+            if (error.message?.includes("schema cache") || error.code === "42P01" || error.message?.includes("does not exist")) {
+                await triggerFormsMigration()
+                return NextResponse.json({ error: "Tables were just created, please try again in a moment." }, { status: 503 })
+            }
+            throw error
+        }
 
         return NextResponse.json({ form: data }, { status: 201 })
     } catch (err: any) {

@@ -25,6 +25,10 @@ export async function GET(request: Request) {
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
       return NextResponse.json({ connected: false, error: "Variables de entorno de Google no configuradas." })
     }
+    // Validate client ID format (should end with .apps.googleusercontent.com)
+    if (!process.env.GOOGLE_CLIENT_ID.endsWith(".apps.googleusercontent.com")) {
+      return NextResponse.json({ connected: false, error: "GOOGLE_CLIENT_ID no es válido. Debe terminar en .apps.googleusercontent.com. Verifica tu Google Cloud Console." })
+    }
     const integration = await getIntegration(memberId, "google")
     if (integration) {
       return NextResponse.json({
@@ -39,6 +43,12 @@ export async function GET(request: Request) {
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
     return NextResponse.json(
       { error: "Variables de entorno de Google no configuradas." },
+      { status: 500 }
+    )
+  }
+  if (!process.env.GOOGLE_CLIENT_ID.endsWith(".apps.googleusercontent.com")) {
+    return NextResponse.json(
+      { error: "GOOGLE_CLIENT_ID no es válido. Verifica tu Google Cloud Console." },
       { status: 500 }
     )
   }

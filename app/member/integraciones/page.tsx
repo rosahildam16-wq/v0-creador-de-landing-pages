@@ -89,7 +89,7 @@ export default function MemberIntegrationsPage() {
                     .then(data => {
                         if (data.connected) {
                             updates.google = "connected"
-                        } else if (data.error?.includes("Variables") || data.error?.includes("CLIENT_ID")) {
+                        } else if (data.error) {
                             updates.google = "config_needed"
                             errors.google = data.error
                         } else {
