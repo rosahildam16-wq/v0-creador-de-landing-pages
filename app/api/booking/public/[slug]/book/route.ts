@@ -111,6 +111,17 @@ export async function POST(
                     { status: 409 }
                 )
             }
+            // Missing columns (037 migration not run) — trigger and return clear error
+            if (bookError.message?.includes("column") || bookError.message?.includes("schema cache") || bookError.code === "42P01") {
+                try {
+                    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+                    await fetch(`${baseUrl}/api/admin/migrate-forms`, { method: "POST" })
+                } catch {}
+                return NextResponse.json(
+                    { error: "La base de datos se está actualizando. Intenta reservar de nuevo en 15 segundos." },
+                    { status: 503 }
+                )
+            }
             throw bookError
         }
 

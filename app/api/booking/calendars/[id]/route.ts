@@ -77,7 +77,12 @@ export async function PUT(
             .select()
             .single()
 
-        if (error) throw error
+        if (error) {
+            if (error.message?.includes("schema cache") || error.code === "42P01" || error.message?.includes("does not exist") || error.message?.includes("column")) {
+                await triggerMigration()
+            }
+            throw error
+        }
 
         // Update availability rules if provided
         if (body.availability_rules) {
@@ -121,10 +126,20 @@ export async function PUT(
         }
 
         return NextResponse.json({ calendar: data })
-    } catch (err) {
+    } catch (err: any) {
         console.error("Error updating calendar:", err)
-        return NextResponse.json({ error: "Error interno" }, { status: 500 })
+        const msg = err?.message?.includes("column") || err?.message?.includes("does not exist")
+            ? "Error de esquema. Las tablas se están actualizando, intenta de nuevo en 15 segundos."
+            : "Error interno"
+        return NextResponse.json({ error: msg }, { status: 500 })
     }
+}
+
+async function triggerMigration() {
+    try {
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+        await fetch(`${baseUrl}/api/admin/migrate-forms`, { method: "POST" })
+    } catch {}
 }
 
 export async function DELETE(

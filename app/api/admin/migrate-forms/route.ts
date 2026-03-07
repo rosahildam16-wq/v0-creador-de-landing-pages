@@ -161,6 +161,157 @@ DROP TRIGGER IF EXISTS trg_forms_updated_at ON forms;
 CREATE TRIGGER trg_forms_updated_at
     BEFORE UPDATE ON forms
     FOR EACH ROW EXECUTE FUNCTION update_forms_updated_at();
+
+-- ===================================================
+-- BOOKING MODULE (012 + 037)
+-- ===================================================
+CREATE TABLE IF NOT EXISTS booking_calendars (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_email text NOT NULL,
+    slug text UNIQUE NOT NULL,
+    name text NOT NULL,
+    description text,
+    type text DEFAULT '1:1' CHECK (type IN ('1:1', 'group')),
+    duration_minutes integer DEFAULT 30,
+    timezone text DEFAULT 'America/Mexico_City',
+    location_type text DEFAULT 'google_meet',
+    location_value text,
+    max_bookings_per_day integer DEFAULT 8,
+    min_notice_hours integer DEFAULT 2,
+    buffer_before_minutes integer DEFAULT 0,
+    buffer_after_minutes integer DEFAULT 10,
+    max_group_size integer DEFAULT 1,
+    confirmation_message text DEFAULT 'Tu cita ha sido agendada exitosamente. Te esperamos!',
+    confirmation_cta_url text,
+    confirmation_cta_label text,
+    active boolean DEFAULT true,
+    created_at timestamptz DEFAULT now(),
+    updated_at timestamptz DEFAULT now()
+);
+
+-- 037 fix: add missing columns to booking_calendars
+ALTER TABLE booking_calendars ADD COLUMN IF NOT EXISTS host_image_url text;
+ALTER TABLE booking_calendars ADD COLUMN IF NOT EXISTS allow_cancellation boolean NOT NULL DEFAULT true;
+ALTER TABLE booking_calendars ADD COLUMN IF NOT EXISTS allow_reschedule boolean NOT NULL DEFAULT false;
+
+CREATE TABLE IF NOT EXISTS availability_rules (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    calendar_id uuid NOT NULL REFERENCES booking_calendars(id) ON DELETE CASCADE,
+    day_of_week integer NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
+    start_time time NOT NULL,
+    end_time time NOT NULL,
+    active boolean DEFAULT true,
+    created_at timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS blackout_dates (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    calendar_id uuid NOT NULL REFERENCES booking_calendars(id) ON DELETE CASCADE,
+    date date NOT NULL,
+    reason text,
+    created_at timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS booking_questions (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    calendar_id uuid NOT NULL REFERENCES booking_calendars(id) ON DELETE CASCADE,
+    label text NOT NULL,
+    type text DEFAULT 'text' CHECK (type IN ('text', 'email', 'phone', 'select', 'textarea')),
+    placeholder text,
+    required boolean DEFAULT true,
+    options jsonb,
+    sort_order integer DEFAULT 0,
+    created_at timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS bookings (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    calendar_id uuid NOT NULL REFERENCES booking_calendars(id) ON DELETE CASCADE,
+    start_time timestamptz NOT NULL,
+    end_time timestamptz NOT NULL,
+    status text DEFAULT 'confirmed' CHECK (status IN ('confirmed','cancelled','rescheduled','no_show','completed')),
+    guest_name text NOT NULL,
+    guest_email text NOT NULL,
+    guest_phone text,
+    guest_answers jsonb DEFAULT '{}',
+    cancel_token text UNIQUE DEFAULT encode(gen_random_bytes(24), 'hex'),
+    reschedule_token text UNIQUE DEFAULT encode(gen_random_bytes(24), 'hex'),
+    cancelled_at timestamptz,
+    cancel_reason text,
+    rescheduled_from uuid REFERENCES bookings(id),
+    notes text,
+    created_at timestamptz DEFAULT now(),
+    updated_at timestamptz DEFAULT now()
+);
+
+-- 037 fix: add missing columns to bookings
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS location_url text;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS meeting_details jsonb;
+
+CREATE TABLE IF NOT EXISTS notification_rules (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    calendar_id uuid NOT NULL REFERENCES booking_calendars(id) ON DELETE CASCADE,
+    event_type text NOT NULL CHECK (event_type IN ('confirmation','reminder','cancellation','reschedule')),
+    channel text DEFAULT 'email' CHECK (channel IN ('email', 'whatsapp')),
+    timing_minutes integer DEFAULT 0,
+    template text,
+    active boolean DEFAULT true,
+    created_at timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS booking_audit_log (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    booking_id uuid REFERENCES bookings(id) ON DELETE CASCADE,
+    event_type text NOT NULL,
+    details jsonb,
+    created_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_calendars_owner ON booking_calendars(owner_email);
+CREATE INDEX IF NOT EXISTS idx_calendars_slug ON booking_calendars(slug);
+CREATE INDEX IF NOT EXISTS idx_availability_calendar ON availability_rules(calendar_id);
+CREATE INDEX IF NOT EXISTS idx_blackout_calendar ON blackout_dates(calendar_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_calendar ON bookings(calendar_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
+CREATE INDEX IF NOT EXISTS idx_bookings_guest ON bookings(guest_email);
+CREATE INDEX IF NOT EXISTS idx_bookings_time ON bookings(start_time);
+CREATE INDEX IF NOT EXISTS idx_audit_booking ON booking_audit_log(booking_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_bookings_no_overlap
+    ON bookings(calendar_id, start_time)
+    WHERE status NOT IN ('cancelled', 'rescheduled');
+
+ALTER TABLE booking_calendars ENABLE ROW LEVEL SECURITY;
+ALTER TABLE availability_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE blackout_dates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE booking_questions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notification_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE booking_audit_log ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'booking_calendars' AND policyname = 'booking_calendars_all') THEN
+    CREATE POLICY "booking_calendars_all" ON booking_calendars FOR ALL USING (true) WITH CHECK (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'availability_rules' AND policyname = 'availability_rules_all') THEN
+    CREATE POLICY "availability_rules_all" ON availability_rules FOR ALL USING (true) WITH CHECK (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'blackout_dates' AND policyname = 'blackout_dates_all') THEN
+    CREATE POLICY "blackout_dates_all" ON blackout_dates FOR ALL USING (true) WITH CHECK (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'booking_questions' AND policyname = 'booking_questions_all') THEN
+    CREATE POLICY "booking_questions_all" ON booking_questions FOR ALL USING (true) WITH CHECK (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'bookings' AND policyname = 'bookings_all') THEN
+    CREATE POLICY "bookings_all" ON bookings FOR ALL USING (true) WITH CHECK (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'notification_rules' AND policyname = 'notification_rules_all') THEN
+    CREATE POLICY "notification_rules_all" ON notification_rules FOR ALL USING (true) WITH CHECK (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'booking_audit_log' AND policyname = 'booking_audit_log_all') THEN
+    CREATE POLICY "booking_audit_log_all" ON booking_audit_log FOR ALL USING (true) WITH CHECK (true);
+  END IF;
+END $$;
 `
 
 export async function POST() {

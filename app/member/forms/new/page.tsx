@@ -69,12 +69,21 @@ export default function NewFormPage() {
         setCreating(true)
         setCreateError(null)
         try {
-            // Create form
-            const res = await fetch("/api/member/forms", {
+            // Create form — auto-retry once if tables were just created (503)
+            let res = await fetch("/api/member/forms", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name: trimmedName, mode }),
             })
+            if (res.status === 503) {
+                // Tables just auto-created, wait 4s and retry
+                await new Promise(r => setTimeout(r, 4000))
+                res = await fetch("/api/member/forms", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: trimmedName, mode }),
+                })
+            }
             const data = await res.json()
             if (!res.ok) throw new Error(data.error || `Error ${res.status}`)
 
