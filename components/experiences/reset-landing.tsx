@@ -583,6 +583,7 @@ export function ResetLanding({ leadId, onTrack, referrer }: Props) {
       {/* ── QUIZ POPUP ── */}
       <DiagnosticQuiz
         open={quizOpen}
+        whatsappUrl={waConfig.url}
         onClose={() => setQuizOpen(false)}
         onComplete={async () => {
           setQuizOpen(false)
