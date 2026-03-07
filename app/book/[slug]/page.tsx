@@ -121,6 +121,30 @@ export default function PublicBookingPage() {
     const handleSubmit = async () => {
         if (!selectedSlot || !calendar) return
 
+        // Validate required fields before sending
+        const missingFields = questions
+            .filter(q => q.required && !formData[q.label]?.trim())
+            .map(q => q.label)
+
+        if (missingFields.length > 0) {
+            alert(`Por favor completa los campos requeridos: ${missingFields.join(", ")}`)
+            return
+        }
+
+        // Extract standard fields from formData
+        const guestName = questions.find(q => q.type === "text")
+            ? (formData[questions.find(q => q.type === "text")!.label] || "").trim()
+            : ""
+        const guestEmail = questions.find(q => q.type === "email")
+            ? (formData[questions.find(q => q.type === "email")!.label] || "").trim()
+            : ""
+        const guestPhone = questions.find(q => q.type === "phone")
+            ? (formData[questions.find(q => q.type === "phone")!.label] || null)
+            : null
+
+        if (!guestName) { alert("Por favor ingresa tu nombre completo"); return }
+        if (!guestEmail) { alert("Por favor ingresa tu email"); return }
+
         setSubmitting(true)
         try {
             const res = await fetch(`/api/booking/public/${slug}/book`, {
@@ -128,9 +152,9 @@ export default function PublicBookingPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     datetime: selectedSlot.datetime,
-                    guest_name: formData["Nombre completo"] || formData["nombre"] || "Invitado",
-                    guest_email: formData["Email"] || formData["email"] || "",
-                    guest_phone: formData["Teléfono"] || formData["telefono"] || null,
+                    guest_name: guestName,
+                    guest_email: guestEmail,
+                    guest_phone: guestPhone,
                     answers: formData,
                 }),
             })
@@ -514,6 +538,19 @@ export default function PublicBookingPage() {
                                         <LocationIcon className="h-4 w-4 text-violet-400 shrink-0" />
                                         <span className="text-sm">{LOCATION_LABELS[calendar.location_type]}</span>
                                     </div>
+                                    {bookingResult.booking.location_url && (
+                                        <div className="flex items-start gap-3">
+                                            <LinkIcon className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" />
+                                            <a
+                                                href={bookingResult.booking.location_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm text-violet-400 hover:text-violet-300 underline break-all transition-colors"
+                                            >
+                                                Unirse a la reunión
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

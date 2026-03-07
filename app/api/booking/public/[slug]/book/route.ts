@@ -106,8 +106,26 @@ export async function POST(
             details: { guest_name, guest_email, start_time: startTime.toISOString() },
         })
 
-        // TODO: Send confirmation email to guest and owner
-        // await sendBookingConfirmation(booking, cal)
+        // Send confirmation emails (non-blocking — booking succeeds even if email fails)
+        try {
+            const { sendBookingConfirmationEmails } = await import("@/lib/booking-emails")
+            await sendBookingConfirmationEmails({
+                bookingId: booking.id,
+                cancelToken: booking.cancel_token,
+                guestName: booking.guest_name,
+                guestEmail: booking.guest_email,
+                ownerEmail: cal.owner_email,
+                calendarName: cal.name,
+                startTime: booking.start_time,
+                endTime: booking.end_time,
+                durationMinutes: cal.duration_minutes,
+                timezone: cal.timezone,
+                locationType: calWithLoc?.location_type || "google_meet",
+                locationUrl: locationValue,
+            })
+        } catch (emailErr) {
+            console.error("[Booking] Email send failed (non-critical):", emailErr)
+        }
 
         return NextResponse.json({
             booking: {
@@ -117,6 +135,7 @@ export async function POST(
                 guest_name: booking.guest_name,
                 cancel_token: booking.cancel_token,
                 reschedule_token: booking.reschedule_token,
+                location_url: locationValue,
             },
             calendar: {
                 name: cal.name,

@@ -21,8 +21,8 @@ export default function NewFunnelPage() {
 
     useEffect(() => { setMounted(true) }, [])
 
-    const handleCreate = (template: typeof TEMPLATES[0]) => {
-        const newLanding = createLanding(
+    const handleCreate = async (template: typeof TEMPLATES[0]) => {
+        const newLanding = await createLanding(
             template.name,
             template.description,
             template.blocks
@@ -30,8 +30,8 @@ export default function NewFunnelPage() {
         router.push(`/member/builder/${newLanding.id}`)
     }
 
-    const handleCreateBlank = () => {
-        const newLanding = createLanding(
+    const handleCreateBlank = async () => {
+        const newLanding = await createLanding(
             "Nuevo Embudo en Blanco",
             "Creado desde cero",
             ["hero", "cta"]
