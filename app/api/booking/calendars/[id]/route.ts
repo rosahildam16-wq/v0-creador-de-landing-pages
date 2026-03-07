@@ -62,7 +62,8 @@ export async function PUT(
             "location_type", "location_value", "max_bookings_per_day",
             "min_notice_hours", "buffer_before_minutes", "buffer_after_minutes",
             "max_group_size", "confirmation_message", "confirmation_cta_url",
-            "confirmation_cta_label", "active"
+            "confirmation_cta_label", "active",
+            "host_image_url", "allow_cancellation", "allow_reschedule"
         ]
         for (const key of allowed) {
             if (body[key] !== undefined) updateFields[key] = body[key]

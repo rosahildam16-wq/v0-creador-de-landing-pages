@@ -62,10 +62,12 @@ export default function NewFormPage() {
     const [name, setName] = useState("")
     const [mode, setMode] = useState<"conversational" | "classic">("conversational")
     const [creating, setCreating] = useState(false)
+    const [createError, setCreateError] = useState<string | null>(null)
 
     const handleCreate = async () => {
         const trimmedName = name.trim() || selectedTemplate.name
         setCreating(true)
+        setCreateError(null)
         try {
             // Create form
             const res = await fetch("/api/member/forms", {
@@ -74,7 +76,7 @@ export default function NewFormPage() {
                 body: JSON.stringify({ name: trimmedName, mode }),
             })
             const data = await res.json()
-            if (!res.ok) throw new Error(data.error)
+            if (!res.ok) throw new Error(data.error || `Error ${res.status}`)
 
             const formId = data.form.id
 
@@ -88,16 +90,21 @@ export default function NewFormPage() {
                     order_index: i,
                     required: (q as any).required ?? false,
                 }))
-                await fetch(`/api/member/forms/${formId}`, {
+                const putRes = await fetch(`/api/member/forms/${formId}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ questions }),
                 })
+                if (!putRes.ok) {
+                    const putData = await putRes.json().catch(() => ({}))
+                    console.error("Template questions save failed:", putData.error)
+                }
             }
 
             router.push(`/member/forms/${formId}`)
-        } catch (err) {
+        } catch (err: any) {
             console.error(err)
+            setCreateError(err.message || "Error al crear el formulario. Intenta de nuevo.")
             setCreating(false)
         }
     }
@@ -187,6 +194,12 @@ export default function NewFormPage() {
                             ))}
                         </div>
                     </div>
+
+                    {createError && (
+                        <div className="rounded-2xl bg-red-500/10 border border-red-500/20 px-5 py-3 text-sm text-red-400">
+                            {createError}
+                        </div>
+                    )}
 
                     <button
                         onClick={handleCreate}

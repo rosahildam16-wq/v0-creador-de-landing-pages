@@ -39,7 +39,7 @@ export async function sendBookingConfirmationEmails(data: BookingEmailData): Pro
     const startFormatted = formatDate(data.startTime, data.timezone)
     const timeStr = formatTime(data.startTime, data.timezone)
     const endTimeStr = formatTime(data.endTime, data.timezone)
-    const cancelUrl = `${BASE_URL}/api/booking/public/cancel?token=${data.cancelToken}`
+    const cancelUrl = `${BASE_URL}/book/cancel?token=${data.cancelToken}`
 
     // Email to guest
     const guestResult = await resend.emails.send({

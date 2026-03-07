@@ -67,6 +67,21 @@ export async function POST(
                 locationValue = meeting.join_url
                 meetingDetails = meeting
             }
+        } else if (calWithLoc?.location_type === "google_meet") {
+            const { createGoogleMeetEvent } = await import("@/lib/google-calendar")
+            const event = await createGoogleMeetEvent({
+                ownerEmail: cal.owner_email,
+                title: `${cal.name} — ${guest_name}`,
+                startTime: startTime.toISOString(),
+                endTime: endTime.toISOString(),
+                timezone: cal.timezone,
+                guestEmail: guest_email,
+                guestName: guest_name,
+            })
+            if (event) {
+                locationValue = event.hangoutLink
+                meetingDetails = { hangoutLink: event.hangoutLink, eventId: event.eventId }
+            }
         } else {
             locationValue = calWithLoc?.location_value
         }

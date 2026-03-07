@@ -7,7 +7,7 @@ import {
     CalendarCheck, CalendarDays, Clock, Plus, Copy, Check,
     Eye, Trash2, ToggleLeft,
     ToggleRight, Users, CalendarPlus, XCircle, Loader2,
-    CheckCircle2, UserX, RefreshCw, ChevronDown, Phone, Video, MapPin, Link as LinkIcon
+    CheckCircle2, UserX, RefreshCw, ChevronDown, Phone, Video, MapPin, Link as LinkIcon, Settings2
 } from "lucide-react"
 import Link from "next/link"
 import { BOOKING_STATUS_CONFIG, LOCATION_TYPES, type BookingCalendar, type Booking } from "@/lib/booking"
@@ -309,6 +309,9 @@ export default function BookingDashboard() {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-1.5 shrink-0">
+                                                <Link href={`/member/agendamiento/${cal.id}`} title="Configurar" className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-violet-500/10 transition-colors text-muted-foreground hover:text-violet-400">
+                                                    <Settings2 className="h-4 w-4" />
+                                                </Link>
                                                 <button onClick={() => handleToggle(cal.id, cal.active)} title={cal.active ? "Desactivar" : "Activar"} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-white/[0.05] transition-colors text-muted-foreground">
                                                     {cal.active ? <ToggleRight className="h-5 w-5 text-emerald-400" /> : <ToggleLeft className="h-5 w-5" />}
                                                 </button>
