@@ -98,8 +98,9 @@ export default function LoginPage() {
     if (!authLoading && isAuthenticated && user) {
       if (user.role === "super_admin") {
         router.replace("/admin")
+      } else if (user.role === "leader") {
+        router.replace("/leader")
       } else if (user.hasCommunity === false) {
-        // Logged-in but not part of any community → send to commercial onboarding
         router.replace("/start")
       } else {
         router.replace("/member")

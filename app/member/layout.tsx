@@ -25,9 +25,12 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
     if (!isLoading && isAuthenticated && user?.role === "super_admin") {
       router.replace("/admin")
     }
+    if (!isLoading && isAuthenticated && user?.role === "leader") {
+      router.replace("/leader")
+    }
   }, [isAuthenticated, isLoading, user, router])
 
-  if (isLoading || !isAuthenticated || user?.role !== "member") {
+  if (isLoading || !isAuthenticated || (user?.role !== "member" && user?.role !== "leader")) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
