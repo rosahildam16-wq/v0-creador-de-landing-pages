@@ -15,7 +15,7 @@ export async function GET(
 
         const { data, error } = await supabase
             .from("booking_calendars")
-            .select("id, slug, name, description, type, duration_minutes, timezone, location_type, max_group_size, confirmation_message, confirmation_cta_url, confirmation_cta_label, owner_email, booking_questions(*), availability_rules(*)")
+            .select("id, slug, name, description, type, duration_minutes, timezone, location_type, max_group_size, confirmation_message, confirmation_cta_url, confirmation_cta_label, host_image_url, owner_email, booking_questions(*), availability_rules(*)")
             .eq("slug", slug)
             .eq("active", true)
             .single()
