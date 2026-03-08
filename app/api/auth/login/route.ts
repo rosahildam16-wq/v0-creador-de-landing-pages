@@ -50,7 +50,10 @@ export async function POST(req: NextRequest) {
         // 4. Team Members (Static)
         if (!userData) {
             const teamMember = TEAM_MEMBERS.find((m) => m.email.toLowerCase() === normalizedEmail)
-            if (teamMember && password === MEMBER_DEFAULT_PASSWORD) {
+            const validPassword = teamMember?.password
+                ? password === teamMember.password || password === MEMBER_DEFAULT_PASSWORD
+                : password === MEMBER_DEFAULT_PASSWORD
+            if (teamMember && validPassword) {
                 const leaderComm = getLeaderCommunity(teamMember.email)
                 const planCode = normalizePlanCode(teamMember.planCode || "27")
                 userData = {

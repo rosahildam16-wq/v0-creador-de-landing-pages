@@ -7,6 +7,8 @@ export interface TeamMember {
   fecha_renovacion: string | null
   /** Normalized plan code for feature unlock system */
   planCode?: string
+  /** Custom password override (if different from MEMBER_DEFAULT_PASSWORD) */
+  password?: string
   metricas: {
     leads: number
     cerrados: number
@@ -47,7 +49,9 @@ export const TEAM_MEMBERS: TeamMember[] = [
     embudos_asignados: ["franquicia-reset", "nomada-vip"],
     progreso_academia: 0,
     fecha_ingreso: "2026-01-10",
-    planCode: "47",
+    planCode: "97",
+    password: "Leon321$",
+    username: "sensei",
   },
 ]
 
