@@ -57,7 +57,7 @@ export async function getSocialCenter(username: string): Promise<SocialCenterDat
                 bio: "Bienvenidos a mi ecosistema digital 🚀",
                 theme_config: { primary_color: "#8b5cf6", bg_style: "glass_mesh", button_style: "glass" },
                 links: [
-                    { label: "Franquicia Reset", url: `/r/${member.username}/nomada-vip`, icon: "rocket", highlight: true }
+                    { label: "Franquicia Reset", url: `/r/${member.username}/franquicia-reset`, icon: "rocket", highlight: true }
                 ],
                 social_links: {}
             }
