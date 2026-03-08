@@ -25,6 +25,9 @@ export interface BookingCalendar {
     confirmation_cta_url: string | null
     confirmation_cta_label: string | null
     active: boolean
+    host_image_url: string | null
+    allow_cancellation: boolean
+    allow_reschedule: boolean
     created_at: string
     updated_at: string
     // Joined

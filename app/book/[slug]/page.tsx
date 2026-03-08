@@ -217,9 +217,19 @@ export default function PublicBookingPage() {
             <div className="relative mx-auto max-w-2xl px-4 py-8 sm:py-16">
                 {/* Header */}
                 <div className="mb-8 text-center">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-500 shadow-lg shadow-violet-500/20">
-                        <Sparkles className="h-6 w-6 text-white" />
-                    </div>
+                    {calendar.host_image_url ? (
+                        <div className="mx-auto mb-4 h-20 w-20 overflow-hidden rounded-full border-2 border-violet-500/30 shadow-lg shadow-violet-500/20">
+                            <img
+                                src={calendar.host_image_url}
+                                alt={calendar.name}
+                                className="h-full w-full object-cover"
+                            />
+                        </div>
+                    ) : (
+                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-500 shadow-lg shadow-violet-500/20">
+                            <Sparkles className="h-6 w-6 text-white" />
+                        </div>
+                    )}
                     <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{calendar.name}</h1>
                     {calendar.description && (
                         <p className="mt-2 text-sm text-violet-300/40">{calendar.description}</p>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { getMemberData } from "@/lib/team-data"
 import { EMBUDOS } from "@/lib/embudos-config"
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { useSearchParams } from "next/navigation"
 import { MagicReferralCard } from "@/components/member/magic-referral-card"
+import { ImageUploader } from "@/components/ui/image-uploader"
 
 export default function MemberPerfilPage() {
   const { user } = useAuth()
@@ -22,14 +23,34 @@ export default function MemberPerfilPage() {
   const [saved, setSaved] = useState(false)
   const [nombre, setNombre] = useState(member?.nombre || user?.name || "")
   const [email] = useState(member?.email || user?.email || "")
+  const [avatarUrl, setAvatarUrl] = useState("")
+  const [savingProfile, setSavingProfile] = useState(false)
+
+  // Load current avatar from DB
+  useEffect(() => {
+    if (!user?.email) return
+    fetch("/api/member/profile")
+      .then(r => r.json())
+      .then(d => { if (d.profile?.avatar_url) setAvatarUrl(d.profile.avatar_url) })
+      .catch(() => {})
+  }, [user?.email])
 
   if (!member || !user) return null
 
   const embudosActivos = EMBUDOS.filter((e) => member.embudos_asignados?.includes(e.id))
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setSavingProfile(true)
+    try {
+      await fetch("/api/member/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: nombre, avatar_url: avatarUrl }),
+      })
+    } catch { /* noop */ }
+    setSavingProfile(false)
     setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    setTimeout(() => setSaved(false), 2500)
   }
 
   return (
@@ -84,8 +105,22 @@ export default function MemberPerfilPage() {
                 </div>
                 <div className="px-6 pb-6">
                   <div className="-mt-12 flex items-end gap-6">
-                    <div className="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-card bg-gradient-to-br from-primary to-accent text-3xl font-bold text-primary-foreground shadow-2xl">
-                      {member.avatar_initials}
+                    {/* Avatar upload — circular, 96px */}
+                    <div className="h-24 w-24 shrink-0 rounded-3xl border-4 border-card shadow-2xl overflow-hidden">
+                      <ImageUploader
+                        value={avatarUrl}
+                        onChange={async (url) => {
+                          setAvatarUrl(url)
+                          await fetch("/api/member/profile", {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ avatar_url: url }),
+                          }).catch(() => {})
+                        }}
+                        bucket="avatars"
+                        shape="circle"
+                        height="h-full"
+                      />
                     </div>
                     <div className="mb-2 flex flex-col">
                       <span className="text-2xl font-bold text-foreground">{member.nombre}</span>
@@ -127,10 +162,15 @@ export default function MemberPerfilPage() {
                   <div className="mt-8 flex justify-end">
                     <button
                       onClick={handleSave}
-                      className="flex items-center gap-2 rounded-xl bg-primary px-8 py-3 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                      disabled={savingProfile}
+                      className="flex items-center gap-2 rounded-xl bg-primary px-8 py-3 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-70 disabled:scale-100"
                     >
-                      {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-                      {saved ? "Guardado" : "Actualizar Perfil"}
+                      {savingProfile
+                        ? <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent inline-block" /> Guardando...</>
+                        : saved
+                          ? <><Check className="h-4 w-4" /> Guardado</>
+                          : <><Save className="h-4 w-4" /> Actualizar Perfil</>
+                      }
                     </button>
                   </div>
                 </CardContent>

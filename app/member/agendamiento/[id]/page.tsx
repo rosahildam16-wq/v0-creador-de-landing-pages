@@ -5,8 +5,9 @@ import { useParams, useRouter } from "next/navigation"
 import {
     ChevronLeft, Save, Loader2, Settings, Clock, MapPin,
     CalendarDays, Shield, MessageSquare, Plus, Trash2,
-    ToggleLeft, ToggleRight, Image as ImageIcon, Globe, Video, Phone, Link as LinkIcon
+    ToggleLeft, ToggleRight, Globe, Video, Phone, Link as LinkIcon
 } from "lucide-react"
+import { ImageUploader } from "@/components/ui/image-uploader"
 import { LOCATION_TYPES, DAY_NAMES, DURATION_OPTIONS, type BookingCalendar, type AvailabilityRule, type BlackoutDate, type BookingQuestion } from "@/lib/booking"
 
 function cn(...classes: (string | boolean | undefined)[]) {
@@ -293,15 +294,15 @@ export default function CalendarSettingsPage() {
                             <textarea value={description} onChange={e => setDescription(e.target.value)}
                                 className="w-full input-field resize-none" rows={2} placeholder="Describe brevemente para qué es esta cita..." />
                         </Field>
-                        <Field label="Foto del anfitrión (URL)">
-                            <div className="flex items-center gap-3">
-                                {hostImageUrl && (
-                                    <img src={hostImageUrl} alt="Host" className="h-10 w-10 rounded-full object-cover border border-violet-500/20" onError={e => { (e.target as HTMLImageElement).style.display = "none" }} />
-                                )}
-                                <input value={hostImageUrl} onChange={e => setHostImageUrl(e.target.value)}
-                                    className="flex-1 input-field" placeholder="https://..." />
-                            </div>
-                        </Field>
+                        <ImageUploader
+                            value={hostImageUrl}
+                            onChange={setHostImageUrl}
+                            bucket="calendar-assets"
+                            pathPrefix={id}
+                            shape="circle"
+                            height="h-28"
+                            label="Foto del anfitrión"
+                        />
                     </Section>
                     <Section title="Configuración">
                         <div className="grid sm:grid-cols-2 gap-4">

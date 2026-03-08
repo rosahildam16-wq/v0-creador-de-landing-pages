@@ -32,6 +32,7 @@ import {
     Check,
 } from "lucide-react"
 import { toast } from "sonner"
+import { ImageUploader } from "@/components/ui/image-uploader"
 
 const TikTokIcon = ({ className }: { className?: string }) => (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -361,20 +362,15 @@ export default function SocialCenterEditor() {
                                             </div>
                                         </div>
 
-                                        {/* Avatar URL */}
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-bold text-white/40 uppercase">URL del Avatar</label>
-                                            <div className="flex items-center gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-1.5">
-                                                <ImageIcon className="h-3 w-3 text-white/30 shrink-0" />
-                                                <input
-                                                    type="url"
-                                                    value={profile.avatar_url}
-                                                    onChange={e => setProfile(p => ({ ...p, avatar_url: e.target.value }))}
-                                                    className="flex-1 bg-transparent border-none text-[11px] text-white/50 outline-none placeholder:text-white/10"
-                                                    placeholder="https://tu-foto.com/imagen.jpg"
-                                                />
-                                            </div>
-                                        </div>
+                                        {/* Avatar Upload */}
+                                        <ImageUploader
+                                            value={profile.avatar_url}
+                                            onChange={url => setProfile(p => ({ ...p, avatar_url: url }))}
+                                            bucket="social-center-assets"
+                                            shape="circle"
+                                            height="h-28"
+                                            label="FOTO / AVATAR"
+                                        />
 
                                         {/* Bio */}
                                         <div className="space-y-1.5">
