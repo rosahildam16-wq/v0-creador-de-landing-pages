@@ -50,12 +50,14 @@ export async function POST(req: NextRequest) {
         if (!userData) {
             const teamMember = TEAM_MEMBERS.find((m) => m.email.toLowerCase() === normalizedEmail)
             if (teamMember && password === MEMBER_DEFAULT_PASSWORD) {
+                const leaderComm = getLeaderCommunity(teamMember.email)
                 userData = {
                     email: teamMember.email,
                     name: teamMember.nombre,
-                    role: "member",
+                    role: leaderComm ? "leader" : "member",
                     memberId: teamMember.id,
-                    username: teamMember.id,
+                    username: teamMember.username || teamMember.id,
+                    communityId: leaderComm?.id || "skalia-vip",
                     hasCommunity: true,
                 }
             }
