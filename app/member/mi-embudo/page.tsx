@@ -9,7 +9,7 @@ import { getMemberData } from "@/lib/team-data"
 import { getMemberCommunity } from "@/lib/communities-data"
 import {
   Rocket, ArrowRight, CheckCircle2, Eye, Copy, Check,
-  Layers, ChevronRight, ExternalLink, Users, MessageSquare, Trophy
+  Layers, ChevronRight, Users, MessageSquare, Trophy
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import useSWR from "swr"
@@ -34,6 +34,7 @@ const ETAPA_ICONS: Record<string, string> = {
 }
 
 import { PixelConfigBlock } from "@/components/admin/pixel-config-block"
+import { WhatsAppConfigBlock } from "@/components/member/whatsapp-config-block"
 
 export default function MemberEmbudoPage() {
   const { user } = useAuth()
@@ -348,86 +349,7 @@ export default function MemberEmbudoPage() {
           </div>
 
           {/* WhatsApp Config (for Franquicia Reset) */}
-          {activeEmbudo.id === "franquicia-reset" && (
-            <div className="mt-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <div className="flex items-center gap-2 mb-3 px-1">
-                <MessageSquare className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-bold text-foreground">Configuración de Contacto (WhatsApp)</h3>
-              </div>
-              <Card className="border-primary/20 bg-primary/5 overflow-hidden">
-                <CardContent className="p-5 flex flex-col gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">Tu número de WhatsApp (con código de país)</label>
-                    <input
-                      type="text"
-                      autoComplete="off"
-                      placeholder="Ej: 573123456789"
-                      className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-foreground outline-none focus:border-primary/50 transition-all font-mono"
-                      value={finalMember.whatsapp_number || ""}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/[^0-9]/g, "");
-                        import("@/lib/team-data").then(m => {
-                          m.updateMemberWhatsApp(finalMember.id, val, finalMember.whatsapp_message || "");
-                          setSelectedEmbudo(activeEmbudo.id);
-                        });
-                        // Persist to DB (fire and forget)
-                        fetch("/api/member/whatsapp", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ whatsapp_number: val, whatsapp_message: finalMember.whatsapp_message || "" }),
-                        }).catch(() => {/* silent – localStorage already saved */});
-                      }}
-                    />
-                  </div>
-
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">Mensaje de Bienvenida</label>
-                    <div className="grid gap-2">
-                      {[
-                        "Hola, acabo de completar el diagnóstico y quiero solicitar mi acceso prioritario a la Franquicia RESET.",
-                        "¡Hola! Vengo del sistema RESET, estoy listo para empezar mi transformación. ¿Me das el acceso?",
-                        "He terminado el proceso de RESET. Quiero hablar con un asesor para activar mi motor de ventas."
-                      ].map((msg, i) => {
-                        const isSelected = finalMember.whatsapp_message === msg || (!finalMember.whatsapp_message && i === 0);
-                        return (
-                          <button
-                            key={i}
-                            onClick={() => {
-                              import("@/lib/team-data").then(m => {
-                                m.updateMemberWhatsApp(finalMember.id, finalMember.whatsapp_number || "", msg);
-                                setSelectedEmbudo(activeEmbudo.id);
-                              });
-                              // Persist to DB (fire and forget)
-                              fetch("/api/member/whatsapp", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ whatsapp_number: finalMember.whatsapp_number || "", whatsapp_message: msg }),
-                              }).catch(() => {});
-                            }}
-                            className={cn(
-                              "text-left p-3 rounded-xl border text-xs transition-all duration-200",
-                              isSelected
-                                ? "border-primary/40 bg-primary/20 text-foreground"
-                                : "border-white/5 bg-black/20 text-muted-foreground hover:bg-black/40"
-                            )}
-                          >
-                            "{msg}"
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3">
-                    <Check className="h-3.5 w-3.5 text-emerald-500" />
-                    <p className="text-[10px] text-emerald-500/80 font-medium">
-                      Configuración guardada automáticamente. Este número y mensaje se usarán en tu link personal.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+          <WhatsAppConfigBlock embudoId={activeEmbudo.id} />
 
           {/* Recent Activity */}
           <div className="mt-6">
