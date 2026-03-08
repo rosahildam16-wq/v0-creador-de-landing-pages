@@ -5,34 +5,43 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
-import { LayoutDashboard, Link2, Users, ChevronLeft, ChevronRight, LogOut, GraduationCap, Kanban, Trophy, Sparkles, CreditCard, MessagesSquare, Globe, CalendarCheck, Plug, Archive, Mail, TrendingUp, ClipboardList } from "lucide-react"
+import { LayoutDashboard, Link2, Users, ChevronLeft, ChevronRight, LogOut, GraduationCap, Kanban, Trophy, Sparkles, CreditCard, MessagesSquare, Globe, CalendarCheck, Plug, Archive, Mail, TrendingUp, ClipboardList, Lock } from "lucide-react"
 import { useState } from "react"
-import { getCommunityById } from "@/lib/communities-data"
+import { type PlanFeatures, hasFeature } from "@/lib/plans"
 
-const NAV_ITEMS = [
+// Each nav item optionally references a feature key.
+// If the user's plan doesn't include it, a subtle lock indicator is shown.
+// The page itself handles the full FeatureGate overlay.
+const NAV_ITEMS: Array<{
+  href: string
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  feature?: keyof PlanFeatures
+}> = [
   { href: "/member", label: "Dashboard", icon: LayoutDashboard },
   { href: "/member/mis-leads", label: "Mis Leads", icon: Users },
-  { href: "/member/mi-equipo", label: "Mi Equipo", icon: Users },
   { href: "/member/pipeline", label: "Pipeline", icon: Kanban },
-  { href: "/member/agendamiento", label: "Citas", icon: CalendarCheck },
+  { href: "/member/mi-equipo", label: "Mi Equipo", icon: Users, feature: "miEquipo" },
+  { href: "/member/agendamiento", label: "Citas", icon: CalendarCheck, feature: "agendamiento" },
   { href: "/member/builder", label: "Magic Builder", icon: Sparkles },
-  { href: "/member/forms", label: "Form Builder", icon: ClipboardList },
+  { href: "/member/forms", label: "Form Builder", icon: ClipboardList, feature: "forms" },
   { href: "/member/retos", label: "Retos", icon: Trophy },
   { href: "/member/comunidad", label: "Comunidad", icon: MessagesSquare },
   { href: "/member/academia", label: "Academia", icon: GraduationCap },
   { href: "/member/mi-embudo", label: "Mis Embudos", icon: Link2 },
-  { href: "/member/integraciones", label: "Integraciones", icon: Plug },
-  { href: "/member/social-center", label: "Social Center", icon: Globe },
+  { href: "/member/integraciones", label: "Integraciones", icon: Plug, feature: "integraciones" },
+  { href: "/member/social-center", label: "Social Center", icon: Globe, feature: "socialCenter" },
   { href: "/member/recursos", label: "Librería", icon: Archive },
+  { href: "/member/mailing", label: "Mailing", icon: Mail, feature: "mailing" },
+  { href: "/member/comisiones", label: "Comisiones", icon: TrendingUp, feature: "comisiones" },
   { href: "/member/suscripcion", label: "Suscripcion", icon: CreditCard },
-  { href: "/member/comisiones", label: "Comisiones", icon: TrendingUp },
-  { href: "/member/mailing", label: "Mailing", icon: Mail },
 ]
 
 export function MemberSidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const { logout, user } = useAuth()
+  const isSuperAdmin = user?.role === "super_admin"
 
   return (
     <aside
@@ -50,30 +59,22 @@ export function MemberSidebar() {
         )}
       </div>
 
-      {/* Navigation */}
-      <nav className="flex flex-1 flex-col gap-1 p-3">
+      {/* Navigation — all items shown to all users; FeatureGate handles access inside pages */}
+      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
         {NAV_ITEMS.map((item) => {
-          // Restrict 'Mi Equipo' to Skalia VIP members
-          if (item.href === "/member/mi-equipo" && user?.communityId !== "skalia-vip" && user?.memberId !== "sensei") {
-            return null
-          }
-
-          // Mailing permission check
-          if (item.href === "/member/mailing") {
-            const comm = user?.communityId ? getCommunityById(user.communityId) : undefined
-            if (!comm?.mailing_enabled && user?.memberId !== "sensei") return null
-          }
-
           const isActive = item.href === "/member"
             ? pathname === "/member"
             : pathname.startsWith(item.href)
+
+          // Show subtle lock indicator if feature is gated (never hide the item)
+          const isLocked = !isSuperAdmin && !!item.feature && !hasFeature(user?.planCode, item.feature)
 
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                 isActive
                   ? "nav-item-active text-primary"
                   : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground",
@@ -81,7 +82,13 @@ export function MemberSidebar() {
               )}
             >
               <item.icon className="h-4.5 w-4.5 shrink-0" />
-              {!collapsed && <span>{item.label}</span>}
+              {!collapsed && (
+                <span className="flex-1">{item.label}</span>
+              )}
+              {/* Subtle lock icon for locked features — not shown when collapsed */}
+              {!collapsed && isLocked && (
+                <Lock className="h-3 w-3 shrink-0 text-muted-foreground/40" />
+              )}
             </Link>
           )
         })}

@@ -5,6 +5,8 @@ export interface TeamMember {
   avatar_initials: string
   publicidad_activa: boolean
   fecha_renovacion: string | null
+  /** Normalized plan code for feature unlock system */
+  planCode?: string
   metricas: {
     leads: number
     cerrados: number
@@ -45,6 +47,7 @@ export const TEAM_MEMBERS: TeamMember[] = [
     embudos_asignados: ["franquicia-reset", "nomada-vip"],
     progreso_academia: 45,
     fecha_ingreso: "2026-01-10",
+    planCode: "47",
   },
   {
     id: "socio-1",

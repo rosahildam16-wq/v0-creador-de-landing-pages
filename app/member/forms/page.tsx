@@ -7,6 +7,7 @@ import { Plus, ClipboardList, Eye, Trash2, BarChart2, ExternalLink, Copy, CheckC
 import { useAuth } from "@/lib/auth-context"
 import type { Form } from "@/lib/form-types"
 import { conversionRate } from "@/lib/form-types"
+import { FeatureGate } from "@/components/feature-gate"
 
 const STATUS_CLASSES: Record<string, string> = {
     draft: "bg-amber-500/10 text-amber-400 border-amber-500/20",
@@ -52,6 +53,10 @@ export default function FormsPage() {
     }
 
     return (
+        <FeatureGate
+            feature="forms"
+            description="Crea formularios de captura, encuestas y cuestionarios para tus leads con análisis de conversión en tiempo real."
+        >
         <div className="min-h-screen bg-[#050505] text-white p-6 md:p-12">
             <div className="max-w-6xl mx-auto space-y-10">
                 {/* Header */}
@@ -202,5 +207,6 @@ export default function FormsPage() {
                 )}
             </div>
         </div>
+        </FeatureGate>
     )
 }

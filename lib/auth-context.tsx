@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { TEAM_MEMBERS } from "./team-data"
 import { getLeaderCommunity } from "./communities-data"
 
-export type UserRole = "super_admin" | "member"
+export type UserRole = "super_admin" | "member" | "leader"
 
 export interface AuthUser {
   email: string
@@ -16,6 +16,8 @@ export interface AuthUser {
   communityId?: string
   hasCommunity?: boolean
   planId?: string
+  /** Normalized plan code: "27" | "47" | "97". Defaults to "27" if not set. */
+  planCode?: string
 }
 
 interface AuthContextType {

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import useSWR, { mutate } from "swr"
+import { FeatureGate } from "@/components/feature-gate"
 import {
     CalendarCheck, CalendarDays, Clock, Plus, Copy, Check,
     Eye, Trash2, ToggleLeft,
@@ -137,6 +138,10 @@ export default function BookingDashboard() {
     }
 
     return (
+        <FeatureGate
+            feature="agendamiento"
+            description="Crea calendarios de citas, comparte links de agenda y gestiona todas tus reservas en un solo lugar."
+        >
         <div className="flex flex-col gap-8 pb-20">
             {/* Header */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -451,5 +456,6 @@ export default function BookingDashboard() {
                 </div>
             )}
         </div>
+        </FeatureGate>
     )
 }

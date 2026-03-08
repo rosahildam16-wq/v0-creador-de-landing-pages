@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
+import { FeatureGate } from "@/components/feature-gate"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -378,12 +379,17 @@ function IntegrationsContent() {
 
 export default function MemberIntegrationsPage() {
     return (
-        <Suspense fallback={
-            <div className="flex items-center justify-center py-20">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </div>
-        }>
-            <IntegrationsContent />
-        </Suspense>
+        <FeatureGate
+            feature="integraciones"
+            description="Conecta Google Calendar, Zoom y WhatsApp para automatizar tus citas y recordatorios de clientes."
+        >
+            <Suspense fallback={
+                <div className="flex items-center justify-center py-20">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+            }>
+                <IntegrationsContent />
+            </Suspense>
+        </FeatureGate>
     )
 }

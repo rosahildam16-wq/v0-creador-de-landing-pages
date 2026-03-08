@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
+import { FeatureGate } from "@/components/feature-gate"
 import {
     Globe,
     Copy,
@@ -252,6 +253,10 @@ export default function SocialCenterEditor() {
     )
 
     return (
+        <FeatureGate
+            feature="socialCenter"
+            description="Tu tarjeta de presentación digital premium con links, redes sociales y tu identidad de marca personalizada."
+        >
         <div className="flex flex-col h-[calc(100vh-100px)] animate-in fade-in duration-500 overflow-hidden">
             {/* Header */}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-6 border-b border-white/5">
@@ -703,5 +708,6 @@ export default function SocialCenterEditor() {
                 }
             `}</style>
         </div>
+        </FeatureGate>
     )
 }

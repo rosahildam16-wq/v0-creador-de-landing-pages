@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import Link from "next/link"
 import useSWR from "swr"
 import { useState } from "react"
+import { FeatureGate } from "@/components/feature-gate"
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -54,6 +55,10 @@ export default function MiEquipoPage() {
   }
 
   return (
+    <FeatureGate
+      feature="miEquipo"
+      description="Gestiona tus socios directos, monitorea el crecimiento de tu red y ve el progreso de tu equipo."
+    >
     <div className="flex flex-col gap-6 pb-20 md:pb-6">
       <header>
         <h1 className="text-2xl font-bold tracking-tight">Mi Equipo</h1>
@@ -274,5 +279,6 @@ export default function MiEquipoPage() {
         </div>
       </div>
     </div>
+    </FeatureGate>
   )
 }

@@ -5,6 +5,7 @@ import { getLeaderCommunity } from "@/lib/communities-data"
 import { logAuditEvent } from "@/lib/server/audit"
 import { isAdminRole } from "@/lib/server/admin-guard"
 import { bootstrapSuperAdmin } from "@/lib/server/bootstrap-admin"
+import { normalizePlanCode } from "@/lib/plans"
 
 export async function POST(req: NextRequest) {
     try {
@@ -51,6 +52,7 @@ export async function POST(req: NextRequest) {
             const teamMember = TEAM_MEMBERS.find((m) => m.email.toLowerCase() === normalizedEmail)
             if (teamMember && password === MEMBER_DEFAULT_PASSWORD) {
                 const leaderComm = getLeaderCommunity(teamMember.email)
+                const planCode = normalizePlanCode(teamMember.planCode || "27")
                 userData = {
                     email: teamMember.email,
                     name: teamMember.nombre,
@@ -59,6 +61,7 @@ export async function POST(req: NextRequest) {
                     username: teamMember.username || teamMember.id,
                     communityId: leaderComm?.id || "skalia-vip",
                     hasCommunity: true,
+                    planCode,
                 }
             }
         }
@@ -83,6 +86,7 @@ export async function POST(req: NextRequest) {
                     .limit(1)
                     .maybeSingle()
 
+                const rawPlanId = sub?.plan_id || "basico"
                 userData = {
                     email: member.email,
                     name: member.name,
@@ -91,7 +95,8 @@ export async function POST(req: NextRequest) {
                     memberId: member.member_id,
                     communityId: member.community_id,
                     hasCommunity: !!member.community_id,
-                    planId: sub?.plan_id || "basico" // Fallback to basico
+                    planId: rawPlanId,
+                    planCode: normalizePlanCode(rawPlanId),
                 }
             }
         }

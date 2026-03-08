@@ -2,6 +2,7 @@ import { getSession, createSession } from "@/lib/auth/session"
 import { NextResponse } from "next/server"
 import { bootstrapSuperAdmin } from "@/lib/server/bootstrap-admin"
 import { TEAM_MEMBERS } from "@/lib/team-data"
+import { normalizePlanCode } from "@/lib/plans"
 
 export async function GET() {
     try {
@@ -16,12 +17,25 @@ export async function GET() {
         const userId = (user.memberId as string | undefined) || email
         if (email) void bootstrapSuperAdmin(email, userId)
 
-        // Patch stale sessions: static team members always have hasCommunity=true
-        const isTeamMember = TEAM_MEMBERS.some(
+        // Patch stale sessions: sync static team member data (hasCommunity, planCode)
+        const teamMember = TEAM_MEMBERS.find(
             (m) => m.email.toLowerCase() === email || m.id === (user.memberId as string | undefined)
         )
-        if (isTeamMember && !user.hasCommunity) {
-            const patchedUser = { ...user, hasCommunity: true }
+        const needsPlanCodePatch = !user.planCode && teamMember?.planCode
+        const needsHasCommunityPatch = teamMember && !user.hasCommunity
+        if (needsPlanCodePatch || needsHasCommunityPatch) {
+            const patchedUser = {
+                ...user,
+                hasCommunity: teamMember ? true : user.hasCommunity,
+                planCode: normalizePlanCode((teamMember?.planCode ?? user.planId) as string | undefined),
+            }
+            void createSession(patchedUser)
+            return NextResponse.json({ authenticated: true, user: patchedUser })
+        }
+
+        // Patch: ensure planCode is always present in session
+        if (!user.planCode && user.planId) {
+            const patchedUser = { ...user, planCode: normalizePlanCode(user.planId as string) }
             void createSession(patchedUser)
             return NextResponse.json({ authenticated: true, user: patchedUser })
         }
