@@ -18,7 +18,10 @@ const MEDAL_COLORS: Record<number, string> = {
 }
 
 export function ChallengeLeaderboard({ challenge, currentMemberId, limit = 10 }: ChallengeLeaderboardProps) {
-  const ranking = getRanking(challenge).slice(0, limit)
+  // Only show participants that have actually contributed (valor > 0)
+  const ranking = getRanking(challenge).filter((r) => r.valor > 0).slice(0, limit)
+
+  if (ranking.length === 0) return null
 
   return (
     <div className="glass-card rounded-xl p-5">

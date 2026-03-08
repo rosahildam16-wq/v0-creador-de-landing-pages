@@ -135,8 +135,7 @@ export default function MemberComunidadPage() {
 
   const QUALIFYING_PLANS = ["plan_47", "plan_97", "plan_300", "pro", "elite"]
   const canCreate =
-    user?.memberId === "sensei" ||
-    user?.memberId === "super-admin" ||
+    user?.role === "leader" ||
     user?.role === "super_admin" ||
     QUALIFYING_PLANS.includes(subscription?.plan_id || "")
 

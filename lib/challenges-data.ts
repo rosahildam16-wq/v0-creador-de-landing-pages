@@ -31,22 +31,8 @@ export const METRICA_LABELS: Record<Challenge["metrica"], string> = {
   afiliados: "Afiliados registrados",
 }
 
-export const DEFAULT_CHALLENGES: Challenge[] = [
-  {
-    id: "top-prospectador-feb",
-    titulo: "TOP PROSPECTADOR",
-    tipo: "cantidad",
-    metrica: "leads",
-    fecha_inicio: "2026-02-07",
-    fecha_fin: "2026-02-28",
-    activo: true,
-    premios: [
-      { puesto: 1, monto: 50, moneda: "USD" },
-      { puesto: 2, monto: 25, moneda: "USD" },
-      { puesto: 3, monto: 15, moneda: "USD" },
-    ],
-  },
-]
+// No active contests by default — community creator activates real contests
+export const DEFAULT_CHALLENGES: Challenge[] = []
 
 export interface RankedMember {
   member: TeamMember

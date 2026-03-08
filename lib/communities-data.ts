@@ -32,7 +32,7 @@ const DEFAULT_COMMUNITIES: Community[] = [
   {
     id: "skalia-vip",
     nombre: "Skalia VIP",
-    codigo: "DIAMANTECELION",
+    codigo: "DIAMANTECELIONVIP",
     embudos_default: ["franquicia-reset"],
     color: "#8b5cf6",
     descripcion: "Comunidad exclusiva del equipo Skalia. Acceso completo a herramientas premium y embudos especializados.",
@@ -44,6 +44,7 @@ const DEFAULT_COMMUNITIES: Community[] = [
     createdAt: "2026-01-15T00:00:00Z",
   },
   {
+    // Fallback for users without a community — no invite code
     id: "general",
     nombre: "General",
     codigo: null,
