@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
 const MAX_SIZE_BYTES = 2 * 1024 * 1024 // 2 MB
-const VALID_BUCKETS = ["avatars", "social-center-assets", "calendar-assets"]
+const VALID_BUCKETS = ["avatars", "social-center-assets", "calendar-assets", "course-assets"]
 
 export async function POST(req: NextRequest) {
     try {

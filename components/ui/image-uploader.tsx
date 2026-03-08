@@ -8,7 +8,7 @@ type UploadState = "idle" | "compressing" | "uploading" | "success" | "error"
 interface ImageUploaderProps {
     value: string
     onChange: (url: string) => void
-    bucket: "avatars" | "social-center-assets" | "calendar-assets"
+    bucket: "avatars" | "social-center-assets" | "calendar-assets" | "course-assets"
     pathPrefix?: string
     /** Shape: "circle" | "square" (default: "square") */
     shape?: "circle" | "square"
