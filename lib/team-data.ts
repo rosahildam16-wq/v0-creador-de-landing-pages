@@ -34,9 +34,9 @@ export interface TeamMember {
 export const TEAM_MEMBERS: TeamMember[] = [
   {
     id: "sensei",
-    nombre: "Sensei",
-    email: "sensei@correo.com",
-    avatar_initials: "SE",
+    nombre: "Jorge León",
+    email: "jlmarketing9011@gmail.com",
+    avatar_initials: "JL",
     publicidad_activa: true,
     fecha_renovacion: "22 ene 2026",
     metricas: { leads: 0, cerrados: 0, afiliados: 0 },

@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
             const { data: member } = await supabase
                 .from("community_members")
                 .select("member_id, name, username, community_id, role, email")
-                .or(`email.eq."${normalizedEmail}",username.eq."${normalizedEmail}"`)
+                .or(`email.eq.${normalizedEmail},username.eq.${normalizedEmail}`)
                 .maybeSingle()
 
             if (member) {
