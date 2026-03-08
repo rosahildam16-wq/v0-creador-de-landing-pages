@@ -25,12 +25,14 @@ export async function createSession(user: any) {
     const session = await encrypt({ user, expires })
 
     const cookieStore = await cookies()
+    const isProduction = process.env.NODE_ENV === "production"
     cookieStore.set("mf_session", session, {
         expires,
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: isProduction,
         sameSite: "lax",
-        path: "/"
+        path: "/",
+        ...(isProduction && { domain: ".magicfunnel.app" })
     })
 }
 
