@@ -74,7 +74,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // 2. Shield Check: Verify with server (the real truth)
       try {
-        const res = await fetch("/api/auth/me")
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000)
+        const res = await fetch("/api/auth/me", { signal: controller.signal }).finally(() => clearTimeout(timeoutId))
         if (res.ok) {
           const data = await res.json()
           if (data.authenticated && data.user) {
