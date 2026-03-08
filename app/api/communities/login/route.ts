@@ -6,16 +6,43 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { email, password } = body as { email: string; password: string }
 
+    if (!email || !password) {
+      return NextResponse.json({ success: false }, { status: 401 })
+    }
+
     const normalizedEmail = email.toLowerCase().trim()
 
     const supabase = await createClient()
 
-    const { data: member } = await supabase
+    // Use safe .eq() calls to avoid SQL injection via string interpolation in .or()
+    // Step 1: Find member by email, then by username if not found
+    let memberQuery = await supabase
       .from("community_members")
-      .select("member_id, name, username, community_id, role")
-      .or(`email.eq.${normalizedEmail},username.eq.${normalizedEmail}`)
-      .or(`password_hash.eq.${password},password_plain.eq.${password}`)
+      .select("member_id, name, username, community_id, role, password_hash, password_plain")
+      .eq("email", normalizedEmail)
       .maybeSingle()
+
+    let memberRow = memberQuery.data
+
+    if (!memberRow) {
+      const byUsername = await supabase
+        .from("community_members")
+        .select("member_id, name, username, community_id, role, password_hash, password_plain")
+        .eq("username", normalizedEmail)
+        .maybeSingle()
+      memberRow = byUsername.data
+    }
+
+    // Step 2: Validate password in application code (not in DB filter)
+    if (
+      !memberRow ||
+      (memberRow.password_hash !== password && memberRow.password_plain !== password)
+    ) {
+      return NextResponse.json({ success: false }, { status: 401 })
+    }
+
+    // Strip password fields before using member data
+    const { password_hash: _ph, password_plain: _pp, ...member } = memberRow
 
     if (!member) {
       return NextResponse.json({ success: false }, { status: 401 })
