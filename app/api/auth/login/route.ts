@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
                 memberId,
                 username: memberId,
                 communityId: leaderComm?.id,
+                hasCommunity: true,
             }
         }
 
@@ -55,6 +56,7 @@ export async function POST(req: NextRequest) {
                     role: "member",
                     memberId: teamMember.id,
                     username: teamMember.id,
+                    hasCommunity: true,
                 }
             }
         }

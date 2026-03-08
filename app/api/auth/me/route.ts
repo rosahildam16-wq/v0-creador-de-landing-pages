@@ -1,6 +1,7 @@
-import { getSession } from "@/lib/auth/session"
+import { getSession, createSession } from "@/lib/auth/session"
 import { NextResponse } from "next/server"
 import { bootstrapSuperAdmin } from "@/lib/server/bootstrap-admin"
+import { TEAM_MEMBERS } from "@/lib/team-data"
 
 export async function GET() {
     try {
@@ -14,6 +15,16 @@ export async function GET() {
         const email = (user.email as string | undefined) ?? ""
         const userId = (user.memberId as string | undefined) || email
         if (email) void bootstrapSuperAdmin(email, userId)
+
+        // Patch stale sessions: static team members always have hasCommunity=true
+        const isTeamMember = TEAM_MEMBERS.some(
+            (m) => m.email.toLowerCase() === email || m.id === (user.memberId as string | undefined)
+        )
+        if (isTeamMember && !user.hasCommunity) {
+            const patchedUser = { ...user, hasCommunity: true }
+            void createSession(patchedUser)
+            return NextResponse.json({ authenticated: true, user: patchedUser })
+        }
 
         return NextResponse.json({ authenticated: true, user: session.user })
     } catch {
