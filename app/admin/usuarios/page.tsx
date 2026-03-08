@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth-context"
 import {
   Search, Eye, EyeOff, Copy, Check, KeyRound, Shield,
   Users, RefreshCw, ChevronDown, Trash2, Plus, X,
-  Snowflake, Flame, Lock, UserX, AlertCircle, Loader2,
+  Snowflake, Flame, Lock, UserX, AlertCircle, Loader2, ArrowUpDown,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogFooter, DialogDescription,
 } from "@/components/ui/dialog"
+import { PLAN_OPTIONS, normalizePlanCode, type PlanCode } from "@/lib/plans"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,6 +33,7 @@ interface AdminUser {
   frozen_at?: string | null
   trialEndsAt: string | null
   createdAt: string
+  planCode: string
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -40,6 +42,15 @@ function roleLabel(role: string) {
   if (role === "super_admin") return { text: "Super Admin", cls: "bg-amber-500/10 text-amber-500 border-amber-500/20" }
   if (role === "admin")       return { text: "Admin",       cls: "bg-purple-500/10 text-purple-400 border-purple-500/20" }
   return                             { text: "Miembro",     cls: "bg-primary/10 text-primary border-primary/20" }
+}
+
+function planLabel(code: string) {
+  switch (normalizePlanCode(code)) {
+    case "300": return { text: "Enterprise $300", cls: "bg-amber-500/10 text-amber-400 border-amber-500/20" }
+    case "97":  return { text: "Pro $97",         cls: "bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/20" }
+    case "47":  return { text: "Growth $47",      cls: "bg-violet-500/10 text-violet-400 border-violet-500/20" }
+    default:    return { text: "Starter $27",     cls: "bg-slate-500/10 text-slate-400 border-slate-500/20" }
+  }
 }
 
 const trialActive = (d: string | null) => !!d && new Date(d) > new Date()
@@ -67,6 +78,11 @@ export default function AdminUsuariosPage() {
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; user: AdminUser | null; loading: boolean }>({
     open: false, user: null, loading: false,
   })
+
+  // Plan upgrade dialog
+  const [planDialog, setPlanDialog] = useState<{
+    open: boolean; user: AdminUser | null; selectedPlan: PlanCode; loading: boolean
+  }>({ open: false, user: null, selectedPlan: "27", loading: false })
 
   // Add user modal
   const [addOpen, setAddOpen]   = useState(false)
@@ -161,6 +177,40 @@ export default function AdminUsuariosPage() {
       if (res.ok) { toast.success(`${target.name} validado en Skalia VIP`); fetchUsers() }
       else { const d = await res.json(); toast.error(d.error ?? "Error") }
     } catch { toast.error("Error de conexión") }
+  }
+
+  // ── Plan upgrade ─────────────────────────────────────────────────────────
+  function openPlanDialog(target: AdminUser) {
+    const currentPlan = normalizePlanCode(target.planCode) as PlanCode
+    setPlanDialog({ open: true, user: target, selectedPlan: currentPlan, loading: false })
+  }
+
+  async function handlePlanUpgrade() {
+    const { user: target, selectedPlan } = planDialog
+    if (!target) return
+
+    const currentPlan = normalizePlanCode(target.planCode)
+    if (selectedPlan === currentPlan) {
+      toast.info("El usuario ya tiene ese plan"); return
+    }
+
+    setPlanDialog((d) => ({ ...d, loading: true }))
+    try {
+      const res = await fetch("/api/admin/users/plan", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: target.id, planCode: selectedPlan }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success(data.message ?? `Plan actualizado a ${selectedPlan}`)
+        setPlanDialog({ open: false, user: null, selectedPlan: "27", loading: false })
+        fetchUsers()
+      } else {
+        toast.error(data.error ?? "Error al actualizar plan")
+      }
+    } catch { toast.error("Error de conexión") }
+    finally { setPlanDialog((d) => ({ ...d, loading: false })) }
   }
 
   // ── Derived ──────────────────────────────────────────────────────────────
@@ -278,6 +328,7 @@ export default function AdminUsuariosPage() {
                   {isSuperAdmin && (
                     <th className="px-4 py-3 font-medium text-muted-foreground">Contraseña</th>
                   )}
+                  <th className="px-4 py-3 font-medium text-muted-foreground">Plan</th>
                   <th className="px-4 py-3 font-medium text-muted-foreground">Rol</th>
                   <th className="px-4 py-3 font-medium text-muted-foreground">Estado</th>
                   <th className="px-4 py-3 font-medium text-muted-foreground">
@@ -295,6 +346,7 @@ export default function AdminUsuariosPage() {
                 {filtered.map((u) => {
                   const isFrozen  = !!u.frozen_at
                   const rl        = roleLabel(u.role)
+                  const pl        = planLabel(u.planCode)
                   return (
                     <tr
                       key={u.id}
@@ -339,6 +391,24 @@ export default function AdminUsuariosPage() {
                           </div>
                         </td>
                       )}
+
+                      {/* Plan */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${pl.cls}`}>
+                            {pl.text}
+                          </span>
+                          {isSuperAdmin && (
+                            <button
+                              onClick={() => openPlanDialog(u)}
+                              className="rounded-md p-1 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                              title="Cambiar plan"
+                            >
+                              <ArrowUpDown className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
 
                       {/* Role */}
                       <td className="px-4 py-3">
@@ -453,6 +523,72 @@ export default function AdminUsuariosPage() {
           </div>
         )}
       </div>
+
+      {/* ── Plan Upgrade Dialog ────────────────────────────────────────────── */}
+      <Dialog
+        open={planDialog.open}
+        onOpenChange={(o) => !planDialog.loading && setPlanDialog((d) => ({ ...d, open: o }))}
+      >
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle className="text-primary">Cambiar plan</DialogTitle>
+            {planDialog.user && (
+              <DialogDescription>
+                <strong>{planDialog.user.name}</strong> — {planDialog.user.email}
+                <br />
+                <span className="text-xs">Plan actual: <strong>{planLabel(planDialog.user.planCode).text}</strong></span>
+              </DialogDescription>
+            )}
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            <Label>Selecciona el nuevo plan</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {PLAN_OPTIONS.map((opt) => (
+                <button
+                  key={opt.code}
+                  onClick={() => setPlanDialog((d) => ({ ...d, selectedPlan: opt.code }))}
+                  className={`rounded-xl border px-4 py-3 text-left transition-all ${
+                    planDialog.selectedPlan === opt.code
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border/40 bg-background/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                  }`}
+                >
+                  <p className="text-sm font-bold">${opt.price}</p>
+                  <p className="text-xs">{opt.label.split("—")[0].trim()}</p>
+                </button>
+              ))}
+            </div>
+
+            {planDialog.user && planDialog.selectedPlan !== normalizePlanCode(planDialog.user.planCode) && (
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs text-primary">
+                El plan se cambiará de <strong>{planLabel(planDialog.user.planCode).text}</strong> a{" "}
+                <strong>{planLabel(planDialog.selectedPlan).text}</strong>.
+                Los permisos se actualizarán en el próximo inicio de página del usuario.
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setPlanDialog({ open: false, user: null, selectedPlan: "27", loading: false })}
+              disabled={planDialog.loading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handlePlanUpgrade}
+              disabled={planDialog.loading || (planDialog.user ? planDialog.selectedPlan === normalizePlanCode(planDialog.user.planCode) : true)}
+            >
+              {planDialog.loading
+                ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Guardando...</>
+                : "Guardar cambios"
+              }
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Freeze/Unfreeze Dialog ─────────────────────────────────────────── */}
       <Dialog
@@ -592,7 +728,7 @@ export default function AdminUsuariosPage() {
       <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
         <p className="text-xs text-amber-500/80">
           <strong>Compliance:</strong> El campo Sponsor es permanente e inmutable (locked by compliance). Las contraseñas solo son visibles para super_admin.
-          Todas las acciones de freeze/unfreeze quedan registradas en el log de auditoría.
+          Todas las acciones de freeze/unfreeze y cambio de plan quedan registradas en el log de auditoría.
         </p>
       </div>
     </div>

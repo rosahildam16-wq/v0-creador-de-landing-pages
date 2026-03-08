@@ -10,8 +10,8 @@ import { createAdminClient } from "@/lib/supabase/admin"
 //   DELETE → super_admin only
 
 // Fields excluded for support_admin (no raw passwords)
-const SUPPORT_SAFE_FIELDS = "id, member_id, name, username, email, role, community_id, sponsor_username, activo, trial_ends_at, created_at"
-const FULL_FIELDS          = "id, member_id, name, username, email, password_plain, password_hash, role, community_id, sponsor_username, activo, trial_ends_at, created_at"
+const SUPPORT_SAFE_FIELDS = "id, member_id, name, username, email, role, community_id, sponsor_username, activo, trial_ends_at, created_at, plan_code"
+const FULL_FIELDS          = "id, member_id, name, username, email, password_plain, password_hash, role, community_id, sponsor_username, activo, trial_ends_at, created_at, plan_code"
 
 // PATCH operations allowed per role
 const SUPPORT_ALLOWED_UPDATES = new Set(["activo", "trial_ends_at"])
@@ -51,6 +51,7 @@ export async function GET(req: NextRequest) {
         activo:          u.activo,
         trialEndsAt:     u.trial_ends_at,
         createdAt:       u.created_at,
+        planCode:        (u.plan_code as string | null) ?? "27",
       }
       if (guard.user.role !== "support_admin") {
         return { ...base, password: (u.password_plain || u.password_hash || "N/A") as string }

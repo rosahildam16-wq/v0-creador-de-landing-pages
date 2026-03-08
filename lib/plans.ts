@@ -1,4 +1,4 @@
-export type PlanCode = "27" | "47" | "97"
+export type PlanCode = "27" | "47" | "97" | "300"
 
 export interface PlanFeatures {
   // Dashboard
@@ -51,6 +51,13 @@ export interface PlanConfig {
   color: string
   features: PlanFeatures
 }
+
+export const PLAN_OPTIONS: Array<{ code: PlanCode; label: string; price: number }> = [
+  { code: "27",  label: "Starter — $27",       price: 27  },
+  { code: "47",  label: "Growth — $47",         price: 47  },
+  { code: "97",  label: "Pro — $97",            price: 97  },
+  { code: "300", label: "Enterprise — $300",    price: 300 },
+]
 
 export const PLANS: Record<PlanCode, PlanConfig> = {
   "27": {
@@ -155,6 +162,40 @@ export const PLANS: Record<PlanCode, PlanConfig> = {
       recursos: true,
     },
   },
+  "300": {
+    code: "300",
+    name: "Enterprise",
+    price: 300,
+    color: "#f59e0b",
+    features: {
+      dashboard: true,
+      leads: true,
+      leadsLimit: -1,
+      pipeline: true,
+      pipelineStagesLimit: -1,
+      builder: true,
+      buildersLimit: -1,
+      forms: true,
+      formsLimit: -1,
+      agendamiento: true,
+      calendariosLimit: -1,
+      miEquipo: true,
+      teamLimit: -1,
+      integraciones: true,
+      googleCalendar: true,
+      zoom: true,
+      whatsapp: true,
+      socialCenter: true,
+      metaAds: true,
+      mailing: true,
+      mailingLimit: -1,
+      comisiones: true,
+      academia: true,
+      retos: true,
+      comunidad: true,
+      recursos: true,
+    },
+  },
 }
 
 /**
@@ -164,8 +205,9 @@ export const PLANS: Record<PlanCode, PlanConfig> = {
 export function normalizePlanCode(planId?: string | null): PlanCode {
   if (!planId) return "27"
   const lower = planId.toLowerCase()
-  if (lower === "47" || lower === "pro" || lower === "plan_47") return "47"
+  if (lower === "300" || lower === "enterprise" || lower === "plan_300") return "300"
   if (lower === "97" || lower === "elite" || lower === "plan_97") return "97"
+  if (lower === "47" || lower === "pro" || lower === "plan_47") return "47"
   if (lower === "27" || lower === "basico" || lower === "plan_27") return "27"
   return "27"
 }

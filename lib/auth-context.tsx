@@ -130,6 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             communityId: data.communityId,
             hasCommunity: data.hasCommunity ?? !!data.communityId,
             planId: data.planId,
+            planCode: data.planCode,
           }
           setUser(userData)
           setIsAuthenticated(true)

@@ -74,22 +74,25 @@ export async function POST(req: NextRequest) {
             const supabase = await createClient()
             const { data: member } = await supabase
                 .from("community_members")
-                .select("member_id, name, username, community_id, role, email")
+                .select("member_id, name, username, community_id, role, email, plan_code")
                 .or(`email.eq.${normalizedEmail},username.eq.${normalizedEmail}`)
                 .maybeSingle()
 
             if (member) {
-                // Fetch subscription
-                const { data: sub } = await supabase
-                    .from("subscriptions")
-                    .select("plan_id")
-                    .eq("user_email", member.email.toLowerCase())
-                    .in("status", ["trial", "active"])
-                    .order("created_at", { ascending: false })
-                    .limit(1)
-                    .maybeSingle()
-
-                const rawPlanId = sub?.plan_id || "basico"
+                // Use plan_code from community_members if set (admin override);
+                // otherwise fall back to subscriptions table.
+                let rawPlanId = member.plan_code || null
+                if (!rawPlanId) {
+                    const { data: sub } = await supabase
+                        .from("subscriptions")
+                        .select("plan_id")
+                        .eq("user_email", member.email.toLowerCase())
+                        .in("status", ["trial", "active"])
+                        .order("created_at", { ascending: false })
+                        .limit(1)
+                        .maybeSingle()
+                    rawPlanId = sub?.plan_id || "basico"
+                }
                 userData = {
                     email: member.email,
                     name: member.name,
