@@ -1,195 +1,172 @@
 import { NextRequest, NextResponse } from "next/server"
-import { Pool } from "pg"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 /**
- * Hardcoded pixel configs — guaranteed fallback.
- * These work even if the database is down or PostgREST cache is broken.
+ * pixel_configs — per-member, per-funnel pixel configuration table.
+ *
+ * Schema: (embudo_id TEXT, member_id TEXT, pixel_id TEXT, pixel_token TEXT, enabled BOOL)
+ * Primary key: (embudo_id, member_id)
+ *
+ * Priority when loading:
+ *   1. DB row for (embudo_id, member_id)      ← member's own pixel
+ *   2. DB row for (embudo_id, "admin")         ← platform admin pixel for that funnel
+ *   3. DB row for ("global", "admin")          ← global admin pixel
+ *   4. Env vars                                ← last resort fallback
  */
-const HARDCODED_CONFIGS: Record<string, { pixel_id: string; pixel_token: string }> = {
-    "franquicia-reset": {
-        pixel_id: "1300015961977903",
-        pixel_token: "EAAPeZCPDoXF4BQwuQ0skpqobZBxMXFnKIaxbLmevHZAK0eDxw5XT2IB9cCE3323tjNffgaEp4mssKRkpZApUx0P9w0cC79AskpHaqTvWBtgo2Qwsuh3XEPN5htCcuYPhkm9PsbY4S5nNmhkOcHDNVJ1qoryDMPCgIrxzg5oTB4ZCIDzqO74N5Hl7ZBoGepmQZDZD",
-    },
-}
 
-/** Create a connection pool using existing Vercel Postgres env vars */
-function getPool(): Pool | null {
-    const connectionString =
-        process.env.POSTGRES_URL_NON_POOLING ||
-        process.env.POSTGRES_PRISMA_URL ||
-        process.env.DATABASE_URL ||
-        ""
-
-    if (!connectionString) return null
-
-    try {
-        return new Pool({
-            connectionString,
-            max: 1,
-            ssl: { rejectUnauthorized: false },
-        })
-    } catch {
-        return null
-    }
-}
-
-/** Try database query, return null on any failure */
-async function dbQuery(sql: string, params: any[] = []): Promise<any[] | null> {
-    const pool = getPool()
-    if (!pool) return null
-
-    try {
-        const { rows } = await pool.query(sql, params)
-        return rows
-    } catch (err: any) {
-        console.error("DB query error:", err.message)
-        return null
-    } finally {
-        try { await pool.end() } catch { /* noop */ }
-    }
-}
-
-/** Get hardcoded config for a funnel */
-function getHardcodedConfig(embudoId: string, memberId: string) {
-    const config = HARDCODED_CONFIGS[embudoId]
-    if (config) {
-        return {
-            pixel_id: config.pixel_id,
-            pixel_token: config.pixel_token,
-            enabled: true,
-            embudo_id: embudoId,
-            member_id: memberId,
-            source: "hardcoded",
-        }
-    }
-    return null
-}
-
-/** Env-based fallback response */
-function envFallback(embudoId: string) {
-    return {
-        pixel_id: process.env.META_PIXEL_ID || process.env.NEXT_PUBLIC_META_PIXEL_ID || "",
-        enabled: !!(process.env.META_PIXEL_ID || process.env.NEXT_PUBLIC_META_PIXEL_ID),
-        embudo_id: embudoId,
-    }
+function db() {
+  const client = createAdminClient()
+  if (!client) throw new Error("DB not configured")
+  return client
 }
 
 /**
  * GET /api/pixel/config?embudo_id=franquicia-reset&member_id=username
- * Priority: DB (member) → DB (admin) → DB (global) → Hardcoded → Env
  */
 export async function GET(req: NextRequest) {
-    const embudoId = req.nextUrl.searchParams.get("embudo_id") || "global"
-    const memberId = req.nextUrl.searchParams.get("member_id") || "admin"
+  const embudoId = req.nextUrl.searchParams.get("embudo_id") || "global"
+  const memberId = req.nextUrl.searchParams.get("member_id") || "admin"
 
-    // 1. Try database (member specific)
-    const memberRows = await dbQuery(
-        `SELECT * FROM pixel_configs WHERE embudo_id = $1 AND member_id = $2 AND enabled = true LIMIT 1`,
-        [embudoId, memberId]
-    )
-    if (memberRows?.[0]) {
-        return NextResponse.json({
-            pixel_id: memberRows[0].pixel_id,
-            pixel_token: memberRows[0].pixel_token || "",
-            enabled: true,
-            embudo_id: memberRows[0].embudo_id,
-            member_id: memberRows[0].member_id,
-        })
+  try {
+    const supabase = db()
+
+    // 1. Member's own pixel for this funnel
+    const { data: memberRow } = await supabase
+      .from("pixel_configs")
+      .select("*")
+      .eq("embudo_id", embudoId)
+      .eq("member_id", memberId)
+      .eq("enabled", true)
+      .maybeSingle()
+
+    if (memberRow) {
+      return NextResponse.json({
+        pixel_id: memberRow.pixel_id,
+        pixel_token: memberRow.pixel_token || "",
+        enabled: true,
+        embudo_id: memberRow.embudo_id,
+        member_id: memberRow.member_id,
+      })
     }
 
-    // 2. Try database (admin fallback)
+    // 2. Admin pixel for this funnel (fallback)
     if (memberId !== "admin") {
-        const adminRows = await dbQuery(
-            `SELECT * FROM pixel_configs WHERE embudo_id = $1 AND member_id = 'admin' AND enabled = true LIMIT 1`,
-            [embudoId]
-        )
-        if (adminRows?.[0]) {
-            return NextResponse.json({
-                pixel_id: adminRows[0].pixel_id,
-                pixel_token: adminRows[0].pixel_token || "",
-                enabled: true,
-                embudo_id: embudoId,
-                member_id: "admin",
-            })
-        }
+      const { data: adminRow } = await supabase
+        .from("pixel_configs")
+        .select("*")
+        .eq("embudo_id", embudoId)
+        .eq("member_id", "admin")
+        .eq("enabled", true)
+        .maybeSingle()
+
+      if (adminRow) {
+        return NextResponse.json({
+          pixel_id: adminRow.pixel_id,
+          pixel_token: adminRow.pixel_token || "",
+          enabled: true,
+          embudo_id: embudoId,
+          member_id: "admin",
+        })
+      }
     }
 
-    // 3. Try database (global)
+    // 3. Global admin pixel (last DB fallback)
     if (embudoId !== "global") {
-        const globalRows = await dbQuery(
-            `SELECT * FROM pixel_configs WHERE embudo_id = 'global' AND member_id = 'admin' AND enabled = true LIMIT 1`
-        )
-        if (globalRows?.[0]) {
-            return NextResponse.json({
-                pixel_id: globalRows[0].pixel_id,
-                pixel_token: globalRows[0].pixel_token || "",
-                enabled: true,
-                embudo_id: "global",
-            })
-        }
-    }
+      const { data: globalRow } = await supabase
+        .from("pixel_configs")
+        .select("*")
+        .eq("embudo_id", "global")
+        .eq("member_id", "admin")
+        .eq("enabled", true)
+        .maybeSingle()
 
-    // 4. Hardcoded fallback (guaranteed to work)
-    const hardcoded = getHardcodedConfig(embudoId, memberId)
-    if (hardcoded) {
-        return NextResponse.json(hardcoded)
+      if (globalRow) {
+        return NextResponse.json({
+          pixel_id: globalRow.pixel_id,
+          pixel_token: globalRow.pixel_token || "",
+          enabled: true,
+          embudo_id: "global",
+          member_id: "admin",
+        })
+      }
     }
+  } catch {
+    // DB unavailable — fall through to env fallback
+  }
 
-    // 5. Env fallback
-    return NextResponse.json(envFallback(embudoId))
+  // 4. Env fallback
+  const envPixelId = process.env.META_PIXEL_ID || process.env.NEXT_PUBLIC_META_PIXEL_ID || ""
+  return NextResponse.json({
+    pixel_id: envPixelId,
+    pixel_token: "",
+    enabled: !!envPixelId,
+    embudo_id: embudoId,
+    member_id: memberId,
+  })
 }
 
 /**
  * POST /api/pixel/config
- * Save pixel config — tries DB first, falls back to success with hardcoded.
+ * Save (upsert) a pixel config for a member + funnel combination.
  */
 export async function POST(req: NextRequest) {
-    try {
-        const body = await req.json()
-        const { embudo_id = "global", member_id = "admin", pixel_id, pixel_token, enabled = true } = body
+  try {
+    const body = await req.json()
+    const { embudo_id = "global", member_id = "admin", pixel_id, pixel_token, enabled = true } = body
 
-        if (!pixel_id) return NextResponse.json({ error: "pixel_id is required" }, { status: 400 })
-
-        // Try database save
-        const rows = await dbQuery(
-            `INSERT INTO pixel_configs (embudo_id, member_id, pixel_id, pixel_token, enabled, updated_at)
-             VALUES ($1, $2, $3, $4, $5, now())
-             ON CONFLICT (embudo_id, member_id) DO UPDATE SET
-                pixel_id = EXCLUDED.pixel_id,
-                pixel_token = EXCLUDED.pixel_token,
-                enabled = EXCLUDED.enabled,
-                updated_at = now()
-             RETURNING *`,
-            [embudo_id, member_id, pixel_id, pixel_token || "", enabled]
-        )
-
-        if (rows?.[0]) {
-            return NextResponse.json({ success: true, data: rows[0] })
-        }
-
-        // If DB fails but it's a known hardcoded config, still return success
-        const hardcoded = getHardcodedConfig(embudo_id, member_id)
-        if (hardcoded && hardcoded.pixel_id === pixel_id) {
-            return NextResponse.json({ success: true, data: hardcoded, source: "hardcoded" })
-        }
-
-        return NextResponse.json({
-            error: "No se pudo guardar. La base de datos no está disponible.",
-        }, { status: 500 })
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 })
+    if (!pixel_id?.trim()) {
+      return NextResponse.json({ error: "pixel_id es requerido" }, { status: 400 })
     }
+
+    const supabase = db()
+    const { data, error } = await supabase
+      .from("pixel_configs")
+      .upsert(
+        {
+          embudo_id,
+          member_id,
+          pixel_id: pixel_id.trim(),
+          pixel_token: pixel_token?.trim() || "",
+          enabled,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "embudo_id,member_id" }
+      )
+      .select()
+      .single()
+
+    if (error) throw error
+
+    return NextResponse.json({ success: true, data })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
 }
 
 /**
- * PUT /api/pixel/config
- * List all pixel configs.
+ * DELETE /api/pixel/config?embudo_id=x&member_id=y
+ * Disable (soft-delete) a pixel config.
  */
-export async function PUT(req: NextRequest) {
-    try {
-        const rows = await dbQuery(`SELECT * FROM pixel_configs ORDER BY created_at DESC`)
-        return NextResponse.json({ configs: rows || [] })
-    } catch (err: any) {
-        return NextResponse.json({ configs: [] })
+export async function DELETE(req: NextRequest) {
+  try {
+    const embudoId = req.nextUrl.searchParams.get("embudo_id")
+    const memberId = req.nextUrl.searchParams.get("member_id")
+
+    if (!embudoId || !memberId) {
+      return NextResponse.json({ error: "embudo_id y member_id requeridos" }, { status: 400 })
     }
+
+    const supabase = db()
+    const { error } = await supabase
+      .from("pixel_configs")
+      .update({ enabled: false, updated_at: new Date().toISOString() })
+      .eq("embudo_id", embudoId)
+      .eq("member_id", memberId)
+
+    if (error) throw error
+
+    return NextResponse.json({ success: true })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
 }

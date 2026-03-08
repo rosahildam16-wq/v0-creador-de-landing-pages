@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
-import { LayoutDashboard, Link2, Users, ChevronLeft, ChevronRight, LogOut, GraduationCap, Kanban, Trophy, Sparkles, CreditCard, MessagesSquare, Globe, CalendarCheck, Plug, Archive, Mail, TrendingUp, ClipboardList, Lock } from "lucide-react"
+import { LayoutDashboard, Link2, Users, ChevronLeft, ChevronRight, LogOut, GraduationCap, Kanban, Trophy, Sparkles, CreditCard, MessagesSquare, Globe, CalendarCheck, Plug, Archive, Mail, TrendingUp, ClipboardList, Lock, BarChart3 } from "lucide-react"
 import { useState } from "react"
 import { type PlanFeatures, hasFeature } from "@/lib/plans"
 
@@ -31,6 +31,7 @@ const NAV_ITEMS: Array<{
   { href: "/member/mi-embudo", label: "Mis Embudos", icon: Link2 },
   { href: "/member/integraciones", label: "Integraciones", icon: Plug, feature: "integraciones" },
   { href: "/member/social-center", label: "Social Center", icon: Globe, feature: "socialCenter" },
+  { href: "/member/meta-ads", label: "Meta Ads", icon: BarChart3, feature: "metaAds" },
   { href: "/member/recursos", label: "Librería", icon: Archive },
   { href: "/member/mailing", label: "Mailing", icon: Mail, feature: "mailing" },
   { href: "/member/comisiones", label: "Comisiones", icon: TrendingUp, feature: "comisiones" },

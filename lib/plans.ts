@@ -28,6 +28,8 @@ export interface PlanFeatures {
   whatsapp: boolean
   // Social Center
   socialCenter: boolean
+  // Meta Ads & Pixel tracking
+  metaAds: boolean
   // Mailing
   mailing: boolean
   mailingLimit: number
@@ -75,6 +77,7 @@ export const PLANS: Record<PlanCode, PlanConfig> = {
       zoom: false,
       whatsapp: false,
       socialCenter: false,
+      metaAds: false,
       mailing: false,
       mailingLimit: 0,
       comisiones: false,
@@ -108,6 +111,7 @@ export const PLANS: Record<PlanCode, PlanConfig> = {
       zoom: true,
       whatsapp: true,
       socialCenter: true,
+      metaAds: false,
       mailing: false,
       mailingLimit: 0,
       comisiones: true,
@@ -141,6 +145,7 @@ export const PLANS: Record<PlanCode, PlanConfig> = {
       zoom: true,
       whatsapp: true,
       socialCenter: true,
+      metaAds: true,
       mailing: true,
       mailingLimit: -1,
       comisiones: true,
