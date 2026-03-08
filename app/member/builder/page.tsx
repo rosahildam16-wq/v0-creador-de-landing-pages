@@ -21,15 +21,15 @@ export default function MagicBuilderHub() {
 
     useEffect(() => {
         setMounted(true)
-        setLandings(getLandings())
+        getLandings().then(setLandings)
     }, [])
 
-    const handleDelete = (e: React.MouseEvent, id: string) => {
+    const handleDelete = async (e: React.MouseEvent, id: string) => {
         e.preventDefault()
         e.stopPropagation()
         if (confirm("¿Estás seguro de que quieres eliminar este embudo?")) {
-            deleteLanding(id)
-            setLandings(getLandings())
+            await deleteLanding(id)
+            getLandings().then(setLandings)
         }
     }
 

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { MagicFunnelLogo } from "@/components/magic-funnel-logo"
 import { LoginPremiumBg } from "@/components/login-premium-bg"
 import { useAuth } from "@/lib/auth-context"
-import { Eye, EyeOff, ArrowRight, Sparkles, Bot, TrendingUp, Network, Tag, AtSign, Check, X, UserPlus, Users } from "lucide-react"
+import { Eye, EyeOff, ArrowRight, Sparkles, Bot, TrendingUp, Network, AtSign, Check, X } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -15,9 +15,7 @@ export default function LoginPage() {
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [discountCode, setDiscountCode] = useState("")
   const [sponsorUsername, setSponsorUsername] = useState("")
-  const [showDiscountField, setShowDiscountField] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
@@ -91,7 +89,6 @@ export default function LoginPage() {
     if (finalRef) {
       setMode("register")
       setSponsorUsername(finalRef.toLowerCase())
-      setShowDiscountField(false) // prioritise sponsor
     }
   }, [])
 
@@ -99,8 +96,14 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!authLoading && isAuthenticated && user) {
-      if (user.role === "super_admin") router.replace("/admin")
-      else router.replace("/member")
+      if (user.role === "super_admin") {
+        router.replace("/admin")
+      } else if (user.hasCommunity === false) {
+        // Logged-in but not part of any community → send to commercial onboarding
+        router.replace("/start")
+      } else {
+        router.replace("/member")
+      }
     }
   }, [isAuthenticated, authLoading, user, router])
 
@@ -151,7 +154,7 @@ export default function LoginPage() {
         return
       }
       // Todos se registran como miembros
-      const ok = await register(name, email, password, username, discountCode || undefined, sponsorUsername.trim())
+      const ok = await register(name, email, password, username, undefined, sponsorUsername.trim())
       if (!ok) {
         setError("Este email o usuario ya esta registrado. Intenta iniciar sesion.")
         setIsSubmitting(false)
@@ -505,53 +508,6 @@ export default function LoginPage() {
                       </p>
                     </div>
 
-                    {/* Community code */}
-                    <div>
-                      {!showDiscountField ? (
-                        <button
-                          type="button"
-                          onClick={() => setShowDiscountField(true)}
-                          className="flex items-center gap-1.5 text-xs text-violet-400/50 hover:text-violet-400 transition-colors"
-                        >
-                          <Tag className="w-3 h-3" />
-                          Tengo un codigo de comunidad
-                        </button>
-                      ) : (
-                        <div>
-                          <label htmlFor="login-discount" className="block text-xs font-medium text-violet-200/60 mb-2 ml-0.5">
-                            Codigo de comunidad
-                          </label>
-                          <div className={`relative rounded-xl border transition-all duration-300 ${focusedField === "discount"
-                            ? "border-emerald-500/40 shadow-[0_0_0_3px_rgba(16,185,129,0.06)]"
-                            : "border-white/[0.06] hover:border-white/[0.10]"
-                            }`}>
-                            <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-violet-400/25" />
-                            <input
-                              id="login-discount"
-                              type="text"
-                              value={discountCode}
-                              onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
-                              onFocus={() => setFocusedField("discount")}
-                              onBlur={() => setFocusedField(null)}
-                              placeholder="Ej: MIEQUIPO2026"
-                              autoComplete="off"
-                              className="w-full pl-11 pr-4 py-4 bg-white/[0.02] text-white text-sm font-mono placeholder:text-violet-400/20 focus:outline-none rounded-2xl uppercase transition-all"
-                            />
-                          </div>
-                          <p className="mt-1.5 text-[10px] text-violet-300/30">Si tu lider te dio un codigo, ingresalo para unirte a su comunidad.</p>
-                        </div>
-                      )}
-                      {/* Role hint */}
-                      <div className="mt-3 rounded-lg border border-violet-500/10 bg-violet-500/[0.03] px-3 py-2.5">
-                        <p className="text-[10px] text-violet-300/50 leading-relaxed">
-                          {discountCode ? (
-                            <>Te registraras como miembro de la comunidad asociada a este codigo.</>
-                          ) : (
-                            <>Al registrarte, podras crear y gestionar tu propia comunidad con todas las herramientas activas.</>
-                          )}
-                        </p>
-                      </div>
-                    </div>
                   </>
                 )}
 

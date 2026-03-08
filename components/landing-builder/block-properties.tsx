@@ -421,6 +421,24 @@ function BlockEditor({
             {textInput("Subtitulo", "subtitle")}
             {textInput("Texto del boton", "buttonText")}
             {textInput("Mensaje de exito", "successMessage")}
+            <div className="space-y-1.5 border-t border-border/20 pt-3 mt-1">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Form Builder (avanzado)</p>
+              {textInput("Slug del formulario", "form_slug")}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-muted-foreground font-medium">Modo de incrustación</label>
+                <select
+                  value={(p.form_embed_mode as string) ?? "inline"}
+                  onChange={e => updateProp("form_embed_mode", e.target.value)}
+                  className="rounded-md border border-border/40 bg-muted/30 px-2 py-1.5 text-xs text-foreground outline-none"
+                >
+                  <option value="inline">Inline (iframe)</option>
+                  <option value="redirect">Botón de enlace</option>
+                </select>
+              </div>
+              <p className="text-[10px] text-muted-foreground/60 leading-relaxed">
+                Si ingresas un slug, se incrustará el formulario del Form Builder en lugar de los campos estáticos.
+              </p>
+            </div>
             <ListEditor
               label="Campos"
               items={(p.fields as Array<{ name: string; type: string; label: string; required: boolean }>) ?? []}

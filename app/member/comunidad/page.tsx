@@ -38,20 +38,50 @@ export default function MemberComunidadPage() {
 
   useEffect(() => {
     setMounted(true)
-    if (!user?.memberId) return
+    if (!user?.email) return
 
-    // Fetch community
-    const comm = getMemberCommunity(user.memberId)
-    setCommunity(comm)
-    if (comm) {
-      setPosts(getCommunityPosts(comm.id))
-      setMembers(getCommunityMembers(comm.id))
-    }
-
-    // Fetch subscription to check plan
-    const fetchSub = async () => {
+    const fetchAll = async () => {
+      // 1. Load community from DB (source of truth — replaces static localStorage lookup)
       try {
-        const res = await fetch("/api/payments/check-subscription")
+        const res = await fetch(`/api/communities/my-community?email=${encodeURIComponent(user.email)}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.community) {
+            const dbComm = data.community
+            const mappedComm: Community = {
+              id: dbComm.id,
+              nombre: dbComm.nombre,
+              codigo: dbComm.codigo || null,
+              embudos_default: dbComm.embudos_default || [],
+              color: dbComm.color || "#8b5cf6",
+              descripcion: dbComm.descripcion || "",
+              activa: dbComm.activa !== false,
+              leaderEmail: dbComm.leader_email || null,
+              leaderName: dbComm.leader_name || null,
+              cuota_miembro: dbComm.cuota_miembro || 0,
+              mailing_enabled: false,
+              createdAt: dbComm.created_at || new Date().toISOString(),
+            }
+            setCommunity(mappedComm)
+            setPosts(getCommunityPosts(mappedComm.id))
+            setMembers(getCommunityMembers(mappedComm.id))
+          }
+        }
+      } catch {
+        // Fallback: static lookup for legacy users
+        if (user.memberId) {
+          const comm = getMemberCommunity(user.memberId)
+          if (comm) {
+            setCommunity(comm)
+            setPosts(getCommunityPosts(comm.id))
+            setMembers(getCommunityMembers(comm.id))
+          }
+        }
+      }
+
+      // 2. Fetch subscription to check plan (for upgrade gate)
+      try {
+        const res = await fetch(`/api/payments/check-subscription?email=${encodeURIComponent(user.email)}`)
         const data = await res.json()
         setSubscription(data.subscription)
       } catch (e) {
@@ -60,7 +90,8 @@ export default function MemberComunidadPage() {
         setSubLoading(false)
       }
     }
-    fetchSub()
+
+    fetchAll()
   }, [user])
 
   const handlePost = () => {
@@ -102,12 +133,16 @@ export default function MemberComunidadPage() {
     }
   }
 
+  const QUALIFYING_PLANS = ["plan_47", "plan_97", "plan_300", "pro", "elite"]
+  const canCreate =
+    user?.memberId === "sensei" ||
+    user?.memberId === "super-admin" ||
+    user?.role === "super_admin" ||
+    QUALIFYING_PLANS.includes(subscription?.plan_id || "")
+
   if (!mounted) return null
 
   if (!community) {
-    const planPrice = subscription?.plan?.precio_usdt || 0
-    const canCreate = planPrice >= 47
-
     if (subLoading) return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -122,13 +157,21 @@ export default function MemberComunidadPage() {
 
           <div className="relative z-10">
             <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-primary/20">
-              <Sparkles className="h-8 w-8 text-primary" />
+              <Users className="h-8 w-8 text-primary" />
             </div>
 
-            <h2 className="text-3xl font-extrabold text-white mb-4 tracking-tight">Crea tu propio imperio</h2>
-            <p className="text-muted-foreground mb-8 leading-relaxed">
-              Todavía no perteneces a ninguna comunidad. Como usuario premium de Magic Funnel, puedes liderar tu propio equipo y crear una comunidad exclusiva.
+            <h2 className="text-2xl font-extrabold text-white mb-3 tracking-tight">Aún no perteneces a una comunidad</h2>
+            <p className="text-muted-foreground mb-6 leading-relaxed text-sm">
+              Para unirte necesitas un link de invitación de tu patrocinador. Pídele a quien te refirió que comparta su link contigo.
             </p>
+
+            <a
+              href="/join"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Ingresar link de invitación
+            </a>
 
             {showCreateForm ? (
               <form onSubmit={handleCreateCommunity} className="space-y-4 text-left animate-in fade-in slide-in-from-bottom-4 duration-500">

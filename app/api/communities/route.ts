@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextRequest, NextResponse } from "next/server"
+import { requireAdminSession } from "@/lib/server/admin-guard"
 
 export async function GET(req: NextRequest) {
   try {
@@ -39,6 +40,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const guard = await requireAdminSession(req)
+  if (!guard.ok) return guard.response
+
   try {
     const { createAdminClient } = await import("@/lib/supabase/admin")
     const supabase = createAdminClient()

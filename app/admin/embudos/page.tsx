@@ -12,6 +12,7 @@ import {
   Bot,
   Leaf,
   ArrowRight,
+  MapPin,
 } from "lucide-react"
 import Link from "next/link"
 import useSWR from "swr"
@@ -62,6 +63,12 @@ const EMBUDO_VISUALS: Record<string, {
     gradient: "from-emerald-600 via-teal-500 to-green-500",
     shadowColor: "shadow-emerald-500/20",
     bgPattern: "radial-gradient(circle at 30% 70%, hsla(160,70%,40%,0.15) 0%, transparent 50%), radial-gradient(circle at 70% 30%, hsla(140,60%,45%,0.1) 0%, transparent 50%)",
+  },
+  "uh-may": {
+    icon: MapPin,
+    gradient: "from-stone-600 via-amber-700 to-yellow-800",
+    shadowColor: "shadow-amber-900/30",
+    bgPattern: "radial-gradient(circle at 25% 75%, hsla(150,35%,18%,0.25) 0%, transparent 50%), radial-gradient(circle at 75% 25%, hsla(35,50%,40%,0.12) 0%, transparent 50%)",
   },
 }
 

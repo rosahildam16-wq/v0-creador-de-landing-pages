@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from "next/server"
+import { requireAdminSession, requireRole, getRequestMeta, getActorId } from "@/lib/server/admin-guard"
+import { logAuditEvent } from "@/lib/server/audit"
 import { createAdminClient } from "@/lib/supabase/admin"
 
 /**
  * GET /api/admin/cleanup?confirm=yes
  * Removes ALL leads and related data from the database.
- * Requires confirm=yes to prevent accidental deletion.
+ * Requires: super_admin role + confirm=yes query param.
  */
 export async function GET(req: NextRequest) {
+    // Only super_admin can wipe all data
+    const guard = await requireAdminSession(req)
+    if (!guard.ok) return guard.response
+    const roleCheck = requireRole(guard.user.role, ["super_admin"])
+    if (!roleCheck.ok) return roleCheck.response
+
     const confirm = req.nextUrl.searchParams.get("confirm")
 
     if (confirm !== "yes") {
@@ -78,6 +86,17 @@ export async function GET(req: NextRequest) {
             .from("leads")
             .select("*", { count: "exact", head: true })
         results.leads_remaining = remaining || 0
+
+        // Audit the destructive action
+        void logAuditEvent({
+            actor_user_id: getActorId(guard.user),
+            actor_role:    guard.user.role,
+            action_type:   "data.cleanup_leads",
+            target_type:   "leads",
+            payload:       { leads_deleted: totalLeads ?? 0, ...results },
+            reason:        "Manual cleanup via /api/admin/cleanup",
+            ...getRequestMeta(req),
+        })
 
         return NextResponse.json({
             success: true,

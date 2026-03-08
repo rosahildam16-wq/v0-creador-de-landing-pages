@@ -38,7 +38,7 @@ const DEFAULT_COMMUNITIES: Community[] = [
     descripcion: "Comunidad exclusiva del equipo Skalia. Acceso completo a herramientas premium y embudos especializados.",
     activa: true,
     leaderEmail: "iajorgeleon21@gmail.com",
-    leaderName: "Jorge Leon",
+    leaderName: "Sensei",
     cuota_miembro: 10,
     mailing_enabled: true,
     createdAt: "2026-01-15T00:00:00Z",

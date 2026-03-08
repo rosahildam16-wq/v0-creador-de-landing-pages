@@ -33,19 +33,20 @@ export default function MagicBuilderEditor() {
     useEffect(() => {
         setMounted(true)
         if (params.id) {
-            const data = getLanding(params.id as string)
-            if (data) {
-                setConfig(data)
-            } else {
-                toast.error("Embudo no encontrado")
-                router.push("/member/builder")
-            }
+            getLanding(params.id as string).then(data => {
+                if (data) {
+                    setConfig(data)
+                } else {
+                    toast.error("Embudo no encontrado")
+                    router.push("/member/builder")
+                }
+            })
         }
     }, [params.id, router])
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (config) {
-            saveLanding({
+            await saveLanding({
                 ...config,
                 updatedAt: new Date().toISOString()
             })
@@ -53,15 +54,12 @@ export default function MagicBuilderEditor() {
         }
     }
 
-    const handlePublish = () => {
+    const handlePublish = async () => {
         if (config) {
-            saveLanding({
-                ...config,
-                status: "published",
-                updatedAt: new Date().toISOString()
-            })
+            const published = { ...config, status: "published" as const, updatedAt: new Date().toISOString() }
+            await saveLanding(published)
             toast.success("¡Tu embudo ya está en línea!")
-            setConfig(prev => prev ? { ...prev, status: "published" } : null)
+            setConfig(published)
         }
     }
 

@@ -1,10 +1,17 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { sendWelcomeEmail } from "@/lib/email-service"
 import { NextRequest, NextResponse } from "next/server"
+import { requireAdminSession, requireRole } from "@/lib/server/admin-guard"
 
 export const dynamic = "force-dynamic"
 
 export async function POST(req: NextRequest) {
+    // Require super_admin or admin session
+    const guard = await requireAdminSession(req)
+    if (!guard.ok) return guard.response
+    const roleCheck = requireRole(guard.user.role, ["super_admin", "admin"])
+    if (!roleCheck.ok) return roleCheck.response
+
     try {
         const supabase = createAdminClient()
         if (!supabase) return NextResponse.json({ error: "No client" }, { status: 500 })

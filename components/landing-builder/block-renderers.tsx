@@ -320,9 +320,53 @@ function CountdownBlock({ props, theme }: { props: Record<string, unknown>; them
 
 // --- FORM ---
 function FormBlock({ props, theme }: { props: Record<string, unknown>; theme: LandingTheme }) {
-  const p = props as { title: string; subtitle: string; fields: Array<{ name: string; type: string; label: string; required: boolean }>; buttonText: string; successMessage: string }
+  const p = props as { title: string; subtitle: string; fields: Array<{ name: string; type: string; label: string; required: boolean }>; buttonText: string; successMessage: string; form_slug?: string; form_embed_mode?: "inline" | "redirect" }
   const [formData, setFormData] = useState<Record<string, string>>({})
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle")
+
+  // ── Form Builder embed mode ──────────────────────────────────────────
+  if (p.form_slug) {
+    if (p.form_embed_mode === "redirect") {
+      return (
+        <section className="px-6 py-16" style={{ background: theme.backgroundColor, color: theme.textColor }}>
+          <div className="mx-auto max-w-lg text-center space-y-6">
+            {p.title && <h2 className="text-2xl font-bold">{p.title}</h2>}
+            {p.subtitle && <p className="text-sm opacity-70">{p.subtitle}</p>}
+            <a
+              href={`/form/${p.form_slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-white transition-all hover:opacity-90"
+              style={{ background: theme.primaryColor, borderRadius: themeRadius(theme.borderRadius) }}
+            >
+              {p.buttonText || "Abrir formulario"}
+              <ChevronRight className="h-4 w-4" />
+            </a>
+          </div>
+        </section>
+      )
+    }
+    // Inline embed via iframe
+    return (
+      <section className="px-4 py-12" style={{ background: theme.backgroundColor }}>
+        {(p.title || p.subtitle) && (
+          <div className="text-center mb-8" style={{ color: theme.textColor }}>
+            {p.title && <h2 className="text-2xl font-bold mb-2">{p.title}</h2>}
+            {p.subtitle && <p className="text-sm opacity-70">{p.subtitle}</p>}
+          </div>
+        )}
+        <div className="mx-auto max-w-xl rounded-2xl overflow-hidden" style={{ borderRadius: themeRadius(theme.borderRadius) }}>
+          <iframe
+            src={`/form/${p.form_slug}`}
+            className="w-full"
+            style={{ height: 600, border: "none" }}
+            title="Formulario"
+          />
+        </div>
+      </section>
+    )
+  }
+  // ── /Form Builder embed mode ─────────────────────────────────────────
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

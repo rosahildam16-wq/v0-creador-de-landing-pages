@@ -15,12 +15,12 @@ export default function LeaderLayout({ children }: { children: React.ReactNode }
     if (!isLoading && !isAuthenticated) {
       router.replace("/login")
     }
-    if (!isLoading && isAuthenticated && user?.role !== "member" && user?.role !== "super_admin") {
+    if (!isLoading && isAuthenticated && user?.role !== "member" && user?.role !== "leader" && user?.role !== "super_admin") {
       router.replace("/login")
     }
   }, [isAuthenticated, isLoading, user, router])
 
-  if (isLoading || !isAuthenticated || (user?.role !== "member" && user?.role !== "super_admin")) {
+  if (isLoading || !isAuthenticated || (user?.role !== "member" && user?.role !== "leader" && user?.role !== "super_admin")) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">

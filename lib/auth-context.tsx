@@ -14,6 +14,7 @@ export interface AuthUser {
   role: UserRole
   memberId?: string
   communityId?: string
+  hasCommunity?: boolean
   planId?: string
 }
 
@@ -123,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             role: data.role,
             memberId: data.memberId,
             communityId: data.communityId,
+            hasCommunity: data.hasCommunity ?? !!data.communityId,
             planId: data.planId,
           }
           setUser(userData)

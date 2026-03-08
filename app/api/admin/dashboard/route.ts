@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { requireAdminSession } from "@/lib/server/admin-guard"
 import {
   getMetricas,
   getLeadsPorDia,
@@ -10,7 +11,11 @@ import {
 
 export const dynamic = "force-dynamic"
 
-export async function GET() {
+// All admin roles may view the dashboard
+export async function GET(request: NextRequest) {
+  const guard = await requireAdminSession(request)
+  if (!guard.ok) return guard.response
+
   try {
 
     const [metricas, leadsPorDia, leadsPorFuente, distribucionTemp, leads, actividad] =

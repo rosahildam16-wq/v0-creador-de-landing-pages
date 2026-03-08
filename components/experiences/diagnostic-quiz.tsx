@@ -9,6 +9,7 @@ interface DiagnosticQuizProps {
   open: boolean
   onClose: () => void
   onComplete: () => void
+  whatsappUrl?: string
 }
 
 const budgetOptions = [
@@ -38,7 +39,10 @@ const budgetOptions = [
   },
 ]
 
-export function DiagnosticQuiz({ open, onClose, onComplete }: DiagnosticQuizProps) {
+const DEFAULT_WA_URL = `https://wa.me/15558865145?text=${encodeURIComponent("Hola, acabo de completar el diagnóstico RESET y he sido aprobado. Quiero agendar mi llamada de admisión.")}`
+
+export function DiagnosticQuiz({ open, onClose, onComplete, whatsappUrl }: DiagnosticQuizProps) {
+  const resolvedWaUrl = whatsappUrl || DEFAULT_WA_URL
   const [step, setStep] = useState<Step>("budget")
   const [selectedBudget, setSelectedBudget] = useState<string | null>(null)
   const [selectedCommitment, setSelectedCommitment] = useState<string | null>(null)
@@ -285,7 +289,7 @@ export function DiagnosticQuiz({ open, onClose, onComplete }: DiagnosticQuizProp
                 </p>
 
                 <a
-                  href={`https://wa.me/15558865145?text=${encodeURIComponent("Hola, acabo de completar el diagnóstico RESET y he sido aprobado. Quiero agendar mi llamada de admisión.")}`}
+                  href={resolvedWaUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-primary py-5 text-base font-black italic text-black shadow-lg shadow-primary/25 transition-all hover:scale-[1.03] active:scale-[0.98]"

@@ -1,18 +1,28 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifyAlivioWebhook } from "@/lib/alivio"
 import { activateSubscription, recordPayment, getSubscriptionById } from "@/lib/subscription-data"
+import { createAdminClient } from "@/lib/supabase/admin"
+import { recordCommission } from "@/lib/server/commissions"
 
 /**
  * POST /api/payments/alivio-webhook
  * Handles payment events from Alivio Payment Gateway
- * 
+ *
  * Events:
- * - payment.created   → Nuevo pago iniciado
- * - payment.waiting   → Esperando pago del cliente
+ * - payment.created    → Nuevo pago iniciado
+ * - payment.waiting    → Esperando pago del cliente
  * - payment.confirming → Pago recibido, confirmando
- * - payment.finished  → Pago completado exitosamente ✅
- * - payment.failed    → Pago fallido ❌
- * - payment.expired   → Pago expirado ⏰
+ * - payment.finished   → Pago completado exitosamente ✅
+ * - payment.failed     → Pago fallido ❌
+ * - payment.expired    → Pago expirado ⏰
+ *
+ * On payment.finished:
+ *  1. Activates legacy subscriptions row (backwards-compat)
+ *  2. Activates user_platform_subscription (new schema)
+ *  3. Calls recordCommission() to create L1/L2 commission rows
+ *
+ * orderId format: mf_{userId}_{planCode}_{billingInterval}_{timestamp}
+ * Legacy format:  sub_{subscriptionId}_{timestamp}
  */
 export async function POST(request: NextRequest) {
     try {
@@ -36,38 +46,91 @@ export async function POST(request: NextRequest) {
             amount: payment.amount,
         })
 
-        // Extract subscription info from orderId (format: sub_{subscriptionId}_{timestamp})
         const orderId = payment.orderId || ""
-        const subscriptionIdMatch = orderId.match(/^sub_(.+)_\d+$/)
-        const subscriptionId = subscriptionIdMatch?.[1]
+
+        // ── New orderId format: mf_{userId}_{planCode}_{billingInterval}_{ts}
+        const newFormatMatch = orderId.match(/^mf_(.+)_(plan_\w+|plan_300)_(monthly|annual)_\d+$/)
+        // ── Legacy orderId format: sub_{subscriptionId}_{timestamp}
+        const legacyMatch = orderId.match(/^sub_(.+)_\d+$/)
 
         switch (eventType) {
             case "payment.finished": {
-                // ✅ Payment completed — activate subscription
-                console.log("[Alivio] Payment completed!", { orderId, subscriptionId })
+                console.log("[Alivio] Payment completed!", { orderId })
 
-                if (subscriptionId) {
-                    // Verify subscription exists
+                // ── Handle NEW format ──────────────────────────────────────────
+                if (newFormatMatch) {
+                    const userId = newFormatMatch[1]
+                    const planCode = newFormatMatch[2]
+                    const billingInterval = newFormatMatch[3] as "monthly" | "annual"
+                    const grossAmount = payment.amount || 0
+
+                    const db = createAdminClient()
+                    if (db) {
+                        const now = new Date()
+                        const periodEnd = new Date(now)
+                        if (billingInterval === "annual") {
+                            periodEnd.setFullYear(periodEnd.getFullYear() + 1)
+                        } else {
+                            periodEnd.setMonth(periodEnd.getMonth() + 1)
+                        }
+
+                        // Activate user_platform_subscription
+                        await db.from("user_platform_subscription").upsert(
+                            {
+                                user_id: userId,
+                                platform_plan_code: planCode,
+                                billing_interval: billingInterval,
+                                status: "active",
+                                trial_start: null,
+                                trial_end: null,
+                                current_period_start: now.toISOString(),
+                                current_period_end: periodEnd.toISOString(),
+                                downgrade_to_student_at: null,
+                                updated_at: now.toISOString(),
+                            },
+                            { onConflict: "user_id" }
+                        )
+
+                        // Record commission (non-blocking — errors logged but won't fail webhook)
+                        recordCommission({
+                            payerUserId: userId,
+                            platformPlanCode: planCode,
+                            grossAmount,
+                            currency: "USD",
+                            periodStart: now,
+                            periodEnd,
+                            metadata: {
+                                source: "alivio_webhook",
+                                payment_id: payment.id,
+                                order_id: orderId,
+                                billing_interval: billingInterval,
+                            },
+                        }).catch((e) => console.error("[Alivio] recordCommission error:", e))
+
+                        console.log(`[Alivio] user_platform_subscription activated for ${userId} → ${planCode} (${billingInterval})`)
+                    }
+                    break
+                }
+
+                // ── Handle LEGACY format ───────────────────────────────────────
+                if (legacyMatch) {
+                    const subscriptionId = legacyMatch[1]
                     const subscription = await getSubscriptionById(subscriptionId)
                     if (!subscription) {
                         console.error("Subscription not found:", subscriptionId)
                         return NextResponse.json({ error: "Subscription not found" }, { status: 404 })
                     }
 
-                    // Detect billing period from metadata
                     const metadata = payment.metadata || {}
                     const billingPeriod = metadata.billingPeriod === "anual" ? "anual" as const : "mensual" as const
 
-                    // Activate the subscription
                     await activateSubscription({
                         subscriptionId,
                         paymentId: payment.id,
                         paymentMethod: "alivio",
                         billingPeriod,
                     })
-                    console.log(`Subscription ${subscriptionId} activated! (${billingPeriod})`)
 
-                    // Record the transaction
                     await recordPayment({
                         subscriptionId,
                         providerPaymentId: payment.id,
@@ -77,6 +140,7 @@ export async function POST(request: NextRequest) {
                         status: "finished",
                         rawData: payment,
                     })
+                    console.log(`[Alivio] Legacy subscription ${subscriptionId} activated`)
                 }
                 break
             }

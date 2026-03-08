@@ -1,7 +1,12 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { requireAdminSession } from "@/lib/server/admin-guard"
 import { addNota } from "@/lib/data"
 
-export async function POST(request: Request) {
+// Any admin role can add notes (support, compliance, platform admin)
+export async function POST(request: NextRequest) {
+  const guard = await requireAdminSession(request)
+  if (!guard.ok) return guard.response
+
   try {
     const body = await request.json()
     const { lead_id, texto, autor } = body

@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
-
-const getResend = async () => {
-    const { Resend } = await import("resend")
-    return new Resend(process.env.RESEND_API_KEY || "re_placeholder")
-}
+import { getResend } from "@/lib/resend"
 
 /**
  * POST /api/mailing/process-sequences

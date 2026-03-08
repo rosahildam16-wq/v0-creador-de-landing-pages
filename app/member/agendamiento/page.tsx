@@ -1,17 +1,16 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import useSWR, { mutate } from "swr"
 import {
     CalendarCheck, CalendarDays, Clock, Plus, Copy, Check,
-    ExternalLink, Trash2, Settings2, MoreVertical, Video,
-    MapPin, Phone, Link as LinkIcon, Loader2, ToggleLeft,
-    ToggleRight, ChevronRight, Users, CalendarPlus, Eye,
-    Sparkles, ArrowRight, CheckCircle2, XCircle, UserX, RefreshCw
+    Eye, Trash2, ToggleLeft,
+    ToggleRight, Users, CalendarPlus, XCircle, Loader2,
+    CheckCircle2, UserX, RefreshCw, ChevronDown, Phone, Video, MapPin, Link as LinkIcon, Settings2
 } from "lucide-react"
 import Link from "next/link"
-import { BOOKING_STATUS_CONFIG, LOCATION_TYPES, DAY_NAMES, type BookingCalendar, type Booking } from "@/lib/booking"
+import { BOOKING_STATUS_CONFIG, LOCATION_TYPES, type BookingCalendar, type Booking } from "@/lib/booking"
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
@@ -32,6 +31,15 @@ function formatDate(iso: string) {
     })
 }
 
+// Static status badge classes — Tailwind cannot purge dynamic class strings like bg-${color}-500
+const STATUS_CLASSES: Record<string, string> = {
+    confirmed: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    cancelled: "bg-red-500/10 text-red-400 border-red-500/20",
+    rescheduled: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    no_show: "bg-gray-500/10 text-gray-400 border-gray-500/20",
+    completed: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+}
+
 type Tab = "calendars" | "appointments"
 
 export default function BookingDashboard() {
@@ -44,15 +52,12 @@ export default function BookingDashboard() {
     const [newDuration, setNewDuration] = useState(30)
     const [newLocation, setNewLocation] = useState("google_meet")
     const [view, setView] = useState<"today" | "week" | "month">("week")
+    const [updatingId, setUpdatingId] = useState<string | null>(null)
+    const [expandedId, setExpandedId] = useState<string | null>(null)
 
-    const { data: calData, isLoading: calLoading } = useSWR(
-        "/api/booking/calendars",
-        fetcher
-    )
-
+    const { data: calData, isLoading: calLoading } = useSWR("/api/booking/calendars", fetcher)
     const { data: aptData, isLoading: aptLoading } = useSWR(
-        `/api/booking/appointments?view=${view}`,
-        fetcher
+        `/api/booking/appointments?view=${view}`, fetcher
     )
 
     const calendars: (BookingCalendar & { total_bookings: number; upcoming_bookings: number })[] = calData?.calendars || []
@@ -73,16 +78,10 @@ export default function BookingDashboard() {
             const res = await fetch("/api/booking/calendars", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name: newName,
-                    duration_minutes: newDuration,
-                    location_type: newLocation,
-                }),
+                body: JSON.stringify({ name: newName, duration_minutes: newDuration, location_type: newLocation }),
             })
             const data = await res.json()
-            if (!res.ok) {
-                throw new Error(data?.error || `Error ${res.status}`)
-            }
+            if (!res.ok) throw new Error(data?.error || `Error ${res.status}`)
             setShowNew(false)
             setNewName("")
             mutate("/api/booking/calendars")
@@ -106,6 +105,26 @@ export default function BookingDashboard() {
         if (!confirm("¿Eliminar este calendario y todas sus citas?")) return
         await fetch(`/api/booking/calendars/${id}`, { method: "DELETE" })
         mutate("/api/booking/calendars")
+    }
+
+    const handleStatusChange = async (bookingId: string, newStatus: string) => {
+        setUpdatingId(bookingId)
+        try {
+            const res = await fetch(`/api/booking/appointments/${bookingId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: newStatus }),
+            })
+            if (!res.ok) {
+                const data = await res.json()
+                throw new Error(data?.error || "Error al actualizar")
+            }
+            mutate(`/api/booking/appointments?view=${view}`)
+        } catch (err: any) {
+            alert(err.message || "Error al cambiar estado")
+        } finally {
+            setUpdatingId(null)
+        }
     }
 
     const getLocationIcon = (type: string) => {
@@ -178,7 +197,6 @@ export default function BookingDashboard() {
                             <XCircle className="h-5 w-5" />
                         </button>
                     </div>
-
                     <div className="grid gap-4 sm:grid-cols-3">
                         <div className="sm:col-span-3">
                             <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Nombre del calendario</label>
@@ -257,16 +275,11 @@ export default function BookingDashboard() {
                             const locLabel = LOCATION_TYPES.find(l => l.value === cal.location_type)?.label || cal.location_type
 
                             return (
-                                <div
-                                    key={cal.id}
-                                    className="group relative overflow-hidden rounded-2xl border border-border/20 bg-card/30 transition-all duration-300 hover:border-violet-500/20 hover:bg-card/50"
-                                >
-                                    {/* Top accent */}
+                                <div key={cal.id} className="group relative overflow-hidden rounded-2xl border border-border/20 bg-card/30 transition-all duration-300 hover:border-violet-500/20 hover:bg-card/50">
                                     <div className={cn(
                                         "absolute inset-x-0 top-0 h-0.5 transition-colors",
                                         cal.active ? "bg-gradient-to-r from-violet-600 to-fuchsia-500" : "bg-white/[0.06]"
                                     )} />
-
                                     <div className="p-5 sm:p-6">
                                         <div className="flex items-start justify-between gap-4">
                                             <div className="flex items-start gap-4 min-w-0">
@@ -280,72 +293,45 @@ export default function BookingDashboard() {
                                                     <div className="flex items-center gap-2 mb-1">
                                                         <h3 className="text-base font-bold text-foreground truncate">{cal.name}</h3>
                                                         <span className={cn(
-                                                            "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold",
+                                                            "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold border",
                                                             cal.active
-                                                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                                                                : "bg-white/[0.04] text-muted-foreground border border-white/[0.06]"
+                                                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                                                : "bg-white/[0.04] text-muted-foreground border-white/[0.06]"
                                                         )}>
                                                             {cal.active ? "Activo" : "Inactivo"}
                                                         </span>
                                                     </div>
                                                     <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                                                        <span className="flex items-center gap-1">
-                                                            <Clock className="h-3 w-3" /> {cal.duration_minutes} min
-                                                        </span>
-                                                        <span className="flex items-center gap-1">
-                                                            <LocIcon className="h-3 w-3" /> {locLabel}
-                                                        </span>
-                                                        <span className="flex items-center gap-1">
-                                                            <Users className="h-3 w-3" /> {cal.upcoming_bookings} próximas
-                                                        </span>
+                                                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {cal.duration_minutes} min</span>
+                                                        <span className="flex items-center gap-1"><LocIcon className="h-3 w-3" /> {locLabel}</span>
+                                                        <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {cal.upcoming_bookings} próximas</span>
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            {/* Actions */}
                                             <div className="flex items-center gap-1.5 shrink-0">
-                                                <button
-                                                    onClick={() => handleToggle(cal.id, cal.active)}
-                                                    title={cal.active ? "Desactivar" : "Activar"}
-                                                    className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-white/[0.05] transition-colors text-muted-foreground"
-                                                >
-                                                    {cal.active
-                                                        ? <ToggleRight className="h-5 w-5 text-emerald-400" />
-                                                        : <ToggleLeft className="h-5 w-5" />
-                                                    }
+                                                <Link href={`/member/agendamiento/${cal.id}`} title="Configurar" className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-violet-500/10 transition-colors text-muted-foreground hover:text-violet-400">
+                                                    <Settings2 className="h-4 w-4" />
+                                                </Link>
+                                                <button onClick={() => handleToggle(cal.id, cal.active)} title={cal.active ? "Desactivar" : "Activar"} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-white/[0.05] transition-colors text-muted-foreground">
+                                                    {cal.active ? <ToggleRight className="h-5 w-5 text-emerald-400" /> : <ToggleLeft className="h-5 w-5" />}
                                                 </button>
-                                                <button
-                                                    onClick={() => handleDelete(cal.id)}
-                                                    className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-red-500/10 transition-colors text-muted-foreground hover:text-red-400"
-                                                >
+                                                <button onClick={() => handleDelete(cal.id)} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-red-500/10 transition-colors text-muted-foreground hover:text-red-400">
                                                     <Trash2 className="h-4 w-4" />
                                                 </button>
                                             </div>
                                         </div>
-
-                                        {/* Bottom actions */}
                                         <div className="mt-4 flex items-center gap-2 flex-wrap">
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 rounded-xl border border-white/[0.04] bg-black/20 px-3 py-2">
                                                     <span className="truncate text-[11px] font-mono text-violet-400/60">
                                                         {typeof window !== "undefined" ? `${window.location.origin}/book/${cal.slug}` : `/book/${cal.slug}`}
                                                     </span>
-                                                    <button
-                                                        onClick={() => handleCopy(cal.slug)}
-                                                        className={cn(
-                                                            "flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-all",
-                                                            copied === cal.slug ? "bg-emerald-500/10 text-emerald-400" : "bg-white/[0.05] text-muted-foreground hover:text-violet-400"
-                                                        )}
-                                                    >
+                                                    <button onClick={() => handleCopy(cal.slug)} className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-all", copied === cal.slug ? "bg-emerald-500/10 text-emerald-400" : "bg-white/[0.05] text-muted-foreground hover:text-violet-400")}>
                                                         {copied === cal.slug ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                                                     </button>
                                                 </div>
                                             </div>
-                                            <Link
-                                                href={`/book/${cal.slug}`}
-                                                target="_blank"
-                                                className="flex items-center gap-1.5 rounded-lg border border-white/[0.06] px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.03] transition-all"
-                                            >
+                                            <Link href={`/book/${cal.slug}`} target="_blank" className="flex items-center gap-1.5 rounded-lg border border-white/[0.06] px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.03] transition-all">
                                                 <Eye className="h-3.5 w-3.5" /> Probar
                                             </Link>
                                         </div>
@@ -360,33 +346,18 @@ export default function BookingDashboard() {
             {/* ═══ TAB: Appointments ═══ */}
             {tab === "appointments" && (
                 <div className="space-y-6">
-                    {/* View toggle + Stats */}
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex gap-1 rounded-lg border border-border/20 bg-card/20 p-0.5">
                             {(["today", "week", "month"] as const).map(v => (
-                                <button
-                                    key={v}
-                                    onClick={() => setView(v)}
-                                    className={cn(
-                                        "rounded-md px-3 py-1.5 text-xs font-medium transition-all",
-                                        view === v ? "bg-violet-500/15 text-violet-300 border border-violet-500/20" : "text-muted-foreground hover:text-foreground"
-                                    )}
-                                >
+                                <button key={v} onClick={() => setView(v)} className={cn("rounded-md px-3 py-1.5 text-xs font-medium transition-all", view === v ? "bg-violet-500/15 text-violet-300 border border-violet-500/20" : "text-muted-foreground hover:text-foreground")}>
                                     {v === "today" ? "Hoy" : v === "week" ? "Semana" : "Mes"}
                                 </button>
                             ))}
                         </div>
-
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1.5">
-                                <div className="h-2 w-2 rounded-full bg-emerald-400" /> {stats.confirmed} confirmadas
-                            </span>
-                            <span className="flex items-center gap-1.5">
-                                <div className="h-2 w-2 rounded-full bg-red-400" /> {stats.cancelled} canceladas
-                            </span>
-                            <span className="flex items-center gap-1.5">
-                                <div className="h-2 w-2 rounded-full bg-gray-400" /> {stats.no_show} no asistieron
-                            </span>
+                            <span className="flex items-center gap-1.5"><div className="h-2 w-2 rounded-full bg-emerald-400" /> {stats.confirmed} confirmadas</span>
+                            <span className="flex items-center gap-1.5"><div className="h-2 w-2 rounded-full bg-red-400" /> {stats.cancelled} canceladas</span>
+                            <span className="flex items-center gap-1.5"><div className="h-2 w-2 rounded-full bg-gray-400" /> {stats.no_show} no asistieron</span>
                         </div>
                     </div>
 
@@ -404,48 +375,73 @@ export default function BookingDashboard() {
                     ) : (
                         <div className="space-y-3">
                             {appointments.map((apt: any) => {
-                                const statusConfig = BOOKING_STATUS_CONFIG[apt.status as keyof typeof BOOKING_STATUS_CONFIG]
+                                const statusCls = STATUS_CLASSES[apt.status] || STATUS_CLASSES.confirmed
                                 const StatusIcon = apt.status === "confirmed" ? CheckCircle2
                                     : apt.status === "cancelled" ? XCircle
-                                        : apt.status === "no_show" ? UserX
-                                            : apt.status === "rescheduled" ? RefreshCw
-                                                : CheckCircle2
+                                    : apt.status === "no_show" ? UserX
+                                    : apt.status === "rescheduled" ? RefreshCw
+                                    : CheckCircle2
+                                const statusLabel = BOOKING_STATUS_CONFIG[apt.status as keyof typeof BOOKING_STATUS_CONFIG]?.label || apt.status
+                                const isExpanded = expandedId === apt.id
+                                const isUpdating = updatingId === apt.id
 
                                 return (
-                                    <div
-                                        key={apt.id}
-                                        className="group rounded-2xl border border-border/20 bg-card/30 p-4 sm:p-5 transition-all hover:border-violet-500/15 hover:bg-card/50"
-                                    >
-                                        <div className="flex items-center justify-between gap-4">
-                                            <div className="flex items-center gap-4 min-w-0">
-                                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 border border-violet-500/10">
-                                                    <span className="text-sm font-bold text-violet-400">
-                                                        {apt.guest_name?.charAt(0)?.toUpperCase() || "?"}
-                                                    </span>
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <h4 className="text-sm font-bold text-foreground truncate">{apt.guest_name}</h4>
-                                                    <div className="flex flex-wrap items-center gap-2 mt-0.5 text-xs text-muted-foreground">
-                                                        <span>{formatDate(apt.start_time)}</span>
-                                                        <span className="text-violet-400 font-medium">
-                                                            {formatTime(apt.start_time, apt.calendar?.timezone)}
+                                    <div key={apt.id} className="rounded-2xl border border-border/20 bg-card/30 overflow-hidden transition-all hover:border-violet-500/15">
+                                        <div className="p-4 sm:p-5">
+                                            <div className="flex items-center justify-between gap-4">
+                                                <div className="flex items-center gap-4 min-w-0">
+                                                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 border border-violet-500/10">
+                                                        <span className="text-sm font-bold text-violet-400">
+                                                            {apt.guest_name?.charAt(0)?.toUpperCase() || "?"}
                                                         </span>
-                                                        {apt.calendar?.name && (
-                                                            <span className="text-muted-foreground/50">· {apt.calendar.name}</span>
-                                                        )}
                                                     </div>
+                                                    <div className="min-w-0">
+                                                        <h4 className="text-sm font-bold text-foreground truncate">{apt.guest_name}</h4>
+                                                        <div className="flex flex-wrap items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                                                            <span>{formatDate(apt.start_time)}</span>
+                                                            <span className="text-violet-400 font-medium">{formatTime(apt.start_time, apt.calendar?.timezone)}</span>
+                                                            {apt.calendar?.name && <span className="text-muted-foreground/50">· {apt.calendar.name}</span>}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    <span className={cn("flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold border", statusCls)}>
+                                                        <StatusIcon className="h-3 w-3" />
+                                                        {statusLabel}
+                                                    </span>
+                                                    <button onClick={() => setExpandedId(isExpanded ? null : apt.id)} className="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-white/[0.05] transition-colors text-muted-foreground">
+                                                        <ChevronDown className={cn("h-4 w-4 transition-transform", isExpanded && "rotate-180")} />
+                                                    </button>
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-2 shrink-0">
-                                                <span className={cn(
-                                                    "flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold border",
-                                                    `bg-${statusConfig?.color}-500/10 text-${statusConfig?.color}-400 border-${statusConfig?.color}-500/20`
-                                                )}>
-                                                    <StatusIcon className="h-3 w-3" />
-                                                    {statusConfig?.label}
-                                                </span>
-                                            </div>
+                                            {isExpanded && (
+                                                <div className="mt-4 pt-4 border-t border-border/20 space-y-3 animate-in fade-in duration-200">
+                                                    <div className="grid grid-cols-2 gap-2 text-xs">
+                                                        <div><span className="text-muted-foreground">Email: </span><span className="text-foreground">{apt.guest_email}</span></div>
+                                                        {apt.guest_phone && <div><span className="text-muted-foreground">Tel: </span><span className="text-foreground">{apt.guest_phone}</span></div>}
+                                                    </div>
+                                                    {apt.status !== "cancelled" && apt.status !== "completed" && (
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {apt.status !== "confirmed" && (
+                                                                <button onClick={() => handleStatusChange(apt.id, "confirmed")} disabled={isUpdating} className="flex items-center gap-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 text-xs font-medium text-emerald-400 hover:bg-emerald-500/20 transition-colors disabled:opacity-50">
+                                                                    <CheckCircle2 className="h-3 w-3" /> Confirmar
+                                                                </button>
+                                                            )}
+                                                            <button onClick={() => handleStatusChange(apt.id, "no_show")} disabled={isUpdating} className="flex items-center gap-1.5 rounded-lg bg-gray-500/10 border border-gray-500/20 px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-500/20 transition-colors disabled:opacity-50">
+                                                                <UserX className="h-3 w-3" /> No asistió
+                                                            </button>
+                                                            <button onClick={() => handleStatusChange(apt.id, "completed")} disabled={isUpdating} className="flex items-center gap-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 text-xs font-medium text-blue-400 hover:bg-blue-500/20 transition-colors disabled:opacity-50">
+                                                                <CheckCircle2 className="h-3 w-3" /> Completada
+                                                            </button>
+                                                            <button onClick={() => { if (confirm("¿Cancelar esta cita?")) handleStatusChange(apt.id, "cancelled") }} disabled={isUpdating} className="flex items-center gap-1.5 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-50">
+                                                                <XCircle className="h-3 w-3" /> Cancelar
+                                                            </button>
+                                                            {isUpdating && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground self-center" />}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 )

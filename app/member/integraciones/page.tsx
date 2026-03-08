@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,11 +14,12 @@ import {
     Loader2,
     AlertCircle,
     ExternalLink,
-    Settings
+    Settings,
+    WifiOff
 } from "lucide-react"
 
 type IntegrationProvider = "whatsapp" | "google" | "zoom"
-type ConnectionStatus = "connected" | "disconnected" | "loading" | "config_needed"
+type ConnectionStatus = "connected" | "disconnected" | "loading" | "config_needed" | "unavailable"
 
 interface IntegrationInfo {
     provider: IntegrationProvider
@@ -27,8 +29,9 @@ interface IntegrationInfo {
     accentColor: string
 }
 
-export default function MemberIntegrationsPage() {
+function IntegrationsContent() {
     const { user } = useAuth()
+    const searchParams = useSearchParams()
     const [statuses, setStatuses] = useState<Record<IntegrationProvider, ConnectionStatus>>({
         whatsapp: "loading",
         google: "loading",
@@ -36,6 +39,27 @@ export default function MemberIntegrationsPage() {
     })
     const [configErrors, setConfigErrors] = useState<Record<string, string>>({})
     const [loadingSettings, setLoadingSettings] = useState(true)
+    const [callbackMsg, setCallbackMsg] = useState<{ type: "success" | "error"; text: string } | null>(null)
+
+    // Read OAuth callback result from URL params
+    useEffect(() => {
+        const googleResult = searchParams.get("google")
+        const reason = searchParams.get("reason")
+        const email = searchParams.get("email")
+        if (googleResult === "success") {
+            setCallbackMsg({ type: "success", text: `Google Calendar conectado${email ? ` como ${email}` : ""}.` })
+            // Clean URL
+            window.history.replaceState({}, "", "/member/integraciones")
+        } else if (googleResult === "error") {
+            const msg = reason === "db_save_failed"
+                ? "Error al guardar la conexión. Las tablas se están creando, intenta conectar de nuevo en 30 segundos."
+                : reason === "token_exchange_failed"
+                ? "Error al intercambiar el token con Google. Intenta de nuevo."
+                : `Error de Google: ${reason || "desconocido"}`
+            setCallbackMsg({ type: "error", text: msg })
+            window.history.replaceState({}, "", "/member/integraciones")
+        }
+    }, [searchParams])
 
     const integrations: IntegrationInfo[] = [
         {
@@ -63,29 +87,59 @@ export default function MemberIntegrationsPage() {
 
     useEffect(() => {
         async function fetchData() {
+            const updates: Partial<Record<IntegrationProvider, ConnectionStatus>> = {}
+            const errors: Record<string, string> = {}
+
+            await Promise.all([
+                // WhatsApp: check actual status
+                fetch("/api/integrations/whatsapp?action=status")
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.connected) {
+                            updates.whatsapp = "connected"
+                        } else if (data.error?.includes("WHATSAPP_SERVER_URL")) {
+                            updates.whatsapp = "unavailable"
+                            errors.whatsapp = "Requiere servidor externo de WhatsApp (WHATSAPP_SERVER_URL)."
+                        } else {
+                            updates.whatsapp = "disconnected"
+                        }
+                    })
+                    .catch(() => { updates.whatsapp = "unavailable" }),
+
+                // Google
+                fetch("/api/integrations/google?action=status")
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.connected) {
+                            updates.google = "connected"
+                        } else if (data.error) {
+                            updates.google = "config_needed"
+                            errors.google = data.error
+                        } else {
+                            updates.google = "disconnected"
+                        }
+                    })
+                    .catch(() => { updates.google = "disconnected" }),
+
+                // Zoom
+                fetch("/api/integrations/zoom?action=status")
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.connected) {
+                            updates.zoom = "connected"
+                        } else if (data.error?.includes("Variables") || data.error?.includes("CLIENT_ID")) {
+                            updates.zoom = "config_needed"
+                            errors.zoom = data.error
+                        } else {
+                            updates.zoom = "disconnected"
+                        }
+                    })
+                    .catch(() => { updates.zoom = "disconnected" }),
+            ])
+
+            setStatuses(prev => ({ ...prev, ...updates }))
+            setConfigErrors(errors)
             setLoadingSettings(false)
-
-            for (const provider of ["whatsapp", "google", "zoom"] as IntegrationProvider[]) {
-                if (provider === "whatsapp") {
-                    setStatuses(prev => ({ ...prev, whatsapp: "disconnected" }))
-                    continue
-                }
-
-                try {
-                    const res = await fetch(`/api/integrations/${provider}?action=status`)
-                    const data = await res.json()
-                    if (data.connected) {
-                        setStatuses(prev => ({ ...prev, [provider]: "connected" }))
-                    } else if (data.error && data.error.includes("Variables")) {
-                        setStatuses(prev => ({ ...prev, [provider]: "config_needed" }))
-                        setConfigErrors(prev => ({ ...prev, [provider]: data.error }))
-                    } else {
-                        setStatuses(prev => ({ ...prev, [provider]: "disconnected" }))
-                    }
-                } catch {
-                    setStatuses(prev => ({ ...prev, [provider]: "disconnected" }))
-                }
-            }
         }
 
         fetchData()
@@ -100,7 +154,7 @@ export default function MemberIntegrationsPage() {
             if (data.url) {
                 window.location.href = data.url
             } else if (data.error) {
-                if (data.error.includes("Variables")) {
+                if (data.error.includes("Variables") || data.error.includes("CLIENT_ID")) {
                     setStatuses(prev => ({ ...prev, [provider]: "config_needed" }))
                     setConfigErrors(prev => ({ ...prev, [provider]: data.error }))
                 } else {
@@ -141,6 +195,13 @@ export default function MemberIntegrationsPage() {
 
     return (
         <div className="flex flex-col gap-8 pb-20">
+            {/* Callback feedback */}
+            {callbackMsg && (
+                <div className={`rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2 ${callbackMsg.type === "success" ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" : "bg-red-500/10 border border-red-500/20 text-red-400"}`}>
+                    {callbackMsg.type === "success" ? <Check className="h-4 w-4 shrink-0" /> : <AlertCircle className="h-4 w-4 shrink-0" />}
+                    {callbackMsg.text}
+                </div>
+            )}
             {/* Header */}
             <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-3">
@@ -245,12 +306,25 @@ export default function MemberIntegrationsPage() {
                                                     Config
                                                 </span>
                                             )}
+                                            {status === "unavailable" && (
+                                                <span className="flex items-center gap-1 rounded-full bg-gray-500/10 px-2 py-0.5 text-[10px] font-bold text-gray-400 border border-gray-500/20">
+                                                    <WifiOff className="h-2.5 w-2.5" />
+                                                    No disponible
+                                                </span>
+                                            )}
                                         </div>
                                         <p className="max-w-md text-sm text-muted-foreground font-medium italic">
                                             {status === "config_needed" && !isAdmin
                                                 ? "Próximamente disponible. Tu administrador está configurando esta integración."
-                                                : item.description}
+                                                : status === "unavailable"
+                                                    ? item.provider === "whatsapp"
+                                                        ? "Requiere servidor de WhatsApp externo. Contacta al administrador para configurarlo."
+                                                        : "No disponible en este entorno."
+                                                    : item.description}
                                         </p>
+                                        {configErrors[item.provider] && isAdmin && status !== "connected" && (
+                                            <p className="text-[11px] text-amber-400/70 mt-1">{configErrors[item.provider]}</p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -272,18 +346,17 @@ export default function MemberIntegrationsPage() {
                                             </Button>
                                         </div>
                                     ) : status === "config_needed" ? (
-                                        <Button
-                                            className="rounded-xl px-8 opacity-50 cursor-not-allowed"
-                                            disabled
-                                        >
+                                        <Button className="rounded-xl px-8 opacity-50 cursor-not-allowed" disabled>
                                             Pendiente de config
                                         </Button>
+                                    ) : status === "unavailable" ? (
+                                        <Button className="rounded-xl px-8 opacity-50 cursor-not-allowed" disabled>
+                                            No disponible
+                                        </Button>
                                     ) : item.provider === "whatsapp" ? (
-                                        <Button
-                                            className="rounded-xl px-8 opacity-60"
-                                            disabled
-                                        >
-                                            Próximamente
+                                        // WhatsApp disconnected but server is available
+                                        <Button className="rounded-xl px-8 shadow-lg shadow-primary/20" disabled>
+                                            Configurar en Admin
                                         </Button>
                                     ) : (
                                         <Button
@@ -300,5 +373,17 @@ export default function MemberIntegrationsPage() {
                 })}
             </div>
         </div>
+    )
+}
+
+export default function MemberIntegrationsPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center py-20">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+        }>
+            <IntegrationsContent />
+        </Suspense>
     )
 }

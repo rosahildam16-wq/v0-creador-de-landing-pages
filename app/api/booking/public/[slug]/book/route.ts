@@ -67,6 +67,21 @@ export async function POST(
                 locationValue = meeting.join_url
                 meetingDetails = meeting
             }
+        } else if (calWithLoc?.location_type === "google_meet") {
+            const { createGoogleMeetEvent } = await import("@/lib/google-calendar")
+            const event = await createGoogleMeetEvent({
+                ownerEmail: cal.owner_email,
+                title: `${cal.name} — ${guest_name}`,
+                startTime: startTime.toISOString(),
+                endTime: endTime.toISOString(),
+                timezone: cal.timezone,
+                guestEmail: guest_email,
+                guestName: guest_name,
+            })
+            if (event) {
+                locationValue = event.hangoutLink
+                meetingDetails = { hangoutLink: event.hangoutLink, eventId: event.eventId }
+            }
         } else {
             locationValue = calWithLoc?.location_value
         }
@@ -96,6 +111,17 @@ export async function POST(
                     { status: 409 }
                 )
             }
+            // Missing columns (037 migration not run) — trigger and return clear error
+            if (bookError.message?.includes("column") || bookError.message?.includes("schema cache") || bookError.code === "42P01") {
+                try {
+                    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+                    await fetch(`${baseUrl}/api/admin/migrate-forms`, { method: "POST" })
+                } catch {}
+                return NextResponse.json(
+                    { error: "La base de datos se está actualizando. Intenta reservar de nuevo en 15 segundos." },
+                    { status: 503 }
+                )
+            }
             throw bookError
         }
 
@@ -106,8 +132,26 @@ export async function POST(
             details: { guest_name, guest_email, start_time: startTime.toISOString() },
         })
 
-        // TODO: Send confirmation email to guest and owner
-        // await sendBookingConfirmation(booking, cal)
+        // Send confirmation emails (non-blocking — booking succeeds even if email fails)
+        try {
+            const { sendBookingConfirmationEmails } = await import("@/lib/booking-emails")
+            await sendBookingConfirmationEmails({
+                bookingId: booking.id,
+                cancelToken: booking.cancel_token,
+                guestName: booking.guest_name,
+                guestEmail: booking.guest_email,
+                ownerEmail: cal.owner_email,
+                calendarName: cal.name,
+                startTime: booking.start_time,
+                endTime: booking.end_time,
+                durationMinutes: cal.duration_minutes,
+                timezone: cal.timezone,
+                locationType: calWithLoc?.location_type || "google_meet",
+                locationUrl: locationValue,
+            })
+        } catch (emailErr) {
+            console.error("[Booking] Email send failed (non-critical):", emailErr)
+        }
 
         return NextResponse.json({
             booking: {
@@ -117,6 +161,7 @@ export async function POST(
                 guest_name: booking.guest_name,
                 cancel_token: booking.cancel_token,
                 reschedule_token: booking.reschedule_token,
+                location_url: locationValue,
             },
             calendar: {
                 name: cal.name,

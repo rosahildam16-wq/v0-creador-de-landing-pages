@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
+import { createAdminClient } from "@/lib/supabase/admin"
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// ─── GET ──────────────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
   const email = req.nextUrl.searchParams.get("email")
@@ -12,9 +9,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ community: null, members: [], stats: {} })
   }
 
+  const supabase = createAdminClient()
+  if (!supabase) return NextResponse.json({ community: null, members: [], stats: {} })
+
   const normalized = email.toLowerCase().trim()
 
-  // First find the member record to get communityId and role
+  // Find the member record to get communityId and role
   const { data: member } = await supabase
     .from("community_members")
     .select("*")
@@ -42,18 +42,16 @@ export async function GET(req: NextRequest) {
   const allMembers = members || []
   const now = new Date()
 
-  // Stats
   const totalMembers = allMembers.length
   const activeMembers = allMembers.filter((m) => m.activo).length
   const inTrial = allMembers.filter((m) => m.trial_ends_at && new Date(m.trial_ends_at) > now).length
   const thisWeek = allMembers.filter((m) => {
-    const d = new Date(m.created_at)
     const weekAgo = new Date()
     weekAgo.setDate(weekAgo.getDate() - 7)
-    return d >= weekAgo
+    return new Date(m.created_at) >= weekAgo
   }).length
 
-  // Referrals of this leader (people who listed this leader as sponsor)
+  // Referrals of this leader
   const { data: directReferrals } = await supabase
     .from("community_members")
     .select("member_id, name, email, username, activo, created_at, trial_ends_at")
@@ -82,6 +80,8 @@ export async function GET(req: NextRequest) {
   })
 }
 
+// ─── PATCH ────────────────────────────────────────────────────────────────────
+
 export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json()
@@ -91,7 +91,10 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Email requerido" }, { status: 400 })
     }
 
-    // Find the member's community
+    const supabase = createAdminClient()
+    if (!supabase) return NextResponse.json({ error: "DB no disponible" }, { status: 500 })
+
+    // Find the member's community and verify role
     const { data: member } = await supabase
       .from("community_members")
       .select("community_id, role")
@@ -99,10 +102,17 @@ export async function PATCH(req: NextRequest) {
       .maybeSingle()
 
     if (!member) {
-      return NextResponse.json({ error: "No tienes permisos" }, { status: 403 })
+      return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
     }
 
-    // Build update object
+    // Only leaders (or owner) can edit the community
+    if (member.role !== "leader" && member.role !== "owner") {
+      return NextResponse.json(
+        { error: "Se requiere rol leader para editar la comunidad" },
+        { status: 403 }
+      )
+    }
+
     const updates: Record<string, unknown> = {}
     if (nombre) updates.nombre = nombre
     if (color) updates.color = color
@@ -126,6 +136,8 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
+// ─── POST (create community) ──────────────────────────────────────────────────
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -138,7 +150,9 @@ export async function POST(req: NextRequest) {
     const normalizedEmail = email.toLowerCase().trim()
     const normalizedCodigo = codigo.trim().toUpperCase()
 
-    // Find the member
+    const supabase = createAdminClient()
+    if (!supabase) return NextResponse.json({ error: "DB no disponible" }, { status: 500 })
+
     const { data: member } = await supabase
       .from("community_members")
       .select("*")
@@ -149,7 +163,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Usuario no encontrado" }, { status: 403 })
     }
 
-    // Check if code is taken
     const { data: existingComm } = await supabase
       .from("communities")
       .select("id")
@@ -160,7 +173,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Este codigo de comunidad ya esta en uso" }, { status: 409 })
     }
 
-    // Create community
     const communityId = `comm-${member.username || member.id}`
     const { error: commError } = await supabase.from("communities").insert({
       id: communityId,
@@ -179,14 +191,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: commError.message }, { status: 500 })
     }
 
-    // Update member to point to this new community
     await supabase
       .from("community_members")
       .update({ community_id: communityId, discount_code: normalizedCodigo })
       .eq("id", member.id)
 
     return NextResponse.json({ success: true, communityId })
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: "Error interno" }, { status: 500 })
   }
 }

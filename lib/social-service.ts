@@ -3,11 +3,14 @@ import { createAdminClient } from "@/lib/supabase/admin"
 export interface SocialCenterData {
     username: string
     display_name: string
+    tagline?: string
     bio: string
     avatar_url?: string
     theme_config: {
         primary_color: string
         bg_style: string
+        button_style?: "glass" | "solid" | "outline"
+        layout?: "list" | "grid"
     }
     links: Array<{
         label: string
@@ -20,8 +23,13 @@ export interface SocialCenterData {
         tiktok?: string
         whatsapp?: string
         youtube?: string
+        facebook?: string
+        linkedin?: string
+        twitter?: string
+        telegram?: string
     }
     views_count: number
+    is_published?: boolean
 }
 
 export async function getSocialCenter(username: string): Promise<SocialCenterData | null> {
@@ -45,9 +53,9 @@ export async function getSocialCenter(username: string): Promise<SocialCenterDat
         if (member) {
             const defaultData = {
                 username: member.username,
-                display_name: member.name,
+                display_name: member.name || username,
                 bio: "Bienvenidos a mi ecosistema digital 🚀",
-                theme_config: { primary_color: "#8b5cf6", bg_style: "glass_mesh" },
+                theme_config: { primary_color: "#8b5cf6", bg_style: "glass_mesh", button_style: "glass" },
                 links: [
                     { label: "Franquicia Reset", url: `/r/${member.username}/nomada-vip`, icon: "rocket", highlight: true }
                 ],
